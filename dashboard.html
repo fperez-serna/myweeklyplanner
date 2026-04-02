@@ -19,8 +19,9 @@ body{background:#f0ebe6;padding:1.5rem;font-family:-apple-system,BlinkMacSystemF
 .r3{grid-template-columns:2fr 1fr;}
 .r3h{grid-template-columns:1fr 1fr 1fr;}
 @media(max-width:600px){.r3h{grid-template-columns:1fr 1fr;}#cal-card{display:none;}}
-.cal-quote-row{display:none;}
-@media(max-width:600px){.cal-quote-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}}
+.cal-quote-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(min-width:601px){#cal-card{display:block;}.cal-quote-row{display:none;}.desktop-quote{display:block;}}
+@media(max-width:600px){#cal-card{display:none;}.desktop-quote{display:none;}}
 .col{display:flex;flex-direction:column;gap:12px;}
 .card{background:var(--bg);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem;}
 .card-teal{background:var(--teal);border-color:var(--teal);}
@@ -157,7 +158,7 @@ body{padding:.75rem;}
     </div>
   </div>
 
-  <div class="card" id="quote-card">
+  <div class="card desktop-quote">
     <div class="accent"></div>
     <div class="lbl">Recordatorio del día</div>
     <div class="qt" id="qt"></div>
@@ -1173,6 +1174,7 @@ window.addEventListener('resize',initCalResponsive);
 // Init with Firebase error protection
 document.getElementById('ev-date').value=dk(today);
 renderDay();
+setTimeout(buildCalendar,100);
 fetchWeather();
 fetchGCal();
 initGCal();
