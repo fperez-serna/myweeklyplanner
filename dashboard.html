@@ -1174,7 +1174,7 @@ window.addEventListener('resize',initCalResponsive);
 // Init with Firebase error protection
 document.getElementById('ev-date').value=dk(today);
 renderDay();
-setTimeout(buildCalendar,100);
+setTimeout(()=>{buildCalendar();showQ(QS[cur]);},150);
 fetchWeather();
 fetchGCal();
 initGCal();
