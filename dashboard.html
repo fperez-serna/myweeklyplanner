@@ -17,11 +17,22 @@ body{background:#f0ebe6;padding:1.5rem;font-family:-apple-system,BlinkMacSystemF
 .row{display:grid;gap:12px;}
 .r2{grid-template-columns:1fr 1fr;}
 .r3{grid-template-columns:2fr 1fr;}
+@media(max-width:600px){
+  .row.r2{display:flex;flex-direction:column;}
+  .row.r2>.col{order:-1;}
+  .sh-grid{grid-template-columns:1fr!important;}
+}
 .r3h{grid-template-columns:1fr 1fr 1fr;}
 @media(max-width:600px){.r3h{grid-template-columns:1fr 1fr;}#cal-card{display:none;}}
-.cal-quote-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-@media(min-width:601px){#cal-card{display:block;}.cal-quote-row{display:none;}.desktop-quote{display:block;}}
-@media(max-width:600px){#cal-card{display:none;}.desktop-quote{display:none;}}
+/* Mobile: hide desktop elements */
+.cal-quote-row{display:none;}
+.desktop-quote{display:block;}
+#cal-card{display:block;}
+@media(max-width:600px){
+  .cal-quote-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .desktop-quote{display:none;}
+  #cal-card{display:none;}
+}
 .col{display:flex;flex-direction:column;gap:12px;}
 .card{background:var(--bg);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem;}
 .card-teal{background:var(--teal);border-color:var(--teal);}
@@ -285,7 +296,7 @@ body{padding:.75rem;}
   <!-- LISTA DE COMPRAS -->
   <div class="card">
     <div class="sec">Lista de compras</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;" id="sh-all">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;" id="sh-all" class="sh-grid">
 
       <div>
         <div style="font-size:11px;font-weight:500;color:var(--mauve);margin-bottom:6px;">🛒 Supermercado</div>
