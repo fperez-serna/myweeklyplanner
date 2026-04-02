@@ -235,11 +235,12 @@ body{padding:.75rem;}
           <select class="t-sel" id="ev-h"><option>12</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option></select>
           <select class="t-sel" id="ev-m"><option>00</option><option>15</option><option>30</option><option>45</option></select>
           <select class="t-sel" id="ev-ap"><option>AM</option><option>PM</option></select>
-          <input type="text" id="ev-title" placeholder="Evento...">
+          <input type="text" id="ev-title" placeholder="Evento..." onkeydown="if(event.key==='Enter')addEv()">
           <button onclick="addEv()">+</button>
         </div>
         <button class="gcal-btn" id="gcal-btn" onclick="handleGCal()">Conectar Google Calendar</button>
         <div class="snote" id="gcal-note"></div>
+        <div class="snote" style="margin-top:4px;color:var(--text3);font-style:italic;">*Por seguridad, tu calendario no puede permanecer conectado. Conéctate cuando quieras que tus eventos se reflejen aquí y cuando quieras que tus eventos de aquí se guarden en tu Google Calendar.</div>
       </div>
       <div class="card">
         <div class="sec">Workout</div>
@@ -530,12 +531,19 @@ function buildOv(){
     if(w.wo2){const t=document.createElement('div');t.className='wtag wwo';t.textContent=emoji(w.wo2,WE);col.appendChild(t);}
     if(w.ha1){const t=document.createElement('div');t.className='wtag whb';t.textContent=emoji(w.ha1,HE);col.appendChild(t);}
     if(w.ha2){const t=document.createElement('div');t.className='wtag whb';t.textContent=emoji(w.ha2,HE);col.appendChild(t);}
+    const df=focusForDay(i);
+    const fd=weekData.focusDone||{};
+    [1,2,3].forEach(n=>{
+      if(df[n]){
+        const isDone=fd[i+'_'+n]!==undefined||fd[String(i)+'_'+String(n)]!==undefined;
+        const el=document.createElement('div');
+        el.className='wtsk'+(isDone?' done-task':'');
+        el.textContent=df[n];
+        col.appendChild(el);
+      }
+    });
     const evs=[...(gcalEvts[dk(d)]||[]),...dayEvts(i)];
     evs.slice(0,2).forEach(ev=>{const t=document.createElement('div');t.className='wtag wev';t.textContent=ev.title;col.appendChild(t);});
-    const df=focusForDay(i);
-    [1,2,3].forEach(n=>{
-      if(df[n]){const el=document.createElement('div');el.className='wtsk';el.textContent=df[n];col.appendChild(el);}
-    });
     ov.appendChild(col);
   });
 }
