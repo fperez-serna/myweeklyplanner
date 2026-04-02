@@ -18,9 +18,12 @@ body{background:#f0ebe6;padding:1.5rem;font-family:-apple-system,BlinkMacSystemF
 .r2{grid-template-columns:1fr 1fr;}
 .r3{grid-template-columns:2fr 1fr;}
 @media(max-width:600px){
-  .row.r2{display:flex;flex-direction:column;}
-  .row.r2>.col{order:-1;}
   .sh-grid{grid-template-columns:1fr!important;}
+  .row.r2{display:flex;flex-direction:column;}
+  .row.r2>.card{order:2;}
+  .row.r2>.col{order:1;display:contents;}
+  .row.r2>.col>.card:first-child{order:0;}
+  .row.r2>.col>.card:not(:first-child){order:3;}
 }
 .r3h{grid-template-columns:1fr 1fr 1fr;}
 @media(max-width:600px){.r3h{grid-template-columns:1fr 1fr;}#cal-card{display:none;}}
@@ -921,7 +924,12 @@ const QS=[
   {t:"Cuídate primero. No puedes servir desde una vasija vacía.",a:"Eleanor Brownn"},
 ];
 let qcur=Math.floor(Math.random()*QS.length);
-function showQ(q){document.getElementById('qt').textContent='\u201C'+q.t+'\u201D';document.getElementById('qa').textContent='\u2014 '+q.a;}
+function showQ(q){
+  const txt='\u201C'+q.t+'\u201D';
+  const auth='\u2014 '+q.a;
+  ['qt','qt-m'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=txt;});
+  ['qa','qa-m'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=auth;});
+}
 function newQ(){qcur=(qcur+1)%QS.length;showQ(QS[qcur]);}
 showQ(QS[qcur]);
 
@@ -1185,7 +1193,7 @@ window.addEventListener('resize',initCalResponsive);
 // Init with Firebase error protection
 document.getElementById('ev-date').value=dk(today);
 renderDay();
-setTimeout(()=>{buildCalendar();showQ(QS[cur]);},150);
+setTimeout(()=>{buildCalendar();showQ(QS[qcur]);},150);
 fetchWeather();
 fetchGCal();
 initGCal();
