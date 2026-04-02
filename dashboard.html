@@ -18,7 +18,9 @@ body{background:#f0ebe6;padding:1.5rem;font-family:-apple-system,BlinkMacSystemF
 .r2{grid-template-columns:1fr 1fr;}
 .r3{grid-template-columns:2fr 1fr;}
 .r3h{grid-template-columns:1fr 1fr 1fr;}
-@media(max-width:600px){.r3h{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.r3h{grid-template-columns:1fr 1fr;}#cal-card{display:none;}}
+.cal-quote-row{display:none;}
+@media(max-width:600px){.cal-quote-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}}
 .col{display:flex;flex-direction:column;gap:12px;}
 .card{background:var(--bg);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem;}
 .card-teal{background:var(--teal);border-color:var(--teal);}
@@ -149,21 +151,35 @@ body{padding:.75rem;}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
         <button onclick="calPrevMonth()" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text3);padding:0 4px;">‹</button>
         <div style="font-size:12px;font-weight:500;color:var(--text);" id="cal-month-lbl"></div>
-        <div style="display:flex;align-items:center;gap:4px;">
-          <button onclick="calNextMonth()" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text3);padding:0 4px;">›</button>
-          <button id="cal-toggle-btn" onclick="toggleCal()" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text3);padding:0 4px;display:none;">▾</button>
-        </div>
+        <button onclick="calNextMonth()" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text3);padding:0 4px;">›</button>
       </div>
       <div id="cal-body"></div>
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="quote-card">
     <div class="accent"></div>
     <div class="lbl">Recordatorio del día</div>
     <div class="qt" id="qt"></div>
     <div class="qa" id="qa"></div>
     <button class="qbtn" onclick="newQ()">nueva frase</button>
+  </div>
+  <div class="cal-quote-row">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <button onclick="calPrevMonth()" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text3);padding:0 4px;">‹</button>
+        <div style="font-size:12px;font-weight:500;color:var(--text);" id="cal-month-lbl-m"></div>
+        <button onclick="calNextMonth()" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text3);padding:0 4px;">›</button>
+      </div>
+      <div id="cal-body-m"></div>
+    </div>
+    <div class="card">
+      <div class="accent"></div>
+      <div class="lbl">Recordatorio</div>
+      <div class="qt" id="qt-m"></div>
+      <div class="qa" id="qa-m"></div>
+      <button class="qbtn" onclick="newQ()">nueva frase</button>
+    </div>
   </div>
 
   <div class="card">
@@ -1097,6 +1113,11 @@ function buildCalendar(){
   }
   h+='</div>';
   body.innerHTML=h;
+  // Also update mobile cal if exists
+  const lblM=document.getElementById('cal-month-lbl-m');
+  const bodyM=document.getElementById('cal-body-m');
+  if(lblM)lblM.textContent=CAL_MESES[calMonth]+' '+calYear;
+  if(bodyM)bodyM.innerHTML=h;
 }
 
 async function calGoTo(y,m,d){
@@ -1152,7 +1173,6 @@ window.addEventListener('resize',initCalResponsive);
 // Init with Firebase error protection
 document.getElementById('ev-date').value=dk(today);
 renderDay();
-initCalResponsive();
 fetchWeather();
 fetchGCal();
 initGCal();
@@ -1162,6 +1182,7 @@ initGCal();
     await loadDB();
     await loadShoppingDB();
     renderDay();
+    buildCalendar();
     renderSh();
     subscribeDB();
     subscribeShoppingDB();
