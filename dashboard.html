@@ -110,7 +110,7 @@ body{background:#f0ebe6;padding:1.5rem;font-family:-apple-system,BlinkMacSystemF
 .snote{font-size:10px;color:var(--text3);margin-top:6px;}
 .ch{font-size:11px;color:var(--mauve);margin-bottom:6px;padding:4px 8px;background:var(--mauve-l);border-radius:8px;}
 .wkov{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;}
-.wcol{display:flex;flex-direction:column;gap:3px;}
+.wcol{display:flex;flex-direction:column;gap:3px;min-width:0;}
 .wovn{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;margin-bottom:3px;}
 .wovn.today{color:var(--mauve);}
 .wtag{font-size:10px;border-radius:4px;padding:2px 4px;line-height:1.4;}
@@ -140,9 +140,218 @@ body{padding:.75rem;}
 .wovn{font-size:9px;}
 .wtsk{font-size:9px;}
 }
+/* ── SETUP SCREEN ─────────────────────────── */
+.setup-card{background:#fff;border-radius:12px;padding:1.25rem;margin-bottom:12px;border:0.5px solid rgba(0,0,0,0.08);}
+.setup-sec{font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;}
+.setup-field{margin-bottom:12px;}
+.setup-lbl{font-size:12px;color:#666;margin-bottom:6px;display:block;}
+.setup-input{width:100%;font-size:13px;padding:8px 10px;border:0.5px solid rgba(0,0,0,.12);border-radius:8px;background:#f8f6f4;color:#1a1a1a;outline:none;}
+.lang-opt{padding:10px;border:0.5px solid rgba(0,0,0,.12);border-radius:8px;text-align:center;cursor:pointer;font-size:13px;color:#666;background:#f8f6f4;}
+.lang-opt.active{border-color:var(--mauve);color:var(--mauve);background:var(--mauve-l);}
+.pal-opt{border:0.5px solid rgba(0,0,0,.12);border-radius:10px;padding:10px;cursor:pointer;background:#f8f6f4;}
+.pal-opt.active{border:2px solid var(--mauve);}
+.pal-preview{display:flex;height:28px;border-radius:6px;overflow:hidden;margin-bottom:6px;}
+.pal-name{font-size:12px;color:#444;font-weight:500;}
+.toggle-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid rgba(0,0,0,.06);}
+.toggle-item:last-child{border-bottom:none;}
+.toggle-name{font-size:13px;color:#1a1a1a;font-weight:500;}
+.toggle-sub{font-size:11px;color:#999;margin-top:2px;}
+.tog{width:40px;height:22px;border-radius:99px;background:#ccc;position:relative;cursor:pointer;flex-shrink:0;transition:background .2s;}
+.tog.active{background:var(--mauve);}
+.tog::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;}
+.tog.active::after{left:20px;}
+.chips-wrap{display:flex;flex-wrap:wrap;gap:6px;}
+.chip-item{font-size:12px;padding:5px 12px;border-radius:99px;border:0.5px solid var(--mauve);color:var(--mauve);background:var(--mauve-l);cursor:pointer;display:flex;align-items:center;gap:4px;}
+.chip-item .chip-x{font-size:14px;opacity:.6;}
+.chip-add-btn{font-size:16px;padding:6px 14px;border:0.5px solid rgba(0,0,0,.12);border-radius:8px;background:#f8f6f4;color:#666;cursor:pointer;}
+
 </style>
 </head>
 <body>
+<!-- SETUP SCREEN -->
+<div id="setup-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#f0ebe6;z-index:9999;overflow-y:auto;padding:2rem 1rem;">
+  <div style="max-width:520px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:2rem;">
+      <h1 style="font-size:28px;font-weight:500;color:#1a1a1a;margin-bottom:6px;">Weekly Planner</h1>
+      <p style="font-size:14px;color:#888;" id="setup-tagline">Configúralo a tu gusto — solo una vez</p>
+    </div>
+
+    <!-- PASO 1: Nombre e idioma -->
+    <div class="setup-card">
+      <div class="setup-sec">Lo básico</div>
+      <div class="setup-field">
+        <label class="setup-lbl">Tu nombre</label>
+        <input type="text" id="cfg-name" placeholder="Ej. Fernanda" class="setup-input">
+      </div>
+      <div class="setup-field">
+        <label class="setup-lbl">Ícono para el dock (opcional)</label>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div id="icon-preview" style="width:52px;height:52px;border-radius:12px;background:#f0ebe6;border:0.5px dashed rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden;flex-shrink:0;">📅</div>
+          <div style="flex:1;">
+            <input type="file" id="cfg-icon" accept="image/*" style="display:none;" onchange="previewIcon(this)">
+            <button onclick="document.getElementById('cfg-icon').click()" class="setup-input" style="cursor:pointer;text-align:left;color:#888;">Subir imagen...</button>
+            <div style="font-size:11px;color:#aaa;margin-top:4px;">PNG o JPG recomendado, cuadrado</div>
+          </div>
+        </div>
+      </div>
+      <div class="setup-field">
+        <label class="setup-lbl">Idioma</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="lang-opt active" data-lang="es" onclick="selectLang(this)">🇲🇽 Español</div>
+          <div class="lang-opt" data-lang="en" onclick="selectLang(this)">🇺🇸 English</div>
+        </div>
+      </div>
+      <div class="setup-field">
+        <label class="setup-lbl">Moneda para gastos</label>
+        <select id="cfg-currency" class="setup-input">
+          <option value="MXN">MXN — Peso mexicano ($)</option>
+          <option value="USD">USD — Dólar ($)</option>
+          <option value="EUR">EUR — Euro (€)</option>
+          <option value="COP">COP — Peso colombiano ($)</option>
+          <option value="ARS">ARS — Peso argentino ($)</option>
+          <option value="OTHER">Otra</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- PASO 2: Paleta -->
+    <div class="setup-card">
+      <div class="setup-sec">Paleta de colores</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+
+        <div class="pal-opt active" data-pal="forest" onclick="selectPal(this)">
+          <div class="pal-preview">
+            <div style="background:#618985;flex:1;border-radius:6px 0 0 6px;"></div>
+            <div style="background:#B75D69;flex:1;"></div>
+            <div style="background:#414535;flex:1;"></div>
+            <div style="background:#f7f0ec;flex:1;border-radius:0 6px 6px 0;"></div>
+          </div>
+          <div class="pal-name">🌿 Forest</div>
+        </div>
+
+        <div class="pal-opt" data-pal="rose" onclick="selectPal(this)">
+          <div class="pal-preview">
+            <div style="background:#EEEBD0;flex:1;border-radius:6px 0 0 6px;"></div>
+            <div style="background:#EBB3A9;flex:1;"></div>
+            <div style="background:#E87EA1;flex:1;"></div>
+            <div style="background:#3D0814;flex:1;border-radius:0 6px 6px 0;"></div>
+          </div>
+          <div class="pal-name">🌸 Rosé</div>
+        </div>
+
+        <div class="pal-opt" data-pal="earth" onclick="selectPal(this)">
+          <div class="pal-preview">
+            <div style="background:#466365;flex:1;border-radius:6px 0 0 6px;"></div>
+            <div style="background:#B49A67;flex:1;"></div>
+            <div style="background:#CEB3AB;flex:1;"></div>
+            <div style="background:#C4C6E7;flex:1;border-radius:0 6px 6px 0;"></div>
+          </div>
+          <div class="pal-name">🏺 Earth</div>
+        </div>
+
+        <div class="pal-opt" data-pal="minimal" onclick="selectPal(this)">
+          <div class="pal-preview">
+            <div style="background:#291F1E;flex:1;border-radius:6px 0 0 6px;"></div>
+            <div style="background:#607466;flex:1;"></div>
+            <div style="background:#BFA89E;flex:1;"></div>
+            <div style="background:#FFFFFF;flex:1;border-radius:0 6px 6px 0;border:0.5px solid #ddd;"></div>
+          </div>
+          <div class="pal-name">🤍 Minimal</div>
+        </div>
+
+        <div class="pal-opt" data-pal="bw" onclick="selectPal(this)" style="grid-column:span 2;">
+          <div class="pal-preview" style="height:32px;">
+            <div style="background:#111111;flex:2;border-radius:6px 0 0 6px;"></div>
+            <div style="background:#444444;flex:1;"></div>
+            <div style="background:#AAAAAA;flex:1;"></div>
+            <div style="background:#FFFFFF;flex:2;border-radius:0 6px 6px 0;border:0.5px solid #ddd;"></div>
+          </div>
+          <div class="pal-name">🖤 Black & White</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PASO 3: Funciones -->
+    <div class="setup-card">
+      <div class="setup-sec">Funciones</div>
+      <div class="toggle-item">
+        <div>
+          <div class="toggle-name">Frases motivacionales</div>
+          <div class="toggle-sub">Frase del día en el inicio</div>
+        </div>
+        <div class="tog active" id="tog-quotes" onclick="toggleCfg(this,'quotes')"></div>
+      </div>
+      <div class="toggle-item">
+        <div>
+          <div class="toggle-name">Google Calendar</div>
+          <div class="toggle-sub">Sincronizar eventos</div>
+        </div>
+        <div class="tog active" id="tog-gcal" onclick="toggleCfg(this,'gcal')"></div>
+      </div>
+      <div class="toggle-item">
+        <div>
+          <div class="toggle-name">Clima</div>
+          <div class="toggle-sub">Temperatura y pronóstico</div>
+        </div>
+        <div class="tog active" id="tog-weather" onclick="toggleCfg(this,'weather')"></div>
+      </div>
+      <div class="toggle-item">
+        <div>
+          <div class="toggle-name">Widget de gastos</div>
+          <div class="toggle-sub">Registro y totales semanales</div>
+        </div>
+        <div class="tog active" id="tog-gastos" onclick="toggleCfg(this,'gastos')"></div>
+      </div>
+    </div>
+
+    <!-- PASO 4: Workouts -->
+    <div class="setup-card">
+      <div class="setup-sec">Workouts</div>
+      <div class="chips-wrap" id="workout-chips"></div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <input type="text" id="wo-custom" placeholder="Agregar workout..." class="setup-input" style="flex:1;" onkeydown="if(event.key==='Enter')addChip('workout')">
+        <button onclick="addChip('workout')" class="chip-add-btn">+</button>
+      </div>
+    </div>
+
+    <!-- PASO 5: Hábitos -->
+    <div class="setup-card">
+      <div class="setup-sec">Hábitos</div>
+      <div class="chips-wrap" id="habito-chips"></div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <input type="text" id="ha-custom" placeholder="Agregar hábito..." class="setup-input" style="flex:1;" onkeydown="if(event.key==='Enter')addChip('habito')">
+        <button onclick="addChip('habito')" class="chip-add-btn">+</button>
+      </div>
+    </div>
+
+    <!-- PASO 6: Lista de compras categorías -->
+    <div class="setup-card">
+      <div class="setup-sec">Categorías de lista de compras</div>
+      <div class="chips-wrap" id="shop-chips"></div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <input type="text" id="shop-custom" placeholder="Agregar categoría..." class="setup-input" style="flex:1;" onkeydown="if(event.key==='Enter')addChip('shop')">
+        <button onclick="addChip('shop')" class="chip-add-btn">+</button>
+      </div>
+    </div>
+
+    <!-- PASO 7: Rubros de gastos -->
+    <div class="setup-card">
+      <div class="setup-sec">Rubros de gastos</div>
+      <div class="chips-wrap" id="gasto-chips"></div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <input type="text" id="gasto-custom" placeholder="Agregar rubro..." class="setup-input" style="flex:1;" onkeydown="if(event.key==='Enter')addChip('gasto')">
+        <button onclick="addChip('gasto')" class="chip-add-btn">+</button>
+      </div>
+    </div>
+
+    <button onclick="saveSetup()" style="width:100%;padding:14px;border-radius:12px;background:var(--mauve);color:#fff;border:none;font-size:15px;font-weight:500;cursor:pointer;margin-bottom:2rem;">¡Listo, empezar! 🎉</button>
+  </div>
+</div>
+
+<!-- SETTINGS BUTTON -->
+<button id="settings-btn" onclick="openSettings()" style="position:fixed;bottom:20px;right:20px;width:44px;height:44px;border-radius:50%;background:var(--mauve);color:#fff;border:none;font-size:20px;cursor:pointer;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);">⚙️</button>
+
 <div class="db">
   <div class="row r3h">
     <div class="card card-teal">
@@ -156,7 +365,8 @@ body{padding:.75rem;}
       <div class="rain" id="rain"></div>
     </div>
     <div class="card">
-      <div class="lbl">Viendo</div>
+      <div class="lbl" id="viendo-lbl">Viendo</div>
+      <div id="user-greeting" style="font-size:15px;font-weight:500;color:var(--mauve);margin-bottom:2px;"></div>
       <div class="date-big" id="active-date"></div>
       <div class="date-sub" id="week-range"></div>
       <div class="prog-lbl" id="prog-lbl">Progreso: 0%</div>
@@ -213,8 +423,8 @@ body{padding:.75rem;}
       <div id="ch" class="ch" style="display:none"></div>
       <div id="task-list"></div>
       <div class="add-row">
-        <input type="text" id="task-in" placeholder="Agregar pendiente...">
-        <button onclick="addTask()">+ Agregar</button>
+        <input type="text" id="task-in" placeholder="Agregar pendiente..." onkeydown="if(event.key==='Enter')addTask()">
+        <button id="btn-add-task" onclick="addTask()">+ Agregar</button>
       </div>
     </div>
     <div class="col">
@@ -240,7 +450,7 @@ body{padding:.75rem;}
         </div>
         <button class="gcal-btn" id="gcal-btn" onclick="handleGCal()">Conectar Google Calendar</button>
         <div class="snote" id="gcal-note"></div>
-        <div class="snote" style="margin-top:4px;color:var(--text3);font-style:italic;">*Por seguridad, tu calendario no puede permanecer conectado. Conéctate cuando quieras que tus eventos se reflejen aquí y cuando quieras que tus eventos de aquí se guarden en tu Google Calendar.</div>
+        <div class="snote" id="gcal-snote" style="margin-top:4px;color:var(--text3);font-style:italic;">*Por seguridad, tu calendario no puede permanecer conectado. Conéctate cuando quieras que tus eventos se reflejen aquí y cuando quieras que tus eventos de aquí se guarden en tu Google Calendar.</div>
       </div>
       <div class="card">
         <div class="sec">Workout</div>
@@ -262,9 +472,9 @@ body{padding:.75rem;}
     <table style="width:100%;border-collapse:collapse;font-size:12px;">
       <thead>
         <tr>
-          <th style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;padding:4px 6px;text-align:left;border-bottom:0.5px solid var(--border);">Descripción</th>
-          <th style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;padding:4px 6px;text-align:left;border-bottom:0.5px solid var(--border);">Categoría</th>
-          <th style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;padding:4px 6px;text-align:right;border-bottom:0.5px solid var(--border);">Monto</th>
+          <th style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;padding:4px 6px;text-align:left;border-bottom:0.5px solid var(--border);" id="gth-desc">Descripción</th>
+          <th style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;padding:4px 6px;text-align:left;border-bottom:0.5px solid var(--border);" id="gth-cat">Categoría</th>
+          <th style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;padding:4px 6px;text-align:right;border-bottom:0.5px solid var(--border);" id="gth-monto">Monto</th>
           <th style="border-bottom:0.5px solid var(--border);width:24px;"></th>
         </tr>
       </thead>
@@ -273,20 +483,14 @@ body{padding:.75rem;}
     <div class="add-row" style="margin-top:8px;">
       <input type="text" id="gasto-desc" placeholder="Descripción..." style="flex:2;" onkeydown="if(event.key==='Enter')document.getElementById('gasto-monto').focus()">
       <select id="gasto-cat" style="flex:2;font-size:12px;padding:5px 8px;border:0.5px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);">
-        <option>Restaurante</option>
-        <option>Entretenimiento</option>
-        <option>Gasolina</option>
-        <option>Suscripción</option>
-        <option>Ejercicio</option>
-        <option>Pago a servicio</option>
-        <option>Negocio</option>
-        <option>Casa</option>
-        <option>Préstamo</option>
-        <option>Viaje</option>
-        <option>Otro</option>
+        <option>🍽 Restaurante</option><option>🛒 Supermercado</option><option>🎬 Entretenimiento</option>
+        <option>⛽ Gasolina</option><option>🚗 Transporte</option><option>📱 Suscripción</option>
+        <option>💪 Ejercicio</option><option>📚 Escuela</option><option>🔧 Pago a servicio</option>
+        <option>💼 Negocio</option><option>🏠 Casa</option><option>💳 Préstamo</option>
+        <option>✈️ Viaje</option><option>💸 Otro</option>
       </select>
       <input type="number" id="gasto-monto" placeholder="$0" style="width:80px;" onkeydown="if(event.key==='Enter')addGasto()">
-      <button onclick="addGasto()">+ Agregar</button>
+      <button id="btn-add-gasto" onclick="addGasto()">+ Agregar</button>
     </div>
     <div style="height:0.5px;background:var(--border);margin:10px 0;"></div>
     <div style="background:var(--bg2);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
@@ -300,54 +504,7 @@ body{padding:.75rem;}
   <!-- LISTA DE COMPRAS -->
   <div class="card">
     <div class="sec">Lista de compras</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;" id="sh-all" class="sh-grid">
-
-      <div>
-        <div style="font-size:11px;font-weight:500;color:var(--mauve);margin-bottom:6px;">🛒 Supermercado</div>
-        <div id="sh-super"></div>
-        <div class="add-row" style="margin-top:6px;">
-          <input type="text" id="sh-super-in" placeholder="Agregar..." onkeydown="if(event.key==='Enter')addShCat('super')">
-          <button onclick="addShCat('super')">+</button>
-        </div>
-      </div>
-
-      <div>
-        <div style="font-size:11px;font-weight:500;color:var(--teal-d);margin-bottom:6px;">🏠 Casa</div>
-        <div id="sh-casa"></div>
-        <div class="add-row" style="margin-top:6px;">
-          <input type="text" id="sh-casa-in" placeholder="Agregar..." onkeydown="if(event.key==='Enter')addShCat('casa')">
-          <button onclick="addShCat('casa')">+</button>
-        </div>
-      </div>
-
-      <div>
-        <div style="font-size:11px;font-weight:500;color:var(--mauve-d);margin-bottom:6px;">🧴 Personal</div>
-        <div id="sh-pers"></div>
-        <div class="add-row" style="margin-top:6px;">
-          <input type="text" id="sh-pers-in" placeholder="Agregar..." onkeydown="if(event.key==='Enter')addShCat('pers')">
-          <button onclick="addShCat('pers')">+</button>
-        </div>
-      </div>
-
-      <div>
-        <div style="font-size:11px;font-weight:500;color:#8f4652;margin-bottom:6px;">👩‍🦳 Mamá</div>
-        <div id="sh-mama"></div>
-        <div class="add-row" style="margin-top:6px;">
-          <input type="text" id="sh-mama-in" placeholder="Agregar..." onkeydown="if(event.key==='Enter')addShCat('mama')">
-          <button onclick="addShCat('mama')">+</button>
-        </div>
-      </div>
-
-      <div>
-        <div style="font-size:11px;font-weight:500;color:var(--brown);margin-bottom:6px;">💼 Negocio</div>
-        <div id="sh-neg"></div>
-        <div class="add-row" style="margin-top:6px;">
-          <input type="text" id="sh-neg-in" placeholder="Agregar..." onkeydown="if(event.key==='Enter')addShCat('neg')">
-          <button onclick="addShCat('neg')">+</button>
-        </div>
-      </div>
-
-    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;" id="sh-all" class="sh-grid"></div>
   </div>
 </div>
 <div class="sync-badge" id="sync-badge">Guardado ✓</div>
@@ -362,9 +519,15 @@ body{padding:.75rem;}
 
 <script>
 // ── CONSTANTS ──────────────────────────────
-const DIAS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-const DS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-const MES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DIAS_ES=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const DIAS_EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DS_ES=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DS_EN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+let DIAS=DIAS_ES;
+let DS=DS_ES;
+const MES_ES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const MES_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+let MES=MES_ES;
 const ICAL_URL='https://calendar.google.com/calendar/ical/f.perezserna%40gmail.com/private-00450f29f66ba6d8112c19e9435f65b5/basic.ics';
 const WE={Tennis:'🎾','E. Club':'🏇',Swimming:'🏊‍♀️',Pilates:'🤸',Gym:'🏋️',Yoga:'🧘',Box:'🥊','Free Diving':'🤿',Climbing:'🧗',Rest:'😴',Otro:'✨'};
 const HE={Meditar:'🧘',Leer:'📖',Stretching:'🤸',Escribir:'✍️',Otro:'✨'};
@@ -378,7 +541,14 @@ let weekDays=getWeekDays(today);
 let weekData={tasks:[],focus:{},focusDone:{},focusDeleted:{},events:{},workout:{}};
 let gcalEvts={};
 let gcalToken=null;
-let shoppingItems={super:[],casa:[],neg:[],pers:[],mama:[]};
+let shoppingItems={};
+function initShoppingItems(){
+  const cats=setupCfg.shopCats||DEFAULT_SHOP;
+  cats.forEach((cat,idx)=>{
+    const key='cat'+idx;
+    if(!shoppingItems[key])shoppingItems[key]=[];
+  });
+}
 let tokenClient=null;
 let db=null;
 let unsub=null;
@@ -448,26 +618,30 @@ async function loadShoppingDB(){
       const data=snap.data();
       // Support new cat-based structure
       if(data.cats){
-        shoppingItems=data.cats;
+        const saved=data.cats;
+        Object.keys(saved).forEach(k=>{shoppingItems[k]=saved[k];});
       } else if(data.items){
-        // Migrate old array to supermercado
-        shoppingItems={super:data.items,casa:[],neg:[],pers:[]};
+        shoppingItems['supermercado']=data.items;
         await saveShoppingDB();
       }
       // Clear bought items if new week
       const lastWeek=localStorage.getItem('fp_last_shopping_week');
       const thisWeek=wid();
       if(lastWeek&&lastWeek!==thisWeek){
-        ['super','casa','neg','pers','mama'].forEach(cat=>{
+        Object.keys(shoppingItems).forEach(cat=>{
           if(shoppingItems[cat])shoppingItems[cat]=shoppingItems[cat].filter(i=>!i.done);
         });
         await saveShoppingDB();
       }
       localStorage.setItem('fp_last_shopping_week',thisWeek);
     } else {
-      shoppingItems={super:[],casa:[],neg:[],pers:[],mama:[]};
+      // New user - initialize with cat keys
+      setupCfg.shopCats&&setupCfg.shopCats.forEach((_,i)=>{shoppingItems['cat'+i]=[];});
     }
-  }catch(e){shoppingItems={super:[],casa:[],neg:[],pers:[],mama:[]};console.log('Shopping fresh start');}
+  }catch(e){
+    setupCfg.shopCats&&setupCfg.shopCats.forEach((_,i)=>{shoppingItems['cat'+i]=[];});
+    console.log('Shopping fresh start');
+  }
 }
 
 function subscribeShoppingDB(){
@@ -475,7 +649,13 @@ function subscribeShoppingDB(){
   db.collection('fernanda').doc('shopping').onSnapshot(snap=>{
     if(snap.exists){
       const data=snap.data();
-      shoppingItems=data.cats||{super:[],casa:[],neg:[],pers:[]};
+      const saved=data.cats||{};
+      // Migrate old keys (super,casa,pers,mama,neg) to new (cat0,cat1,cat2,cat3)
+      const oldMap={super:'cat0',casa:'cat1',pers:'cat2',mama:'cat3',neg:'cat4'};
+      Object.keys(saved).forEach(k=>{
+        const newKey=oldMap[k]||k;
+        shoppingItems[newKey]=saved[k]||[];
+      });
       renderSh();
     }
   });
@@ -487,8 +667,8 @@ function subscribeDB(){
   unsub=db.collection('fernanda').doc(wid()).onSnapshot(snap=>{
     if(snap.exists){
       weekData=snap.data();
+      if(!document.getElementById('sh-cat0'))applyShopCats(setupCfg.shopCats||DEFAULT_SHOP);
       renderDay();
-      renderSh();
     }
   });
 }
@@ -503,7 +683,11 @@ async function loadDB(){
 
 // ── RENDER ─────────────────────────────────
 function setWeekRange(){
-  document.getElementById('week-range').textContent='Semana '+weekDays[0].getDate()+' de '+MES[weekDays[0].getMonth()]+' — '+weekDays[6].getDate()+' de '+MES[weekDays[6].getMonth()];
+  const isEnWR=setupCfg&&setupCfg.lang==='en';
+  const wr=isEnWR
+    ?(MES[weekDays[0].getMonth()]+' '+weekDays[0].getDate()+' — '+MES[weekDays[6].getMonth()]+' '+weekDays[6].getDate())
+    :('Semana '+weekDays[0].getDate()+' de '+MES[weekDays[0].getMonth()]+' — '+weekDays[6].getDate()+' de '+MES[weekDays[6].getMonth()]);
+  document.getElementById('week-range').textContent=wr;
 }
 
 function buildNav(){
@@ -550,8 +734,12 @@ function buildOv(){
 
 function renderDay(){
   const di=dayIdx();
-  document.getElementById('active-date').textContent=DIAS[activeDate.getDay()]+', '+activeDate.getDate()+' de '+MES[activeDate.getMonth()];
+  const isEn2=setupCfg&&setupCfg.lang==='en';
+  document.getElementById('active-date').textContent=isEn2
+    ?(DIAS[activeDate.getDay()]+', '+MES[activeDate.getMonth()]+' '+activeDate.getDate())
+    :(DIAS[activeDate.getDay()]+', '+activeDate.getDate()+' de '+MES[activeDate.getMonth()]);
   setWeekRange();buildNav();buildOv();
+  if(setupCfg&&setupCfg.lang)updateGastosLang(setupCfg.lang);
   renderTasks(di);renderFocus(di);renderEvts(di);renderWo(di);updateProg(di);renderSh();renderGastos(di);
 }
 
@@ -576,7 +764,8 @@ function updateProg(di){
   const tasks=tasksForDay(di);const done=tasks.filter(t=>t.doneOnDay!==undefined).length;
   const pct=tasks.length?Math.round(done/tasks.length*100):0;
   document.getElementById('prog-fill').style.width=pct+'%';
-  document.getElementById('prog-lbl').textContent='Progreso del día: '+pct+'%';
+  const isEnP=setupCfg&&setupCfg.lang==='en';
+  document.getElementById('prog-lbl').textContent=(isEnP?'Day progress':'Progreso del día')+': '+pct+'%';
 }
 
 function toggleTask(el){
@@ -669,7 +858,7 @@ function renderEvts(di){
   const ts=t=>{if(!t||t==='Todo el día')return -1;const p=t.includes('PM');const pts=t.replace(/AM|PM/,'').trim().split(':');let h=parseInt(pts[0]);if(p&&h!==12)h+=12;if(!p&&h===12)h=0;return h*60+parseInt(pts[1]||0);};
   const all=[...gcal,...manual].sort((a,b)=>ts(a.time)-ts(b.time));
   list.innerHTML='';
-  if(!all.length){list.innerHTML='<div class="ev-empty">Sin eventos para este día</div>';return;}
+  if(!all.length){const isEnEv=setupCfg&&setupCfg.lang==='en';list.innerHTML='<div class="ev-empty">'+(isEnEv?'No events for this day':'Sin eventos para este día')+'</div>';return;}
   all.forEach(ev=>{
     const d=document.createElement('div');d.className='ev-item';
     let del='';
@@ -709,15 +898,40 @@ function addEv(){
   const m=document.getElementById('ev-m').value;
   const ap=document.getElementById('ev-ap').value;
   const titleIn=document.getElementById('ev-title');
-  if(!titleIn.value.trim())return;
+  const evTitle=evTitle;
+  if(!evTitle)return;
   const targetDate=dateIn.value||dk(activeDate);
   const tdi=weekDays.findIndex(d=>dk(d)===targetDate);
-  if(tdi<0)return;
+  if(tdi<0){
+    // Date outside current week - save to that week's Firebase doc
+    if(db){
+      const targetWeekDays=getWeekDays(new Date(targetDate+'T12:00:00'));
+      const targetWid='week_'+dk(targetWeekDays[0]);
+      db.collection('fernanda').doc(targetWid).get().then(snap=>{
+        const data=snap.exists?snap.data():{tasks:[],focus:{},events:{},workout:{},gastos:{}};
+        const targetTdi=targetWeekDays.findIndex(d=>dk(d)===targetDate);
+        if(!data.events)data.events={};
+        if(!data.events[targetTdi])data.events[targetTdi]=[];
+        data.events[targetTdi].push({time:h+':'+m+' '+ap,title:evTitle});
+        db.collection('fernanda').doc(targetWid).set(data);
+      });
+    }
+    if(gcalToken)createGCalEv(evTitle,targetDate,h,m,ap);
+    titleIn.value='';
+    const isEn=setupCfg&&setupCfg.lang==='en';
+    const td=new Date(targetDate+'T12:00:00');
+    document.getElementById('gcal-note').textContent=(isEn?'Saved for ':'Guardado para el ')+DIAS[td.getDay()]+' '+td.getDate();
+    setTimeout(()=>document.getElementById('gcal-note').textContent='',3000);
+    return;
+  }
   if(!weekData.events)weekData.events={};
   if(!weekData.events[tdi])weekData.events[tdi]=[];
-  weekData.events[tdi].push({time:h+':'+m+' '+ap,title:titleIn.value.trim()});
+  weekData.events[tdi].push({time:h+':'+m+' '+ap,title:evTitle});
   saveDB();
-  if(gcalToken&&targetDate)createGCalEv(titleIn.value.trim(),targetDate,h,m,ap);
+  if(gcalToken&&targetDate){
+    createGCalEv(evTitle,targetDate,h,m,ap);
+    // Don't remove - keep as manual event too, renderEvts deduplicates by title
+  }
   const di=dayIdx();renderEvts(di);buildNav();buildOv();titleIn.value='';
   if(tdi!==di){
     document.getElementById('gcal-note').textContent='Guardado para el '+DIAS[weekDays[tdi].getDay()]+' '+weekDays[tdi].getDate();
@@ -843,8 +1057,11 @@ async function fetchWeatherCoords(lat,lon){
     const pre=d.current.precipitation_probability;
     const code=d.current.weathercode;
     document.getElementById('temp').textContent=temp+'°C';
-    const ds={0:'Despejado',1:'Mayormente despejado',2:'Parcialmente nublado',3:'Nublado',45:'Neblina',51:'Llovizna',61:'Lluvia ligera',63:'Lluvia moderada',65:'Lluvia fuerte',80:'Chubascos',95:'Tormenta'};
-    document.getElementById('wdesc').textContent=(ds[code]||'Variable')+' — se siente '+(temp+4)+'°C';
+    const isEnW=setupCfg&&setupCfg.lang==='en';
+    const ds=isEnW
+      ?{0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Cloudy',45:'Foggy',51:'Drizzle',61:'Light rain',63:'Moderate rain',65:'Heavy rain',80:'Showers',95:'Thunderstorm'}
+      :{0:'Despejado',1:'Mayormente despejado',2:'Parcialmente nublado',3:'Nublado',45:'Neblina',51:'Llovizna',61:'Lluvia ligera',63:'Lluvia moderada',65:'Lluvia fuerte',80:'Chubascos',95:'Tormenta'};
+    document.getElementById('wdesc').textContent=(ds[code]||'Variable')+(isEnW?' — feels like ':' — se siente ')+(temp+4)+'°C';
     // Get city name
     fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json')
       .then(r=>r.json())
@@ -854,7 +1071,7 @@ async function fetchWeatherCoords(lat,lon){
         if(city)document.getElementById('location-lbl').textContent=city+(state?', '+state:'');
       }).catch(()=>{});
     const rain=pre>40||[51,53,55,61,63,65,80,81,95].includes(code);
-    document.getElementById('rain').textContent=rain?'Lluvia probable ('+pre+'%)':'Sin lluvia hoy';
+    const isEnRain=setupCfg&&setupCfg.lang==='en';document.getElementById('rain').textContent=rain?(isEnRain?'Rain likely ('+pre+'%)':'Lluvia probable ('+pre+'%)'):(isEnRain?'No rain today':'Sin lluvia hoy');
   }catch(e){
     document.getElementById('temp').textContent='--°C';
     document.getElementById('wdesc').textContent='No se pudo cargar el clima';
@@ -915,23 +1132,41 @@ async function searchCity(){
 }
 
 // ── QUOTES ─────────────────────────────────
-const QS=[
+const QS_ES=[
   {t:"Tengo el defecto de tomar en serio las cosas que me importan.",a:"Alejandra Pizarnik"},
   {t:"Y sobre todo, no olvidar que la vida no tiene sentido — hay que dárselo.",a:"Alejandra Pizarnik"},
   {t:"Yo no sé si he vivido muy poco o demasiado, pero sé que aún tengo algo por decir.",a:"Alejandra Pizarnik"},
   {t:"No podemos dirigir el viento, pero sí podemos ajustar las velas.",a:"Dolly Parton"},
-  {t:"Haz de cada día tu obra maestra.",a:"Maya Angelou"},
   {t:"Puedes encontrarte con muchas derrotas, pero no debes ser derrotada.",a:"Maya Angelou"},
-  {t:"La vida es corta. Come el postre primero.",a:"Ernestine Ulmer"},
   {t:"Haz cada día algo que te asuste.",a:"Eleanor Roosevelt"},
   {t:"El futuro pertenece a quienes creen en la belleza de sus sueños.",a:"Eleanor Roosevelt"},
-  {t:"No estoy libre de prejuicios, pero trabajo para estarlo cada día.",a:"Gloria Steinem"},
   {t:"Una mujer que sabe lo que quiere ya tiene ventaja.",a:"Coco Chanel"},
-  {t:"El éxito no es definitivo, el fracaso no es fatal: lo que cuenta es el valor de continuar.",a:"Simone de Beauvoir"},
   {t:"La disciplina es el puente entre metas y logros.",a:"Brené Brown"},
   {t:"Eres más valiente de lo que crees, más fuerte de lo que pareces.",a:"A.A. Milne"},
   {t:"Cuídate primero. No puedes servir desde una vasija vacía.",a:"Eleanor Brownn"},
+  {t:"No se trata de perfección. Se trata de esfuerzo.",a:"Jillian Michaels"},
+  {t:"El éxito no es definitivo, el fracaso no es fatal.",a:"Simone de Beauvoir"},
+  {t:"No estoy libre de prejuicios, pero trabajo para estarlo cada día.",a:"Gloria Steinem"},
+  {t:"Haz de cada día tu obra maestra.",a:"Maya Angelou"},
 ];
+const QS_EN=[
+  {t:"I have the defect of taking seriously the things that matter to me.",a:"Alejandra Pizarnik"},
+  {t:"Above all, don't forget that life has no meaning — you have to give it one.",a:"Alejandra Pizarnik"},
+  {t:"We can't direct the wind, but we can adjust the sails.",a:"Dolly Parton"},
+  {t:"You may encounter many defeats, but you must not be defeated.",a:"Maya Angelou"},
+  {t:"Do one thing every day that scares you.",a:"Eleanor Roosevelt"},
+  {t:"The future belongs to those who believe in the beauty of their dreams.",a:"Eleanor Roosevelt"},
+  {t:"A woman who knows what she wants already has an advantage.",a:"Coco Chanel"},
+  {t:"Discipline is the bridge between goals and accomplishment.",a:"Brené Brown"},
+  {t:"You are braver than you believe, stronger than you seem.",a:"A.A. Milne"},
+  {t:"Take care of yourself first. You can't pour from an empty cup.",a:"Eleanor Brownn"},
+  {t:"It's not about perfection. It's about effort.",a:"Jillian Michaels"},
+  {t:"Success is not final, failure is not fatal.",a:"Winston Churchill"},
+  {t:"I am not free of prejudice, but I work on it every day.",a:"Gloria Steinem"},
+  {t:"Make each day your masterpiece.",a:"Maya Angelou"},
+  {t:"Well-behaved women seldom make history.",a:"Laurel Thatcher Ulrich"},
+];
+let QS=[...QS_ES];
 let qcur=Math.floor(Math.random()*QS.length);
 function showQ(q){
   const txt='\u201C'+q.t+'\u201D';
@@ -944,7 +1179,7 @@ showQ(QS[qcur]);
 
 // ── SHOPPING ───────────────────────────────
 function renderSh(){
-  const cats=['super','casa','neg','pers'];
+  const cats=Object.keys(shoppingItems);
   cats.forEach(cat=>{
     const el=document.getElementById('sh-'+cat);
     if(!el)return;
@@ -1008,16 +1243,20 @@ function renderGastos(di){
   const items=gastosForDay(di);
   const body=document.getElementById('gastos-body');
   if(!body)return;
-  const DIAS=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
   const title=document.getElementById('gastos-title');
-  if(title&&weekDays[di])title.textContent='Gastos del día — '+DIAS[di]+' '+weekDays[di].getDate();
+  if(title&&weekDays[di]){
+    const isEnG=setupCfg&&setupCfg.lang==='en';
+    title.textContent=isEnG
+      ?'Daily expenses — '+DIAS[weekDays[di].getDay()]+' '+weekDays[di].getDate()
+      :'Gastos del día — '+DS[di]+' '+weekDays[di].getDate();
+  }
   body.innerHTML='';
   items.forEach((g,i)=>{
     const c=GASTO_COLORS[g.cat]||GASTO_COLORS['Otro'];
     const tr=document.createElement('tr');
     tr.innerHTML=
       '<td style="padding:6px;border-bottom:0.5px solid var(--border);"><span contenteditable="true" spellcheck="false" data-idx="'+i+'" onblur="updateGastoDesc(this)" style="color:var(--text);outline:none;">'+g.desc+'</span></td>'+
-      '<td style="padding:6px;border-bottom:0.5px solid var(--border);"><span style="font-size:10px;padding:2px 7px;border-radius:99px;background:'+c.bg+';color:'+c.color+';">'+c.emoji+' '+g.cat+'</span></td>'+
+      '<td style="padding:6px;border-bottom:0.5px solid var(--border);"><span style="font-size:10px;padding:2px 7px;border-radius:99px;background:'+c.bg+';color:'+c.color+';">'+g.cat+'</span></td>'+
       '<td style="padding:6px;border-bottom:0.5px solid var(--border);text-align:right;"><span contenteditable="true" spellcheck="false" data-idx="'+i+'" onblur="updateGastoMonto(this)" style="color:var(--text);outline:none;">$'+g.monto.toLocaleString()+'</span></td>'+
       '<td style="padding:6px;border-bottom:0.5px solid var(--border);"><button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;" onclick="delGasto('+i+')">×</button></td>';
     body.appendChild(tr);
@@ -1028,7 +1267,12 @@ function renderGastos(di){
 function renderGastosTotals(di){
   let total=0;
   const bycat={};
-  for(let d=0;d<=di;d++){
+  // Sum up to TODAY's index, not active day
+  // Find today's index - if viewing current week use today, else use last day (di)
+  const todayDi=weekDays.findIndex(d=>dk(d)===dk(today));
+  const isCurrentWeek=todayDi>=0;
+  const maxDi=isCurrentWeek?todayDi:6; // if past week show full week, current week show up to today
+  for(let d=0;d<=maxDi;d++){
     gastosForDay(d).forEach(g=>{
       total+=g.monto;
       bycat[g.cat]=(bycat[g.cat]||0)+g.monto;
@@ -1036,9 +1280,14 @@ function renderGastosTotals(di){
   }
   const tel=document.getElementById('gastos-total');
   if(tel)tel.textContent='$'+total.toLocaleString();
-  const DIAS=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
   const lbl=document.getElementById('gastos-total-lbl');
-  if(lbl)lbl.textContent=di===0?'Total '+DIAS[0]:'Total '+DIAS[0]+'–'+DIAS[di];
+  // Label: always Mon to today
+  const isEnT=setupCfg&&setupCfg.lang==='en';
+  const monLabel=isEnT?'Mon':'Lun';
+  if(lbl){
+    if(maxDi===0)lbl.textContent='Total '+DS[weekDays[0].getDay()];
+    else lbl.textContent='Total '+monLabel+'–'+DS[weekDays[maxDi].getDay()];
+  }
   const rubros=document.getElementById('gastos-rubros');
   if(!rubros)return;
   rubros.innerHTML='';
@@ -1046,7 +1295,7 @@ function renderGastosTotals(di){
     const c=GASTO_COLORS[cat]||GASTO_COLORS['Otro'];
     const div=document.createElement('div');
     div.style.cssText='background:var(--bg2);border-radius:7px;padding:7px 10px;display:flex;justify-content:space-between;align-items:center;';
-    div.innerHTML='<span style="font-size:11px;color:var(--text2);">'+c.emoji+' '+cat+'</span>'+
+    div.innerHTML='<span style="font-size:11px;color:var(--text2);">'+cat+'</span>'+
       '<span style="font-size:12px;font-weight:500;color:var(--text);">$'+amt.toLocaleString()+'</span>';
     rubros.appendChild(div);
   });
@@ -1097,8 +1346,12 @@ function updateGastoMonto(el){
 let calYear=today.getFullYear();
 let calMonth=today.getMonth();
 
-const CAL_DIAS=['L','M','M','J','V','S','D'];
-const CAL_MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const CAL_DIAS_ES=['L','M','M','J','V','S','D'];
+const CAL_DIAS_EN=['M','T','W','T','F','S','S'];
+const CAL_MESES_ES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const CAL_MESES_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+let CAL_DIAS=CAL_DIAS_ES;
+let CAL_MESES=CAL_MESES_ES;
 
 function buildCalendar(){
   const lbl=document.getElementById('cal-month-lbl');
@@ -1199,11 +1452,589 @@ function initCalResponsive(){
 window.addEventListener('resize',initCalResponsive);
 
 
+
+// ── TRANSLATIONS ───────────────────────────
+const T = {
+  es: {
+    viendo:'Viendo', progreso:'Progreso del día',
+    semana:'Semana — click para navegar',
+    overview:'Overview semanal',
+    pendientes:'Pendientes', enfoque:'Enfoque del día',
+    agenda:'Agenda', workout:'Workout', habito:'Hábito',
+    compras:'Lista de compras', supermercado:'Supermercado',
+    casa:'Casa', personal:'Personal', mama:'Mamá', negocio:'Negocio',
+    gastos:'Gastos del día', totalSemana:'Total semana',
+    porCategoria:'Por categoría esta semana',
+    recordatorio:'Recordatorio del día', nuevaFrase:'nueva frase',
+    agregar:'+ Agregar', agregarEvento:'Agregar evento:',
+    clima:'Obteniendo ubicación...',
+    conectarGcal:'Conectar Google Calendar',
+    agregarPendiente:'Agregar pendiente...',
+    primerEnfoque:'Primer enfoque...',
+    segundoEnfoque:'Segundo enfoque...',
+    tercerEnfoque:'Tercer enfoque...',
+    desc:'Descripción...', monto:'$0',
+    listo:'¡Listo, empezar! 🎉'
+  },
+  en: {
+    viendo:'Viewing', progreso:'Day progress',
+    semana:'Week — click to navigate',
+    overview:'Weekly overview',
+    pendientes:'To-do', enfoque:'Focus of the day',
+    agenda:'Schedule', workout:'Workout', habito:'Habit',
+    compras:'Shopping list', supermercado:'Grocery',
+    casa:'Home', personal:'Personal', mama:'Mom', negocio:'Business',
+    gastos:'Daily expenses', totalSemana:'Week total',
+    porCategoria:'By category this week',
+    recordatorio:'Daily reminder', nuevaFrase:'new quote',
+    agregar:'+ Add', agregarEvento:'Add event:',
+    clima:'Getting location...',
+    conectarGcal:'Connect Google Calendar',
+    agregarPendiente:'Add to-do...',
+    primerEnfoque:'First focus...',
+    segundoEnfoque:'Second focus...',
+    tercerEnfoque:'Third focus...',
+    desc:'Description...', monto:'$0',
+    listo:'Get started! 🎉'
+  }
+};
+
+const WORKOUT_MAP={
+  '🎾 Tennis':'🎾 Tennis','🏊 Swimming':'🏊 Swimming','🧘 Pilates':'🧘 Pilates',
+  '🏋️ Gym':'🏋️ Gym','🥊 Box':'🥊 Box','🏃 Running':'🏃 Running',
+  '💃 Baile':'💃 Dance','🏓 Padel':'🏓 Padel','⛸️ Patinar':'⛸️ Skate',
+  '⚡ Funcional':'⚡ Functional','🔥 HIIT':'🔥 HIIT','🏅 CrossFit':'🏅 CrossFit',
+  '🧗 Climbing':'🧗 Climbing','🤿 Free Diving':'🤿 Free Diving','🌿 Yoga':'🌿 Yoga'
+};
+const DEFAULT_WORKOUTS=Object.keys(WORKOUT_MAP);
+const HABITO_MAP={
+  '🧘 Meditar':'🧘 Meditate','📖 Leer':'📖 Read','✍️ Escribir':'✍️ Journal',
+  '🤸 Stretching':'🤸 Stretching','🙏 Gratitud':'🙏 Gratitude',
+  '💤 Sleep 8hrs':'💤 Sleep 8hrs','🚰 Tomar agua':'🚰 Drink water'
+};
+const DEFAULT_HABITOS=Object.keys(HABITO_MAP);
+const DEFAULT_SHOP_ES=['Supermercado','Casa','Personal','Oficina'];
+const DEFAULT_SHOP_EN=['Supermarket','Home','Personal','Office'];
+let DEFAULT_SHOP=[...DEFAULT_SHOP_ES];
+
+function updateGastosLang(lang){
+  const isEn=lang==='en';
+  // Translate workout/habito selects
+  ['wo1','wo2'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const cur=sel.value;
+    const opts=Array.from(sel.options).map(o=>o.value||'');
+    sel.innerHTML='<option value="">—</option>'+(setupCfg.workouts||DEFAULT_WORKOUTS).map(w=>{
+      const en=WORKOUT_MAP[w]||w;
+      const label=isEn?en:w;
+      return '<option'+(w===cur||en===cur?' selected':'')+'>'+label+'</option>';
+    }).join('');
+  });
+  ['ha1','ha2'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">—</option>'+(setupCfg.habitos||DEFAULT_HABITOS).map(h=>{
+      const en=HABITO_MAP[h]||h;
+      const label=isEn?en:h;
+      return '<option'+(h===cur||en===cur?' selected':'')+'>'+label+'</option>';
+    }).join('');
+  });
+  // Translate shopping section headers
+  if(isEn&&document.getElementById('sh-all')){
+    applyShopCats(DEFAULT_SHOP_EN);
+    DEFAULT_SHOP=DEFAULT_SHOP_EN;
+  } else if(!isEn&&document.getElementById('sh-all')){
+    applyShopCats(DEFAULT_SHOP_ES);
+    DEFAULT_SHOP=DEFAULT_SHOP_ES;
+  }
+  // Table headers
+  const d=document.getElementById('gth-desc');if(d)d.textContent=isEn?'Description':'Descripción';
+  const c=document.getElementById('gth-cat');if(c)c.textContent=isEn?'Category':'Categoría';
+  const m=document.getElementById('gth-monto');if(m)m.textContent=isEn?'Amount':'Monto';
+  // Gastos dropdown
+  const sel=document.getElementById('gasto-cat');
+  if(sel){
+    const cats=isEn
+      ?['🍽 Restaurant','🛒 Grocery','🎬 Entertainment','⛽ Gas','🚗 Transport','📱 Subscription','💪 Exercise','📚 School','🔧 Service payment','💼 Business','🏠 Home','💳 Loan','✈️ Travel','💸 Other']
+      :['🍽 Restaurante','🛒 Supermercado','🎬 Entretenimiento','⛽ Gasolina','🚗 Transporte','📱 Suscripción','💪 Ejercicio','📚 Escuela','🔧 Pago a servicio','💼 Negocio','🏠 Casa','💳 Préstamo','✈️ Viaje','💸 Otro'];
+    sel.innerHTML=cats.map(c=>'<option>'+c+'</option>').join('');
+  }
+  // Total label
+  const tot=document.getElementById('gastos-total-lbl');
+  if(tot){const range=tot.textContent.replace(/^(Total |Week total )/i,'');tot.textContent=(isEn?'Week total ':'Total ')+range;}
+  // Viendo label
+  const vl=document.getElementById('viendo-lbl');if(vl)vl.textContent=isEn?'Viewing':'Viendo';
+  // Rain badge update
+  const rain=document.getElementById('rain');
+  if(rain){const txt=rain.textContent;
+    if(isEn){rain.textContent=txt.replace('Lluvia probable hoy','Rain likely today').replace('Sin lluvia hoy','No rain today');}
+    else{rain.textContent=txt.replace('Rain likely today','Lluvia probable hoy').replace('No rain today','Sin lluvia hoy');}
+  }
+  // desc placeholder
+  const gd=document.getElementById('gasto-desc');if(gd)gd.placeholder=isEn?'Description...':'Descripción...';
+  const gm=document.getElementById('gasto-monto');if(gm)gm.placeholder='$0';
+  // GCal note
+  // Agregar buttons
+  const btnTask=document.getElementById('btn-add-task');if(btnTask)btnTask.textContent=isEn?'+ Add':'+ Agregar';
+  const btnGasto=document.getElementById('btn-add-gasto');if(btnGasto)btnGasto.textContent=isEn?'+ Add':'+ Agregar';
+  const gcalNote=document.getElementById('gcal-snote');
+  if(gcalNote)gcalNote.textContent=isEn
+    ?'*For security, your calendar cannot stay connected. Connect whenever you want your events to appear here and when you want your events saved to Google Calendar.'
+    :'*Por seguridad, tu calendario no puede permanecer conectado. Conéctate cuando quieras que tus eventos se reflejen aquí y cuando quieras que tus eventos de aquí se guarden en tu Google Calendar.';
+}
+
+function applyLang(lang){
+  // Set lang in config first so all renders use it
+  if(!setupCfg)setupCfg={};
+  setupCfg.lang=lang;
+  // Switch all language arrays
+  DIAS=lang==='en'?DIAS_EN:DIAS_ES;
+  DS=lang==='en'?DS_EN:DS_ES;
+  MES=lang==='en'?MES_EN:MES_ES;
+  CAL_DIAS=lang==='en'?CAL_DIAS_EN:CAL_DIAS_ES;
+  CAL_MESES=lang==='en'?CAL_MESES_EN:CAL_MESES_ES;
+  QS=lang==='en'?[...QS_EN]:[...QS_ES];
+  qcur=Math.floor(Math.random()*QS.length);
+  showQ(QS[qcur]);
+  buildCalendar();
+  renderDay();
+  const t=T[lang]||T.es;
+  // Update all .sec headings by matching content
+  document.querySelectorAll('.sec, .lbl').forEach(el=>{
+    const txt=el.textContent.trim().toLowerCase();
+    if(txt.includes('pendientes')||txt.includes('to-do'))el.textContent=t.pendientes;
+    else if(txt.includes('enfoque')||txt.includes('focus of'))el.textContent=t.enfoque;
+    else if(txt.includes('agenda')||txt.includes('schedule'))el.textContent=t.agenda;
+    else if(txt.includes('workout'))el.textContent=t.workout;
+    else if(txt.includes('hábito')||txt.includes('habit'))el.textContent=t.habito;
+    else if(txt.includes('overview')||txt.includes('semanal'))el.textContent=t.overview;
+    else if(txt.includes('lista')||txt.includes('shopping'))el.textContent=t.compras;
+    else if(txt.includes('categoría')||txt.includes('category this'))el.textContent=t.porCategoria;
+    else if(txt.includes('semana')||txt.includes('week —')||txt.includes('week —'))el.textContent=t.semana;
+    else if(txt.includes('recordatorio')||txt.includes('reminder'))el.textContent=t.recordatorio;
+    else if(txt.includes('gastos')||txt.includes('expenses'))el.textContent=t.gastosDia||t.gastos;
+    else if(txt.includes('por categoría')||txt.includes('by category'))el.textContent=t.porCat||t.porCategoria;
+  });
+  // Placeholders
+  const ph=(id,v)=>{const e=document.getElementById(id);if(e)e.placeholder=v;};
+  ph('task-in',t.agregarPendiente);
+  ph('fi1',t.primerEnfoque);ph('fi2',t.segundoEnfoque);ph('fi3',t.tercerEnfoque);
+  ph('gasto-desc',t.desc);
+  ph('ev-title',lang==='en'?'Event...':'Evento...');
+  ph('task-in',lang==='en'?'Add to-do...':'Agregar pendiente...');
+  ph('sh-super-in',t.agregar||'Add...');ph('sh-casa-in',t.agregar||'Add...');
+  ph('sh-pers-in',t.agregar||'Add...');ph('sh-mama-in',t.agregar||'Add...');ph('sh-neg-in',t.agregar||'Add...');
+  // Buttons and labels
+  const gcalBtn=document.getElementById('gcal-btn');if(gcalBtn)gcalBtn.textContent=t.conectarGcal;
+  const qbtn=document.querySelector('.qbtn');if(qbtn)qbtn.textContent=t.nuevaFrase;
+  const snote=document.querySelector('.snote');if(snote&&t.snote)snote.textContent=t.snote;
+  const evLbl=document.querySelector('.ev-lbl');if(evLbl)evLbl.textContent=t.evLbl||t.agregarEvento;
+  const lbl=document.getElementById('location-lbl');
+  if(lbl&&(lbl.textContent.includes('ubicación')||lbl.textContent.includes('location')||lbl.textContent.includes('Getting')||lbl.textContent.includes('Obteniendo')))lbl.textContent=t.clima;
+  const progLbl=document.getElementById('prog-lbl');
+  if(progLbl){const pct=progLbl.textContent.match(/\d+/)?.[0]||'0';progLbl.textContent=t.progreso+': '+pct+'%';}
+  // Total labels
+  const totLbl=document.getElementById('gastos-total-lbl');
+  if(totLbl){const range=totLbl.textContent.split('–')[1]||'';totLbl.textContent=(t.totalSem||t.totalSemana)+(range?'–'+range:'');}
+  updateGastosLang(lang);
+  const greet=document.getElementById('user-greeting');
+  if(greet&&setupCfg.name){greet.textContent=(lang==='en'?'Hello ':'Hola ')+setupCfg.name+'!';}
+}
+
+
+// ── PALETTES ───────────────────────────────
+const PALETTES = {
+  // 🌿 Forest — original, balanced
+  forest: {
+    teal:'#618985',tealL:'#e8f0ef',tealD:'#4a6e6b',
+    mauve:'#B75D69',mauveL:'#f5e8eb',mauveD:'#8f4652',
+    brown:'#414535',silkL:'#f7f0ec',
+    bg:'#fff',bg2:'#f8f6f4',bgPage:'#f0ebe6',
+    border:'rgba(0,0,0,0.1)',text:'#1a1a1a',text2:'#666',text3:'#999'
+  },
+  // 🌸 Rosé — pastels, soft bordeaux accent
+  rose: {
+    teal:'#c9847a',tealL:'#faeae8',tealD:'#8f5a54',   // powder blush warm
+    mauve:'#c4788a',mauveL:'#fce8ef',mauveD:'#8f4d5e', // petal rose
+    brown:'#7a4a52',silkL:'#EEEBD0',                   // dark bordeaux for text/accents
+    bg:'#fff',bg2:'#fdf7f5',bgPage:'#f7ede9',
+    border:'rgba(0,0,0,0.09)',text:'#2a1a1c',text2:'#7a5a5e',text3:'#b09498'
+  },
+  // 🏺 Earth — muted, sophisticated
+  earth: {
+    teal:'#607466',tealL:'#eaefeb',tealD:'#3d4d42',   // granite green
+    mauve:'#9a7b6a',mauveL:'#f2ebe7',mauveD:'#6b5246', // camel warm
+    brown:'#5C4a55',silkL:'#e8e0da',                   // mauve shadow
+    bg:'#fff',bg2:'#f7f4f1',bgPage:'#ede8e2',
+    border:'rgba(0,0,0,0.09)',text:'#1e1a18',text2:'#6b605a',text3:'#a89890'
+  },
+  // 🤍 Minimal — deep teal + warm neutrals
+  minimal: {
+    teal:'#607466',tealL:'#eaefeb',tealD:'#3d4d42',
+    mauve:'#4a3f3c',mauveL:'#ede9e8',mauveD:'#2a2220',
+    brown:'#8B786D',silkL:'#e8e0d8',
+    bg:'#fff',bg2:'#f5f3f0',bgPage:'#ede8e2',
+    border:'rgba(0,0,0,0.09)',text:'#1a1816',text2:'#6a6058',text3:'#a89888'
+  },
+  // 🖤 Black & White — pure, crisp
+  bw: {
+    teal:'#555555',tealL:'#efefef',tealD:'#333333',
+    mauve:'#222222',mauveL:'#f2f2f2',mauveD:'#000000',
+    brown:'#777777',silkL:'#f0f0f0',
+    bg:'#ffffff',bg2:'#f6f6f6',bgPage:'#ebebeb',
+    border:'rgba(0,0,0,0.11)',text:'#111111',text2:'#555',text3:'#999'
+  }
+};
+
+function applyPalette(key){
+  const p=PALETTES[key]||PALETTES.forest;
+  const r=document.documentElement.style;
+  r.setProperty('--teal',p.teal);
+  r.setProperty('--teal-l',p.tealL);
+  r.setProperty('--teal-d',p.tealD);
+  r.setProperty('--mauve',p.mauve);
+  r.setProperty('--mauve-l',p.mauveL);
+  r.setProperty('--mauve-d',p.mauveD);
+  r.setProperty('--brown',p.brown);
+  r.setProperty('--silk-l',p.silkL);
+  r.setProperty('--bg',p.bg);
+  r.setProperty('--bg2',p.bg2);
+  r.setProperty('--border',p.border);
+  r.setProperty('--text',p.text);
+  r.setProperty('--text2',p.text2);
+  r.setProperty('--text3',p.text3);
+  document.body.style.background=p.bgPage;
+}
+
+// ── SETUP STATE ────────────────────────────
+
+const DEFAULT_GASTOS=['🍽 Restaurante','🛒 Supermercado','🎬 Entretenimiento','⛽ Gasolina','🚗 Transporte','📱 Suscripción','💪 Ejercicio','📚 Escuela','🔧 Pago a servicio','💼 Negocio','🏠 Casa','💳 Préstamo','✈️ Viaje','💸 Otro'];
+
+let setupCfg={
+  name:'',lang:'es',currency:'MXN',palette:'forest',
+  features:{quotes:true,gcal:true,weather:true,gastos:true},
+  workouts:[...DEFAULT_WORKOUTS],
+  habitos:[...DEFAULT_HABITOS],
+  shopCats:[...DEFAULT_SHOP],
+  gastoCats:[...DEFAULT_GASTOS]
+};
+
+let selectedPal='forest';
+let selectedLang='es';
+
+function initSetupChips(){
+  renderChips('workout',setupCfg.workouts);
+  renderChips('habito',setupCfg.habitos);
+  renderChips('shop',setupCfg.shopCats);
+  renderChips('gasto',setupCfg.gastoCats);
+}
+
+function renderChips(type,arr){
+  const wrap=document.getElementById(type+'-chips');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  arr.forEach((item,i)=>{
+    const el=document.createElement('div');
+    el.className='chip-item';
+    el.innerHTML=item+'<span class="chip-x" onclick="removeChip(\''+type+'\','+i+')">×</span>';
+    wrap.appendChild(el);
+  });
+}
+
+function addChip(type){
+  const inputId={workout:'wo-custom',habito:'ha-custom',shop:'shop-custom',gasto:'gasto-custom'}[type];
+  const arr={workout:setupCfg.workouts,habito:setupCfg.habitos,shop:setupCfg.shopCats,gasto:setupCfg.gastoCats}[type];
+  const inp=document.getElementById(inputId);
+  const v=inp.value.trim();
+  if(!v)return;
+  arr.push(v);
+  inp.value='';
+  renderChips(type,arr);
+}
+
+function removeChip(type,i){
+  const arr={workout:setupCfg.workouts,habito:setupCfg.habitos,shop:setupCfg.shopCats,gasto:setupCfg.gastoCats}[type];
+  arr.splice(i,1);
+  renderChips(type,arr);
+}
+
+function selectPal(el){
+  document.querySelectorAll('.pal-opt').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  selectedPal=el.dataset.pal;
+  applyPalette(selectedPal);
+}
+
+function selectLang(el){
+  document.querySelectorAll('.lang-opt').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  selectedLang=el.dataset.lang;
+  setupCfg.lang=selectedLang;
+  translateSetup(selectedLang);
+}
+
+const SETUP_T={
+  es:{
+    subtitle:'Solo necesitas hacer esto una vez',
+    basics:'Lo básico',
+    name:'Tu nombre',
+    namePh:'Ej. Fernanda',
+    iconLbl:'Ícono para el dock (opcional)',
+    iconBtn:'Subir imagen...',
+    iconHint:'PNG o JPG recomendado, cuadrado',
+    lang:'Idioma',
+    currency:'Moneda para gastos',
+    palette:'Paleta de colores',
+    features:'Funciones',
+    quotes:'Frases motivacionales',
+    quotesSub:'Frase del día en el inicio',
+    gcal:'Google Calendar',
+    gcalSub:'Sincronizar eventos',
+    weather:'Clima',
+    weatherSub:'Temperatura y pronóstico',
+    gastos:'Widget de gastos',
+    gastosSub:'Registro y totales semanales',
+    workouts:'Workouts',
+    woAdd:'Agregar workout...',
+    habitos:'Hábitos',
+    haAdd:'Agregar hábito...',
+    shopCats:'Categorías de lista de compras',
+    shopAdd:'Agregar categoría...',
+    gastoCats:'Rubros de gastos',
+    gastoAdd:'Agregar rubro...',
+    btn:'¡Listo, empezar! 🎉',
+    currencies:['MXN — Peso mexicano ($)','USD — Dólar ($)','EUR — Euro (€)','COP — Peso colombiano ($)','ARS — Peso argentino ($)','Otra'],
+  },
+  en:{
+    subtitle:'Only needs to be done once',
+    basics:'The basics',
+    name:'Your name',
+    namePh:'e.g. Sarah',
+    iconLbl:'Dock icon (optional)',
+    iconBtn:'Upload image...',
+    iconHint:'PNG or JPG recommended, square',
+    lang:'Language',
+    currency:'Currency for expenses',
+    palette:'Color palette',
+    features:'Features',
+    quotes:'Motivational quotes',
+    quotesSub:'Daily quote on the home screen',
+    gcal:'Google Calendar',
+    gcalSub:'Sync events',
+    weather:'Weather',
+    weatherSub:'Temperature and forecast',
+    gastos:'Expenses widget',
+    gastosSub:'Weekly records and totals',
+    workouts:'Workouts',
+    woAdd:'Add workout...',
+    habitos:'Habits',
+    haAdd:'Add habit...',
+    shopCats:'Shopping list categories',
+    shopAdd:'Add category...',
+    gastoCats:'Expense categories',
+    gastoAdd:'Add category...',
+    btn:'Get started! 🎉',
+    currencies:['MXN — Mexican Peso ($)','USD — US Dollar ($)','EUR — Euro (€)','COP — Colombian Peso ($)','ARS — Argentine Peso ($)','Other'],
+  }
+};
+
+function translateSetup(lang){
+  const t=SETUP_T[lang]||SETUP_T.es;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const setPh=(id,v)=>{const e=document.getElementById(id);if(e)e.placeholder=v;};
+  const setText=(sel,v)=>{const e=document.querySelector(sel);if(e)e.textContent=v;};
+
+  // Subtitle
+  set('setup-tagline',lang==='en'?'Set it up your way — only once':'Configúralo a tu gusto — solo una vez');
+  // Section headers — find by current text
+  document.querySelectorAll('#setup-screen .setup-sec').forEach((el,i)=>{
+    const secLabels=[t.basics,t.palette,t.features,t.workouts,t.habitos,t.shopCats,t.gastoCats];
+    if(secLabels[i])el.textContent=secLabels[i];
+  });
+  // Field labels
+  document.querySelectorAll('#setup-screen .setup-lbl').forEach((el,i)=>{
+    const lbls=[t.name,t.iconLbl,t.lang,t.currency];
+    if(lbls[i]!==undefined)el.textContent=lbls[i];
+  });
+  // Placeholders
+  setPh('cfg-name',t.namePh);
+  // Icon button
+  const iconBtn=document.querySelector('#setup-screen button[onclick*="cfg-icon"]');
+  if(iconBtn)iconBtn.textContent=t.iconBtn;
+  // Icon hint
+  const iconHint=document.querySelector('#setup-screen .setup-field div[style*="font-size:11px"]');
+  if(iconHint)iconHint.textContent=t.iconHint;
+  // Toggle labels
+  const toggleNames=document.querySelectorAll('#setup-screen .toggle-name');
+  const toggleSubs=document.querySelectorAll('#setup-screen .toggle-sub');
+  const tNames=[t.quotes,t.gcal,t.weather,t.gastos];
+  const tSubs=[t.quotesSub,t.gcalSub,t.weatherSub,t.gastosSub];
+  toggleNames.forEach((el,i)=>{if(tNames[i])el.textContent=tNames[i];});
+  toggleSubs.forEach((el,i)=>{if(tSubs[i])el.textContent=tSubs[i];});
+  // Input placeholders for chips
+  setPh('wo-custom',t.woAdd);
+  setPh('ha-custom',t.haAdd);
+  setPh('shop-custom',t.shopAdd);
+  setPh('gasto-custom',t.gastoAdd);
+  // Save button
+  const saveBtn=document.querySelector('#setup-screen button[onclick="saveSetup()"]');
+  if(saveBtn)saveBtn.textContent=t.btn;
+  // Currency options
+  const currSel=document.getElementById('cfg-currency');
+  if(currSel){
+    Array.from(currSel.options).forEach((opt,i)=>{if(t.currencies[i])opt.text=t.currencies[i];});
+  }
+  // Palette section names (pal-name divs)
+  // These stay in their language since they're proper names
+}
+
+function toggleCfg(el,key){
+  el.classList.toggle('active');
+  setupCfg.features[key]=el.classList.contains('active');
+}
+
+function previewIcon(input){
+  if(!input.files||!input.files[0])return;
+  const file=input.files[0];
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const prev=document.getElementById('icon-preview');
+    prev.innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;">';
+    setupCfg.iconB64=e.target.result;
+    // Update apple-touch-icon
+    updateFavicon(e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateFavicon(b64){
+  let link=document.querySelector('link[rel="apple-touch-icon"]');
+  if(!link){link=document.createElement('link');link.rel='apple-touch-icon';document.head.appendChild(link);}
+  link.href=b64;
+  let link2=document.querySelector('link[rel="icon"]');
+  if(!link2){link2=document.createElement('link');link2.rel='icon';document.head.appendChild(link2);}
+  link2.href=b64;
+}
+
+function saveSetup(){
+  setupCfg.name=document.getElementById('cfg-name').value.trim()||'';
+  setupCfg.lang=selectedLang;
+  setupCfg.currency=document.getElementById('cfg-currency').value;
+  setupCfg.palette=selectedPal;
+  if(setupCfg.iconB64)updateFavicon(setupCfg.iconB64);
+  localStorage.setItem('wp_config',JSON.stringify(setupCfg));
+  document.getElementById('setup-screen').style.display='none';
+  location.reload();
+}
+
+function applyConfig(cfg){
+  applyPalette(cfg.palette);
+  if(cfg.lang)applyLang(cfg.lang);
+  // Show/hide features
+  const weatherCard=document.querySelector('.card-teal');
+  if(weatherCard)weatherCard.style.display=cfg.features.weather?'':'none';
+  const quoteCard=document.querySelector('.desktop-quote');
+  if(quoteCard)quoteCard.style.display=cfg.features.quotes?'':'none';
+  const gastosCard=document.getElementById('gastos-title');
+  if(gastosCard)gastosCard.closest('.card').style.display=cfg.features.gastos?'':'none';
+  const gcalBtn=document.getElementById('gcal-btn');
+  if(gcalBtn)gcalBtn.style.display=cfg.features.gcal?'':'none';
+  if(cfg.iconB64)updateFavicon(cfg.iconB64);
+  // Set greeting
+  const greet=document.getElementById('user-greeting');
+  if(greet&&cfg.name){
+    const isEn=cfg.lang==='en';
+    greet.textContent=(isEn?'Hello ':'Hola ')+cfg.name+'!';
+  }
+  // Apply workout/habito options to selects
+  const wo=setupCfg.workouts||DEFAULT_WORKOUTS;
+  const ha=setupCfg.habitos||DEFAULT_HABITOS;
+  ['wo1','wo2'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">—</option>'+wo.map(w=>'<option'+(w===cur?' selected':'')+'>'+w+'</option>').join('');
+  });
+  ['ha1','ha2'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">—</option>'+ha.map(h=>'<option'+(h===cur?' selected':'')+'>'+h+'</option>').join('');
+  });
+  const sc=setupCfg.shopCats||DEFAULT_SHOP;
+  if(sc.length){applyShopCats(sc);initShoppingItems();}
+  const gc=setupCfg.gastoCats||DEFAULT_GASTOS;
+  if(gc.length){const sel=document.getElementById('gasto-cat');if(sel)sel.innerHTML=gc.map(c=>'<option>'+c+'</option>').join('');}
+}
+
+const SHOP_EMOJI={'Supermercado':'🛒','Supermarket':'🛒','Casa':'🏠','Home':'🏠','Personal':'🧴','Oficina':'💼','Office':'💼','Mamá':'👩‍🦳','Mom':'👩‍🦳','Negocio':'💼','Business':'💼'};
+
+function applyShopCats(cats){
+  const shAll=document.getElementById('sh-all');
+  if(!shAll)return;
+  shAll.innerHTML='';
+  cats.forEach((cat,idx)=>{
+    const key='cat'+idx;
+    if(!shoppingItems[key])shoppingItems[key]=[];
+    const emoji=SHOP_EMOJI[cat]||'🛍';
+    const col=document.createElement('div');
+    col.innerHTML=`
+      <div style="font-size:11px;font-weight:500;color:var(--mauve);margin-bottom:6px;">${emoji} ${cat}</div>
+      <div id="sh-${key}"></div>
+      <div class="add-row" style="margin-top:6px;">
+        <input type="text" id="sh-${key}-in" placeholder="Agregar..." onkeydown="if(event.key==='Enter')addShCat('${key}')">
+        <button onclick="addShCat('${key}')">+</button>
+      </div>`;
+    shAll.appendChild(col);
+  });
+  renderSh();
+}
+
+function openSettings(){
+  const cfg=JSON.parse(localStorage.getItem('wp_config')||'{}');
+  translateSetup(cfg.lang||'es');
+  if(cfg.name)document.getElementById('cfg-name').value=cfg.name;
+  if(cfg.currency)document.getElementById('cfg-currency').value=cfg.currency;
+  if(cfg.palette){
+    selectedPal=cfg.palette;
+    document.querySelectorAll('.pal-opt').forEach(e=>{
+      e.classList.toggle('active',e.dataset.pal===cfg.palette);
+    });
+  }
+  document.getElementById('setup-screen').style.display='block';
+}
+
+function initApp(){
+  const saved=localStorage.getItem('wp_config');
+  if(!saved){
+    // First time — show setup
+    initSetupChips();
+    document.getElementById('setup-screen').style.display='block';
+  } else {
+    const cfg=JSON.parse(saved);
+    setupCfg={
+      ...setupCfg,
+      ...cfg,
+      workouts: cfg.workouts&&cfg.workouts.length ? cfg.workouts : [...DEFAULT_WORKOUTS],
+      habitos: cfg.habitos&&cfg.habitos.length ? cfg.habitos : [...DEFAULT_HABITOS],
+      shopCats: cfg.shopCats&&cfg.shopCats.length ? cfg.shopCats : [...DEFAULT_SHOP],
+      gastoCats: cfg.gastoCats&&cfg.gastoCats.length ? cfg.gastoCats : [...DEFAULT_GASTOS],
+    };
+    // Build shopping DOM immediately before Firebase loads
+    applyShopCats(setupCfg.shopCats||DEFAULT_SHOP);
+    applyConfig(setupCfg);
+    initSetupChips();
+  }
+}
+
 // Init with Firebase error protection
+initApp();
 document.getElementById('ev-date').value=dk(today);
-renderDay();
-setTimeout(()=>{buildCalendar();showQ(QS[qcur]);},150);
-fetchWeather();
+// Only call renderDay if setup is not shown (applyLang already calls it)
+if(localStorage.getItem('wp_config')){
+  setTimeout(()=>{buildCalendar();showQ(QS[qcur]);fetchWeather();},200);
+} else {
+  renderDay();
+  setTimeout(()=>{buildCalendar();showQ(QS[qcur]);fetchWeather();},200);
+}
 fetchGCal();
 initGCal();
 (async function(){
@@ -1211,9 +2042,9 @@ initGCal();
     initFirebase();
     await loadDB();
     await loadShoppingDB();
+    applyShopCats(setupCfg.shopCats||DEFAULT_SHOP);
     renderDay();
     buildCalendar();
-    renderSh();
     subscribeDB();
     subscribeShoppingDB();
   }catch(e){
