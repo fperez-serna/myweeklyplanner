@@ -464,8 +464,6 @@ body{padding:.75rem;}
     </div>
   </div>
 
-
-
   <!-- GASTOS -->
   <div class="card">
     <div class="sec" id="gastos-title">Gastos del día</div>
@@ -604,57 +602,56 @@ async function saveDB(){
   catch(e){console.error('Save error:',e);}
 }
 
+let _shSaving=false;
 async function saveShoppingDB(){
   if(!db)return;
+  _shSaving=true;
   try{await db.collection('fernanda').doc('shopping').set({cats:shoppingItems});}
-  catch(e){console.error('Shopping save error:',e);}
+  catch(e){console.error('Shopping save:',e);}
+  setTimeout(()=>{_shSaving=false;},1500);
 }
 
 async function loadShoppingDB(){
   if(!db)return;
   try{
     const snap=await db.collection('fernanda').doc('shopping').get();
+    const cats=setupCfg.shopCats||DEFAULT_SHOP;
+    cats.forEach((_,i)=>{if(!shoppingItems['cat'+i])shoppingItems['cat'+i]=[];});
     if(snap.exists){
       const data=snap.data();
-      // Support new cat-based structure
       if(data.cats){
-        const saved=data.cats;
-        Object.keys(saved).forEach(k=>{shoppingItems[k]=saved[k];});
-      } else if(data.items){
-        shoppingItems['supermercado']=data.items;
-        await saveShoppingDB();
+        Object.keys(data.cats).forEach(k=>{shoppingItems[k]=data.cats[k]||[];});
       }
-      // Clear bought items if new week
+      // Migrate old keys
+      const oldMap={super:'cat0',casa:'cat1',pers:'cat2',mama:'cat3',neg:'cat4',supermercado:'cat0'};
+      Object.keys(oldMap).forEach(old=>{
+        if(shoppingItems[old]&&shoppingItems[old].length){
+          shoppingItems[oldMap[old]]=[...(shoppingItems[oldMap[old]]||[]),...shoppingItems[old]];
+          delete shoppingItems[old];
+        }
+      });
+      // Clear bought if new week
       const lastWeek=localStorage.getItem('fp_last_shopping_week');
       const thisWeek=wid();
       if(lastWeek&&lastWeek!==thisWeek){
-        Object.keys(shoppingItems).forEach(cat=>{
-          if(shoppingItems[cat])shoppingItems[cat]=shoppingItems[cat].filter(i=>!i.done);
+        Object.keys(shoppingItems).forEach(k=>{
+          shoppingItems[k]=(shoppingItems[k]||[]).filter(i=>!i.done);
         });
-        await saveShoppingDB();
       }
       localStorage.setItem('fp_last_shopping_week',thisWeek);
-    } else {
-      // New user - initialize with cat keys
-      setupCfg.shopCats&&setupCfg.shopCats.forEach((_,i)=>{shoppingItems['cat'+i]=[];});
     }
-  }catch(e){
-    setupCfg.shopCats&&setupCfg.shopCats.forEach((_,i)=>{shoppingItems['cat'+i]=[];});
-    console.log('Shopping fresh start');
-  }
+  }catch(e){console.log('Shopping fresh');}
 }
 
 function subscribeShoppingDB(){
   if(!db)return;
   db.collection('fernanda').doc('shopping').onSnapshot(snap=>{
+    if(_shSaving)return;
     if(snap.exists){
       const data=snap.data();
-      const saved=data.cats||{};
-      // Migrate old keys (super,casa,pers,mama,neg) to new (cat0,cat1,cat2,cat3)
-      const oldMap={super:'cat0',casa:'cat1',pers:'cat2',mama:'cat3',neg:'cat4'};
-      Object.keys(saved).forEach(k=>{
-        const newKey=oldMap[k]||k;
-        shoppingItems[newKey]=saved[k]||[];
+      const oldMap={super:'cat0',casa:'cat1',pers:'cat2',mama:'cat3',neg:'cat4',supermercado:'cat0'};
+      Object.keys(data.cats||{}).forEach(k=>{
+        shoppingItems[oldMap[k]||k]=data.cats[k]||[];
       });
       renderSh();
     }
@@ -667,7 +664,7 @@ function subscribeDB(){
   unsub=db.collection('fernanda').doc(wid()).onSnapshot(snap=>{
     if(snap.exists){
       weekData=snap.data();
-      if(!document.getElementById('sh-cat0'))applyShopCats(setupCfg.shopCats||DEFAULT_SHOP);
+
       renderDay();
     }
   });
@@ -683,8 +680,8 @@ async function loadDB(){
 
 // ── RENDER ─────────────────────────────────
 function setWeekRange(){
-  const isEnWR=setupCfg&&setupCfg.lang==='en';
-  const wr=isEnWR
+  
+  const wr=isEn()
     ?(MES[weekDays[0].getMonth()]+' '+weekDays[0].getDate()+' — '+MES[weekDays[6].getMonth()]+' '+weekDays[6].getDate())
     :('Semana '+weekDays[0].getDate()+' de '+MES[weekDays[0].getMonth()]+' — '+weekDays[6].getDate()+' de '+MES[weekDays[6].getMonth()]);
   document.getElementById('week-range').textContent=wr;
@@ -734,8 +731,8 @@ function buildOv(){
 
 function renderDay(){
   const di=dayIdx();
-  const isEn2=setupCfg&&setupCfg.lang==='en';
-  document.getElementById('active-date').textContent=isEn2
+  
+  document.getElementById('active-date').textContent=isEn()
     ?(DIAS[activeDate.getDay()]+', '+MES[activeDate.getMonth()]+' '+activeDate.getDate())
     :(DIAS[activeDate.getDay()]+', '+activeDate.getDate()+' de '+MES[activeDate.getMonth()]);
   setWeekRange();buildNav();buildOv();
@@ -764,8 +761,8 @@ function updateProg(di){
   const tasks=tasksForDay(di);const done=tasks.filter(t=>t.doneOnDay!==undefined).length;
   const pct=tasks.length?Math.round(done/tasks.length*100):0;
   document.getElementById('prog-fill').style.width=pct+'%';
-  const isEnP=setupCfg&&setupCfg.lang==='en';
-  document.getElementById('prog-lbl').textContent=(isEnP?'Day progress':'Progreso del día')+': '+pct+'%';
+  
+  document.getElementById('prog-lbl').textContent=(isEn()?'Day progress':'Progreso del día')+': '+pct+'%';
 }
 
 function toggleTask(el){
@@ -858,7 +855,7 @@ function renderEvts(di){
   const ts=t=>{if(!t||t==='Todo el día')return -1;const p=t.includes('PM');const pts=t.replace(/AM|PM/,'').trim().split(':');let h=parseInt(pts[0]);if(p&&h!==12)h+=12;if(!p&&h===12)h=0;return h*60+parseInt(pts[1]||0);};
   const all=[...gcal,...manual].sort((a,b)=>ts(a.time)-ts(b.time));
   list.innerHTML='';
-  if(!all.length){const isEnEv=setupCfg&&setupCfg.lang==='en';list.innerHTML='<div class="ev-empty">'+(isEnEv?'No events for this day':'Sin eventos para este día')+'</div>';return;}
+  if(!all.length){list.innerHTML='<div class="ev-empty">'+(isEn()?'No events for this day':'Sin eventos para este día')+'</div>';return;}
   all.forEach(ev=>{
     const d=document.createElement('div');d.className='ev-item';
     let del='';
@@ -898,7 +895,7 @@ function addEv(){
   const m=document.getElementById('ev-m').value;
   const ap=document.getElementById('ev-ap').value;
   const titleIn=document.getElementById('ev-title');
-  const evTitle=evTitle;
+  const evTitle=titleIn.value.trim();
   if(!evTitle)return;
   const targetDate=dateIn.value||dk(activeDate);
   const tdi=weekDays.findIndex(d=>dk(d)===targetDate);
@@ -918,9 +915,9 @@ function addEv(){
     }
     if(gcalToken)createGCalEv(evTitle,targetDate,h,m,ap);
     titleIn.value='';
-    const isEn=setupCfg&&setupCfg.lang==='en';
+    const evLng=isEn();
     const td=new Date(targetDate+'T12:00:00');
-    document.getElementById('gcal-note').textContent=(isEn?'Saved for ':'Guardado para el ')+DIAS[td.getDay()]+' '+td.getDate();
+    document.getElementById('gcal-note').textContent=(evLng?'Saved for ':'Guardado para el ')+DIAS[td.getDay()]+' '+td.getDate();
     setTimeout(()=>document.getElementById('gcal-note').textContent='',3000);
     return;
   }
@@ -934,7 +931,7 @@ function addEv(){
   }
   const di=dayIdx();renderEvts(di);buildNav();buildOv();titleIn.value='';
   if(tdi!==di){
-    document.getElementById('gcal-note').textContent='Guardado para el '+DIAS[weekDays[tdi].getDay()]+' '+weekDays[tdi].getDate();
+    document.getElementById('gcal-note').textContent=(isEn()?'Saved for ':'Guardado para el ')+DIAS[weekDays[tdi].getDay()]+' '+weekDays[tdi].getDate();
     setTimeout(()=>document.getElementById('gcal-note').textContent='',3000);
   }
 }
@@ -1057,11 +1054,11 @@ async function fetchWeatherCoords(lat,lon){
     const pre=d.current.precipitation_probability;
     const code=d.current.weathercode;
     document.getElementById('temp').textContent=temp+'°C';
-    const isEnW=setupCfg&&setupCfg.lang==='en';
-    const ds=isEnW
+    
+    const ds=isEn()
       ?{0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Cloudy',45:'Foggy',51:'Drizzle',61:'Light rain',63:'Moderate rain',65:'Heavy rain',80:'Showers',95:'Thunderstorm'}
       :{0:'Despejado',1:'Mayormente despejado',2:'Parcialmente nublado',3:'Nublado',45:'Neblina',51:'Llovizna',61:'Lluvia ligera',63:'Lluvia moderada',65:'Lluvia fuerte',80:'Chubascos',95:'Tormenta'};
-    document.getElementById('wdesc').textContent=(ds[code]||'Variable')+(isEnW?' — feels like ':' — se siente ')+(temp+4)+'°C';
+    document.getElementById('wdesc').textContent=(ds[code]||'Variable')+(isEn()?' — feels like ':' — se siente ')+(temp+4)+'°C';
     // Get city name
     fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json')
       .then(r=>r.json())
@@ -1071,7 +1068,7 @@ async function fetchWeatherCoords(lat,lon){
         if(city)document.getElementById('location-lbl').textContent=city+(state?', '+state:'');
       }).catch(()=>{});
     const rain=pre>40||[51,53,55,61,63,65,80,81,95].includes(code);
-    const isEnRain=setupCfg&&setupCfg.lang==='en';document.getElementById('rain').textContent=rain?(isEnRain?'Rain likely ('+pre+'%)':'Lluvia probable ('+pre+'%)'):(isEnRain?'No rain today':'Sin lluvia hoy');
+    document.getElementById('rain').textContent=rain?(isEn()?'Rain likely ('+pre+'%)':'Lluvia probable ('+pre+'%)'):(isEn()?'No rain today':'Sin lluvia hoy');
   }catch(e){
     document.getElementById('temp').textContent='--°C';
     document.getElementById('wdesc').textContent='No se pudo cargar el clima';
@@ -1179,20 +1176,35 @@ showQ(QS[qcur]);
 
 // ── SHOPPING ───────────────────────────────
 function renderSh(){
-  const cats=Object.keys(shoppingItems);
-  cats.forEach(cat=>{
-    const el=document.getElementById('sh-'+cat);
-    if(!el)return;
-    el.innerHTML='';
-    const items=(shoppingItems[cat]||[]);
-    items.forEach((item,i)=>{
-      const d=document.createElement('div');
-      d.className='sh-item';
-      d.innerHTML='<div class="cb'+(item.done?' done':'')+'" onclick="togShCat(\''+cat+'\','+i+')"><svg class="ck" viewBox="0 0 8 8"><polyline points="1,4 3,6 7,2" fill="none" stroke="white" stroke-width="1.5"/></svg></div>'+
-        '<div class="sh-text'+(item.done?' bought':'')+'" contenteditable="true" spellcheck="false" data-cat="'+cat+'" data-idx="'+i+'" onblur="updateShCat(this)">'+item.text+'</div>'+
-        '<button class="dx" onclick="delShCat(\''+cat+'\','+i+')">×</button>';
-      el.appendChild(d);
-    });
+  const shAll=document.getElementById('sh-all');
+  if(!shAll)return;
+  const cats=setupCfg.shopCats||DEFAULT_SHOP;
+  // Rebuild entire shopping DOM every time for reliability
+  shAll.innerHTML='';
+  cats.forEach((catName,idx)=>{
+    const key='cat'+idx;
+    if(!shoppingItems[key])shoppingItems[key]=[];
+    const emoji=SHOP_EMOJI[catName]||'🛍';
+    const col=document.createElement('div');
+    const items=shoppingItems[key]||[];
+    let itemsHtml=items.map((item,i)=>`
+      <div class="sh-item">
+        <div class="cb${item.done?' done':''}" onclick="togShCat('${key}',${i})">
+          <svg class="ck" viewBox="0 0 8 8"><polyline points="1,4 3,6 7,2" fill="none" stroke="white" stroke-width="1.5"/></svg>
+        </div>
+        <div class="sh-text${item.done?' bought':''}" contenteditable="true" spellcheck="false" 
+          data-cat="${key}" data-idx="${i}" onblur="updateShCat(this)">${item.text}</div>
+        <button class="dx" onclick="delShCat('${key}',${i})">×</button>
+      </div>`).join('');
+    col.innerHTML=`
+      <div style="font-size:11px;font-weight:500;color:var(--mauve);margin-bottom:6px;">${emoji} ${catName}</div>
+      <div id="sh-${key}">${itemsHtml}</div>
+      <div class="add-row" style="margin-top:6px;">
+        <input type="text" id="sh-${key}-in" placeholder="${isEn()?'Add...':'Agregar...'}" 
+          onkeydown="if(event.key==='Enter')addShCat('${key}')">
+        <button onclick="addShCat('${key}')">+</button>
+      </div>`;
+    shAll.appendChild(col);
   });
 }
 
@@ -1203,7 +1215,7 @@ function togShCat(cat,i){
 }
 function delShCat(cat,i){
   if(!shoppingItems[cat])return;
-  shoppingItems[cat].splice(i,1);
+  shoppingItems[cat]=shoppingItems[cat].filter((_,idx)=>idx!==i);
   saveShoppingDB();renderSh();
 }
 function addShCat(cat){
@@ -1221,7 +1233,6 @@ function updateShCat(el){
     saveShoppingDB();
   }
 }
-
 
 const GASTO_COLORS = {
   'Restaurante':    {bg:'#e8f0ef',color:'#2c5f5c',emoji:'🍽'},
@@ -1245,8 +1256,8 @@ function renderGastos(di){
   if(!body)return;
   const title=document.getElementById('gastos-title');
   if(title&&weekDays[di]){
-    const isEnG=setupCfg&&setupCfg.lang==='en';
-    title.textContent=isEnG
+    
+    title.textContent=isEn()
       ?'Daily expenses — '+DIAS[weekDays[di].getDay()]+' '+weekDays[di].getDate()
       :'Gastos del día — '+DS[di]+' '+weekDays[di].getDate();
   }
@@ -1282,8 +1293,8 @@ function renderGastosTotals(di){
   if(tel)tel.textContent='$'+total.toLocaleString();
   const lbl=document.getElementById('gastos-total-lbl');
   // Label: always Mon to today
-  const isEnT=setupCfg&&setupCfg.lang==='en';
-  const monLabel=isEnT?'Mon':'Lun';
+  
+  const monLabel=isEn()?'Mon':'Lun';
   if(lbl){
     if(maxDi===0)lbl.textContent='Total '+DS[weekDays[0].getDay()];
     else lbl.textContent='Total '+monLabel+'–'+DS[weekDays[maxDi].getDay()];
@@ -1300,7 +1311,6 @@ function renderGastosTotals(di){
     rubros.appendChild(div);
   });
 }
-
 
 function addGasto(){
   const desc=document.getElementById('gasto-desc').value.trim();
@@ -1340,7 +1350,6 @@ function updateGastoMonto(el){
     saveDB();renderGastosTotals(di);
   }
 }
-
 
 // ── MINI CALENDAR ────────────────────────────
 let calYear=today.getFullYear();
@@ -1451,8 +1460,6 @@ function initCalResponsive(){
 
 window.addEventListener('resize',initCalResponsive);
 
-
-
 // ── TRANSLATIONS ───────────────────────────
 const T = {
   es: {
@@ -1540,13 +1547,7 @@ function updateGastosLang(lang){
     }).join('');
   });
   // Translate shopping section headers
-  if(isEn&&document.getElementById('sh-all')){
-    applyShopCats(DEFAULT_SHOP_EN);
-    DEFAULT_SHOP=DEFAULT_SHOP_EN;
-  } else if(!isEn&&document.getElementById('sh-all')){
-    applyShopCats(DEFAULT_SHOP_ES);
-    DEFAULT_SHOP=DEFAULT_SHOP_ES;
-  }
+  renderSh();
   // Table headers
   const d=document.getElementById('gth-desc');if(d)d.textContent=isEn?'Description':'Descripción';
   const c=document.getElementById('gth-cat');if(c)c.textContent=isEn?'Category':'Categoría';
@@ -1641,7 +1642,6 @@ function applyLang(lang){
   if(greet&&setupCfg.name){greet.textContent=(lang==='en'?'Hello ':'Hola ')+setupCfg.name+'!';}
 }
 
-
 // ── PALETTES ───────────────────────────────
 const PALETTES = {
   // 🌿 Forest — original, balanced
@@ -1721,6 +1721,7 @@ let setupCfg={
 
 let selectedPal='forest';
 let selectedLang='es';
+function isEn(){return setupCfg&&setupCfg.lang==='en';}
 
 function initSetupChips(){
   renderChips('workout',setupCfg.workouts);
@@ -1771,6 +1772,21 @@ function selectLang(el){
   selectedLang=el.dataset.lang;
   setupCfg.lang=selectedLang;
   translateSetup(selectedLang);
+  // Translate chips
+  const isEn=selectedLang==='en';
+  // Translate default chips, keep custom ones as-is
+  const translateArr=(arr, map)=>arr.map(v=>isEn?(map[v]||v):v);
+  renderChips('workout', translateArr(setupCfg.workouts||DEFAULT_WORKOUTS, WORKOUT_MAP));
+  renderChips('habito', translateArr(setupCfg.habitos||DEFAULT_HABITOS, HABITO_MAP));
+  // Shop chips - translate when EN
+  const shopMap2={'Supermercado':'Supermarket','Casa':'Home','Personal':'Personal','Oficina':'Office','Mamá':'Mom','Negocio':'Business'};
+  const shopChips=(setupCfg.shopCats||DEFAULT_SHOP_ES).map(c=>isEn()?(shopMap2[c]||c):c);
+  renderChips('shop', shopChips);
+  // Gasto chips
+  const gaArr=isEn
+    ?['🍽 Restaurant','🛒 Grocery','🎬 Entertainment','⛽ Gas','🚗 Transport','📱 Subscription','💪 Exercise','📚 School','🔧 Service payment','💼 Business','🏠 Home','💳 Loan','✈️ Travel','💸 Other']
+    :['🍽 Restaurante','🛒 Supermercado','🎬 Entretenimiento','⛽ Gasolina','🚗 Transporte','📱 Suscripción','💪 Ejercicio','📚 Escuela','🔧 Pago a servicio','💼 Negocio','🏠 Casa','💳 Préstamo','✈️ Viaje','💸 Otro'];
+  renderChips('gasto', gaArr);
 }
 
 const SETUP_T={
@@ -2018,8 +2034,7 @@ function initApp(){
       shopCats: cfg.shopCats&&cfg.shopCats.length ? cfg.shopCats : [...DEFAULT_SHOP],
       gastoCats: cfg.gastoCats&&cfg.gastoCats.length ? cfg.gastoCats : [...DEFAULT_GASTOS],
     };
-    // Build shopping DOM immediately before Firebase loads
-    applyShopCats(setupCfg.shopCats||DEFAULT_SHOP);
+    // Shopping DOM built by renderSh()
     applyConfig(setupCfg);
     initSetupChips();
   }
@@ -2042,7 +2057,6 @@ initGCal();
     initFirebase();
     await loadDB();
     await loadShoppingDB();
-    applyShopCats(setupCfg.shopCats||DEFAULT_SHOP);
     renderDay();
     buildCalendar();
     subscribeDB();
