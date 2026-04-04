@@ -17,7 +17,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{--teal:#618985;--teal-l:#e8f0ef;--teal-d:#4a6e6b;--mauve:#B75D69;--mauve-l:#f5e8eb;--mauve-d:#8f4652;--brown:#414535;--silk-l:#f7f0ec;--bg:#fff;--bg2:#f8f6f4;--border:rgba(0,0,0,0.1);--text:#1a1a1a;--text2:#666;--text3:#999;}
-body{background:#f0ebe6;padding:1.5rem;padding-bottom:80px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text);}
+body{background:#f0ebe6;padding:1.5rem;padding-bottom:calc(80px + env(safe-area-inset-bottom));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text);}
 .db{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:12px;}
 .row{display:grid;gap:12px;}
 .r2{grid-template-columns:1fr 1fr;}
@@ -391,10 +391,12 @@ body{padding:.75rem;}
 </div>
 
 <!-- SETTINGS BUTTON -->
-<div id="settings-btn-wrap" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--bg);border-top:0.5px solid var(--border);padding:10px 20px;flex-direction:row;align-items:center;justify-content:flex-end;gap:12px;">
-  <button onclick="openReport()" style="background:none;border:none;cursor:pointer;font-size:20px;padding:4px;" title="Reporte mensual">📊</button>
-  <button id="settings-btn" onclick="openSettings()" style="background:none;border:none;cursor:pointer;font-size:22px;padding:4px;">⚙️</button>
-  <button onclick="signOut()" id="logout-btn" style="display:none;padding:6px 16px;border-radius:99px;background:none;color:var(--text3);border:0.5px solid var(--border);font-size:12px;cursor:pointer;">Cerrar sesión</button>
+<div id="settings-btn-wrap" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--bg);border-top:0.5px solid rgba(0,0,0,0.1);padding:8px 20px;padding-bottom:calc(12px + env(safe-area-inset-bottom));">
+  <div style="display:flex;flex-direction:row;align-items:center;justify-content:flex-end;gap:16px;width:100%;">
+    <button onclick="openReport()" style="background:none;border:none;cursor:pointer;font-size:20px;padding:4px;line-height:1;" title="Reporte mensual">📊</button>
+    <button id="settings-btn" onclick="openSettings()" style="background:none;border:none;cursor:pointer;font-size:22px;padding:4px;line-height:1;">⚙️</button>
+    <button onclick="signOut()" id="logout-btn" style="display:none;padding:6px 16px;border-radius:99px;background:none;color:var(--text3);border:0.5px solid var(--border);font-size:12px;cursor:pointer;white-space:nowrap;">Cerrar sesión</button>
+  </div>
 </div>
 
 <div class="db">
