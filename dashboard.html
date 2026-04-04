@@ -190,7 +190,7 @@ body{padding:.75rem;}
           <div style="flex:1;">
             <input type="file" id="cfg-icon" accept="image/*" style="display:none;" onchange="previewIcon(this)">
             <button onclick="document.getElementById('cfg-icon').click()" class="setup-input" style="cursor:pointer;text-align:left;color:#888;">Subir imagen...</button>
-            <div style="font-size:11px;color:#aaa;margin-top:4px;">PNG o JPG recomendado, cuadrado</div>
+            <div style="font-size:11px;color:#aaa;margin-top:4px;">PNG o JPG, cuadrado. Agrega al dock DESPUÉS de guardar.</div>
           </div>
         </div>
       </div>
@@ -565,13 +565,19 @@ function showSync(){const s=document.getElementById('sync-badge');s.classList.ad
 
 // ── TASKS LOGIC ────────────────────────────
 function tasksForDay(di){
-  return(weekData.tasks||[]).filter(t=>{
+  const weekTasks=(weekData.tasks||[]).filter(t=>{
     if(t.addedOnDay>di)return false;
     if(t.deletedOnDay!==undefined&&t.deletedOnDay<=di)return false;
-    // Hide tasks done on a PREVIOUS day (not today)
     if(t.doneOnDay!==undefined&&t.doneOnDay<di)return false;
     return true;
   });
+  // Add undone tasks from previous weeks
+  const currentWeekIds=new Set((weekData.tasks||[]).map(t=>t.id));
+  const dayDate=weekDays[di];
+  const carryTasks=pendingTasks
+    .filter(p=>!currentWeekIds.has(p.id)&&p.addedDate<=dk(dayDate))
+    .map(p=>({id:p.id,text:p.text,addedOnDay:-1,fromPrevWeek:true}));
+  return [...carryTasks,...weekTasks];
 }
 function focusForDay(di){
   // Each day has its own independent focus - no carry forward
@@ -586,7 +592,7 @@ function focusForDay(di){
 function dayEvts(di){return((weekData.events||{})[di])||[];}
 function dayWo(di){
   if(weekData.workout&&weekData.workout[di]!==undefined)return weekData.workout[di];
-  return DW[weekDays[di].getDay()]||{wo1:'',wo2:'',ha1:'',ha2:''};
+  return {wo1:'',wo2:'',ha1:'',ha2:''};
 }
 
 // ── FIREBASE ───────────────────────────────
@@ -668,6 +674,36 @@ function subscribeDB(){
       renderDay();
     }
   });
+}
+
+// ── PERSISTENT TASKS ──────────────────────
+let pendingTasks=[];
+
+async function loadPendingTasks(){
+  if(!db)return;
+  try{
+    const snap=await db.collection('fernanda').doc('pending_tasks').get();
+    if(snap.exists){
+      pendingTasks=(snap.data().tasks||[]).filter(t=>!t.doneDate&&!t.deletedDate);
+    }
+  }catch(e){console.log('No pending tasks');}
+}
+
+async function savePendingTasks(){
+  if(!db)return;
+  try{await db.collection('fernanda').doc('pending_tasks').set({tasks:pendingTasks});}
+  catch(e){console.error('Pending save:',e);}
+}
+
+function addPendingTask(id, text, dateStr){
+  pendingTasks=pendingTasks.filter(t=>t.id!==id);
+  pendingTasks.push({id, text, addedDate:dateStr});
+  savePendingTasks();
+}
+
+function resolvePendingTask(id){
+  pendingTasks=pendingTasks.filter(t=>t.id!==id);
+  savePendingTasks();
 }
 
 async function loadDB(){
@@ -767,9 +803,24 @@ function updateProg(di){
 
 function toggleTask(el){
   const id=el.dataset.id;const di=dayIdx();
-  const t=(weekData.tasks||[]).find(t=>t.id===id);if(!t)return;
-  if(t.doneOnDay!==undefined){delete t.doneOnDay;}else{t.doneOnDay=di;}
-  saveDB();renderTasks(di);updateProg(di);buildNav();buildOv();
+  const t=(weekData.tasks||[]).find(t=>t.id===id);
+  // Also check pendingTasks
+  const pt=pendingTasks.find(p=>p.id===id);
+  if(t){
+    if(t.doneOnDay!==undefined){
+      delete t.doneOnDay;
+      // Restore to pending if undone
+      if(pt===undefined)addPendingTask(id,t.text,dk(weekDays[t.addedOnDay]||activeDate));
+    }else{
+      t.doneOnDay=di;
+      resolvePendingTask(id);
+    }
+    saveDB();
+  } else if(pt){
+    // Task from a previous week - mark done in pending only
+    resolvePendingTask(id);
+  }
+  renderTasks(di);updateProg(di);buildNav();buildOv();
 }
 function updateTaskText(el){
   const id=el.dataset.id;
@@ -778,14 +829,19 @@ function updateTaskText(el){
 }
 function deleteTask(el){
   const id=el.dataset.id;const di=dayIdx();
-  const t=(weekData.tasks||[]).find(t=>t.id===id);if(t)t.deletedOnDay=di;
-  saveDB();renderTasks(di);updateProg(di);buildNav();buildOv();
+  const t=(weekData.tasks||[]).find(t=>t.id===id);
+  if(t){t.deletedOnDay=di;saveDB();}
+  resolvePendingTask(id);
+  renderTasks(di);updateProg(di);buildNav();buildOv();
 }
 function addTask(){
   const inp=document.getElementById('task-in');const v=inp.value.trim();if(!v)return;
   const di=dayIdx();if(!weekData.tasks)weekData.tasks=[];
-  weekData.tasks.push({id:'t'+Date.now(),text:v,addedOnDay:di});
-  saveDB();renderTasks(di);buildNav();inp.value='';
+  const id='t'+Date.now();
+  weekData.tasks.push({id,text:v,addedOnDay:di});
+  saveDB();
+  addPendingTask(id, v, dk(activeDate));
+  renderTasks(di);buildNav();inp.value='';
 }
 
 function renderFocus(di){
@@ -811,6 +867,34 @@ function makeBubble(inp,num){
   buildNav();
 }
 
+function editBubble(n,di){
+  const f=focusForDay(di);
+  const inp=document.createElement('input');
+  inp.type='text';
+  inp.value=f[n]||'';
+  inp.className='finput';
+  inp.style.cssText='flex:1;font-size:13px;';
+  const bub=document.querySelector('.fbub[data-n="'+n+'"]');
+  if(!bub)return;
+  bub.innerHTML='';
+  bub.appendChild(inp);
+  bub.onclick=null;
+  inp.focus();
+  inp.select();
+  inp.onblur=()=>{
+    const v=inp.value.trim();
+    if(v){
+      if(!weekData.focus)weekData.focus={};
+      if(!weekData.focus[di])weekData.focus[di]={};
+      weekData.focus[di][n]=v;
+      saveDB();
+    }
+    renderBubbles(di);
+    buildOv();
+  };
+  inp.onkeydown=(e)=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape'){inp.value=f[n]||'';inp.blur();}};
+}
+
 function renderBubbles(di){
   const c=document.getElementById('fbubb');c.innerHTML='';
   const f=focusForDay(di);
@@ -820,8 +904,12 @@ function renderBubbles(di){
       b.className='fbub'+(fdone[n]?' tachado':'');
       b.setAttribute('data-n',n);
       b.setAttribute('data-di',di);
-      b.setAttribute('onclick','toggleFdone(parseInt(this.dataset.n),parseInt(this.dataset.di))');
-      b.innerHTML=f[n]+'<span style="font-size:11px;margin-left:4px;" data-n="'+n+'" onclick="event.stopPropagation();delFocus(this)">✕</span>';
+      b.title=isEn()?'Click to edit, tap ✓ to complete':'Click para editar, toca ✓ para completar';
+      b.innerHTML=
+        '<span onclick="event.stopPropagation();toggleFdone('+n+','+di+')" style="margin-right:5px;opacity:0.5;font-size:11px;">'+(fdone[n]?'↩':'✓')+'</span>'+
+        '<span onclick="editBubble('+n+','+di+')" style="flex:1;cursor:text;">'+f[n]+'</span>'+
+        '<span style="font-size:11px;margin-left:4px;opacity:0.5;" onclick="event.stopPropagation();delFocus(this)" data-n="'+n+'">✕</span>';
+      b.style.cssText='display:flex;align-items:center;gap:2px;';
       c.appendChild(b);
       const s=document.getElementById('fs'+n);if(s)s.style.display='none';
     } else {
@@ -936,10 +1024,21 @@ function addEv(){
   }
 }
 
+function setSelectVal(id, val){
+  const sel=document.getElementById(id);
+  if(!sel||!val)return;
+  // Try direct match first
+  if([...sel.options].some(o=>o.value===val)){sel.value=val;return;}
+  // Try translated match (ES->EN or EN->ES)
+  const mapped=WORKOUT_MAP[val]||Object.keys(WORKOUT_MAP).find(k=>WORKOUT_MAP[k]===val);
+  const hmapped=HABITO_MAP[val]||Object.keys(HABITO_MAP).find(k=>HABITO_MAP[k]===val);
+  const alt=mapped||hmapped;
+  if(alt&&[...sel.options].some(o=>o.value===alt)){sel.value=alt;}
+}
 function renderWo(di){
   const w=dayWo(di);
-  document.getElementById('wo1').value=w.wo1||'';document.getElementById('wo2').value=w.wo2||'';
-  document.getElementById('ha1').value=w.ha1||'';document.getElementById('ha2').value=w.ha2||'';
+  setSelectVal('wo1',w.wo1);setSelectVal('wo2',w.wo2);
+  setSelectVal('ha1',w.ha1);setSelectVal('ha2',w.ha2);
 }
 function saveWorkout(){
   const di=dayIdx();if(!weekData.workout)weekData.workout={};
@@ -1507,17 +1606,32 @@ const T = {
 };
 
 const WORKOUT_MAP={
-  '🎾 Tennis':'🎾 Tennis','🏊 Swimming':'🏊 Swimming','🧘 Pilates':'🧘 Pilates',
-  '🏋️ Gym':'🏋️ Gym','🥊 Box':'🥊 Box','🏃 Running':'🏃 Running',
-  '💃 Baile':'💃 Dance','🏓 Padel':'🏓 Padel','⛸️ Patinar':'⛸️ Skate',
-  '⚡ Funcional':'⚡ Functional','🔥 HIIT':'🔥 HIIT','🏅 CrossFit':'🏅 CrossFit',
-  '🧗 Climbing':'🧗 Climbing','🤿 Free Diving':'🤿 Free Diving','🌿 Yoga':'🌿 Yoga'
+  '🤿 Apnea':'🤿 Free Diving',
+  '💃 Baile':'💃 Dance',
+  '🥊 Box':'🥊 Box',
+  '🏃 Correr':'🏃 Running',
+  '🏅 CrossFit':'🏅 CrossFit',
+  '🧗 Escalar':'🧗 Climbing',
+  '🏇 Equitación':'🏇 Horse Riding',
+  '⚡ Funcional':'⚡ Functional',
+  '🏋️ Gym':'🏋️ Gym',
+  '🔥 HIIT':'🔥 HIIT',
+  '🏊 Nadar':'🏊 Swimming',
+  '🏓 Padel':'🏓 Padel',
+  '⛸️ Patinar':'⛸️ Skate',
+  '🧘 Pilates':'🧘 Pilates',
+  '🎾 Tennis':'🎾 Tennis',
+  '🌿 Yoga':'🌿 Yoga',
 };
 const DEFAULT_WORKOUTS=Object.keys(WORKOUT_MAP);
 const HABITO_MAP={
-  '🧘 Meditar':'🧘 Meditate','📖 Leer':'📖 Read','✍️ Escribir':'✍️ Journal',
-  '🤸 Stretching':'🤸 Stretching','🙏 Gratitud':'🙏 Gratitude',
-  '💤 Sleep 8hrs':'💤 Sleep 8hrs','🚰 Tomar agua':'🚰 Drink water'
+  '✍️ Escribir':'✍️ Journal',
+  '🙏 Gratitud':'🙏 Gratitude',
+  '📖 Leer':'📖 Read',
+  '🧘 Meditar':'🧘 Meditate',
+  '💤 Sleep 8hrs':'💤 Sleep 8hrs',
+  '🤸 Stretching':'🤸 Stretching',
+  '🚰 Tomar agua':'🚰 Drink water',
 };
 const DEFAULT_HABITOS=Object.keys(HABITO_MAP);
 const DEFAULT_SHOP_ES=['Supermercado','Casa','Personal','Oficina'];
@@ -1773,17 +1887,18 @@ function selectLang(el){
   setupCfg.lang=selectedLang;
   translateSetup(selectedLang);
   // Translate chips
-  const isEn=selectedLang==='en';
-  // Translate default chips, keep custom ones as-is
-  const translateArr=(arr, map)=>arr.map(v=>isEn?(map[v]||v):v);
+  const langIsEn=selectedLang==='en';
+  const translateArr=(arr,map)=>arr.map(v=>langIsEn?(map[v]||v):v);
   renderChips('workout', translateArr(setupCfg.workouts||DEFAULT_WORKOUTS, WORKOUT_MAP));
   renderChips('habito', translateArr(setupCfg.habitos||DEFAULT_HABITOS, HABITO_MAP));
-  // Shop chips - translate when EN
-  const shopMap2={'Supermercado':'Supermarket','Casa':'Home','Personal':'Personal','Oficina':'Office','Mamá':'Mom','Negocio':'Business'};
-  const shopChips=(setupCfg.shopCats||DEFAULT_SHOP_ES).map(c=>isEn()?(shopMap2[c]||c):c);
+  // Shop chips
+  const shopMap2={'Supermercado':'Supermarket','Casa':'Home','Personal':'Personal','Oficina':'Office','Mamá':'Mom','Negocio':'Business','Supermarket':'Supermercado','Home':'Casa','Office':'Oficina','Mom':'Mamá'};
+  const shopChips=langIsEn
+    ?(setupCfg.shopCats||DEFAULT_SHOP_ES).map(c=>shopMap2[c]||c)
+    :(setupCfg.shopCats||DEFAULT_SHOP_ES).map(c=>c);
   renderChips('shop', shopChips);
   // Gasto chips
-  const gaArr=isEn
+  const gaArr=langIsEn
     ?['🍽 Restaurant','🛒 Grocery','🎬 Entertainment','⛽ Gas','🚗 Transport','📱 Subscription','💪 Exercise','📚 School','🔧 Service payment','💼 Business','🏠 Home','💳 Loan','✈️ Travel','💸 Other']
     :['🍽 Restaurante','🛒 Supermercado','🎬 Entretenimiento','⛽ Gasolina','🚗 Transporte','📱 Suscripción','💪 Ejercicio','📚 Escuela','🔧 Pago a servicio','💼 Negocio','🏠 Casa','💳 Préstamo','✈️ Viaje','💸 Otro'];
   renderChips('gasto', gaArr);
@@ -1797,7 +1912,7 @@ const SETUP_T={
     namePh:'Ej. Fernanda',
     iconLbl:'Ícono para el dock (opcional)',
     iconBtn:'Subir imagen...',
-    iconHint:'PNG o JPG recomendado, cuadrado',
+    iconHint:'PNG o JPG, cuadrado. Agrega al dock DESPUÉS de guardar.',
     lang:'Idioma',
     currency:'Moneda para gastos',
     palette:'Paleta de colores',
@@ -1828,7 +1943,7 @@ const SETUP_T={
     namePh:'e.g. Sarah',
     iconLbl:'Dock icon (optional)',
     iconBtn:'Upload image...',
-    iconHint:'PNG or JPG recommended, square',
+    iconHint:'PNG or JPG, square. Add to home screen AFTER saving.',
     lang:'Language',
     currency:'Currency for expenses',
     palette:'Color palette',
@@ -2056,6 +2171,7 @@ initGCal();
   try{
     initFirebase();
     await loadDB();
+    await loadPendingTasks();
     await loadShoppingDB();
     renderDay();
     buildCalendar();
