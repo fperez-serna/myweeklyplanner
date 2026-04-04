@@ -419,7 +419,10 @@ body{padding:.75rem;}
 
   <div class="row r2">
     <div class="card">
-      <div class="sec">Pendientes</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="sec">Pendientes</div>
+        <button onclick="shareTasks()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:var(--text3);" title="Compartir"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+      </div>
       <div id="ch" class="ch" style="display:none"></div>
       <div id="task-list"></div>
       <div class="add-row">
@@ -429,7 +432,10 @@ body{padding:.75rem;}
     </div>
     <div class="col">
       <div class="card">
-        <div class="sec">Enfoque del día</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="sec">Enfoque del día</div>
+          <button onclick="shareFocus()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:var(--text3);" title="Compartir"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+        </div>
         <div id="fbubb" class="fbubb"></div>
         <div class="fslot" id="fs1"><div class="frow"><div class="fnum">1</div><input class="finput" id="fi1" type="text" placeholder="Primer enfoque..." onblur="makeBubble(this,1)" onkeydown="if(event.key==='Enter')this.blur()"></div></div>
         <div class="fslot" id="fs2"><div class="frow"><div class="fnum">2</div><input class="finput" id="fi2" type="text" placeholder="Segundo enfoque..." onblur="makeBubble(this,2)" onkeydown="if(event.key==='Enter')this.blur()"></div></div>
@@ -466,7 +472,10 @@ body{padding:.75rem;}
 
   <!-- GASTOS -->
   <div class="card">
-    <div class="sec" id="gastos-title">Gastos del día</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="sec" id="gastos-title">Gastos del día</div>
+      <button onclick="shareGastos()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:var(--text3);" title="Compartir"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+    </div>
     <table style="width:100%;border-collapse:collapse;font-size:12px;">
       <thead>
         <tr>
@@ -501,7 +510,10 @@ body{padding:.75rem;}
 
   <!-- LISTA DE COMPRAS -->
   <div class="card">
-    <div class="sec">Lista de compras</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="sec">Lista de compras</div>
+      <button onclick="shareShopping()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:var(--text3);" title="Compartir"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;" id="sh-all" class="sh-grid"></div>
   </div>
 </div>
@@ -2153,6 +2165,96 @@ function initApp(){
     applyConfig(setupCfg);
     initSetupChips();
   }
+}
+
+
+// ── SHARE ──────────────────────────────────
+function shareText(text){
+  if(navigator.share){
+    navigator.share({text:text}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(text).then(()=>{
+      const msg=isEn()?'Copied to clipboard!':'¡Copiado al portapapeles!';
+      showToast(msg);
+    });
+  }
+}
+
+function showToast(msg){
+  let t=document.getElementById('share-toast');
+  if(!t){t=document.createElement('div');t.id='share-toast';
+    t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--brown);color:#fff;padding:8px 18px;border-radius:99px;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;';
+    document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';
+  setTimeout(()=>{t.style.opacity='0';},2000);
+}
+
+function shareTasks(){
+  const di=dayIdx();
+  const tasks=tasksForDay(di);
+  const dateStr=DIAS[activeDate.getDay()]+', '+activeDate.getDate()+' de '+MES[activeDate.getMonth()];
+  const undone=tasks.filter(t=>t.doneOnDay===undefined);
+  const done=tasks.filter(t=>t.doneOnDay!==undefined);
+  let txt=isEn()?'📋 To-do — '+dateStr+'\n':'📋 Pendientes — '+dateStr+'\n';
+  txt+='\n';
+  undone.forEach(t=>{txt+='• '+t.text+'\n';});
+  if(done.length){
+    txt+='\n'+(isEn()?'✅ Done:':'✅ Completados:')+'\n';
+    done.forEach(t=>{txt+='✓ '+t.text+'\n';});
+  }
+  if(!undone.length&&!done.length)txt+=(isEn()?'No tasks yet':'Sin pendientes aún');
+  shareText(txt.trim());
+}
+
+function shareShopping(){
+  const cats=setupCfg.shopCats||DEFAULT_SHOP;
+  let txt=isEn()?'🛒 Shopping List\n':'🛒 Lista de compras\n';
+  txt+='\n';
+  cats.forEach((cat,idx)=>{
+    const key='cat'+idx;
+    const items=(shoppingItems[key]||[]);
+    if(items.length){
+      const emoji=SHOP_EMOJI[cat]||'🛍';
+      txt+=emoji+' '+cat+':\n';
+      items.forEach(i=>{txt+=(i.done?'✓ ':'• ')+i.text+'\n';});
+      txt+='\n';
+    }
+  });
+  if(txt.trim()===(isEn()?'🛒 Shopping List':'🛒 Lista de compras'))
+    txt+=(isEn()?'List is empty':'Lista vacía');
+  shareText(txt.trim());
+}
+
+function shareGastos(){
+  const di=dayIdx();
+  const dateStr=DIAS[activeDate.getDay()]+', '+activeDate.getDate();
+  let txt=(isEn()?'💸 Expenses — ':'💸 Gastos — ')+dateStr+'\n\n';
+  const items=gastosForDay(di);
+  if(items.length){
+    items.forEach(g=>{txt+='• '+g.desc+' ('+g.cat+') — $'+g.monto.toLocaleString()+'\n';});
+    const total=items.reduce((s,g)=>s+g.monto,0);
+    txt+='\n'+(isEn()?'Total: ':'Total: ')+'$'+total.toLocaleString();
+  } else {
+    txt+=(isEn()?'No expenses today':'Sin gastos hoy');
+  }
+  shareText(txt.trim());
+}
+
+function shareFocus(){
+  const di=dayIdx();
+  const f=focusForDay(di);
+  const dateStr=DIAS[activeDate.getDay()]+', '+activeDate.getDate()+' de '+MES[activeDate.getMonth()];
+  let txt=(isEn()?'🎯 Focus — ':'🎯 Enfoque — ')+dateStr+'\n\n';
+  [1,2,3].forEach(n=>{
+    if(f[n])txt+(fdone[n]?'✓ ':'• ')+f[n]+'\n';
+  });
+  const lines=[f[1],f[2],f[3]].filter(Boolean);
+  if(lines.length){
+    lines.forEach((l,i)=>{txt+=(i+1)+'. '+l+'\n';});
+  } else {
+    txt+=(isEn()?'No focus set':'Sin enfoques aún');
+  }
+  shareText(txt.trim());
 }
 
 // Init with Firebase error protection
