@@ -3,6 +3,7 @@
   "short_name": "Planner",
   "description": "Your personal weekly planner",
   "start_url": "./versionbetaweeklyplanner.html",
+  "scope": "https://app.myweeklyplanner.app/",
   "display": "standalone",
   "background_color": "#f0ebe6",
   "theme_color": "#618985",
