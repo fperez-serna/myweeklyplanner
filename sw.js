@@ -1,4 +1,4 @@
-const CACHE_NAME = 'weekly-planner-v1';
+const CACHE_NAME = 'weekly-planner-v3';
 const ASSETS = [
   './dashboard.html',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
