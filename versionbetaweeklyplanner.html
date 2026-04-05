@@ -17,7 +17,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{--teal:#618985;--teal-l:#e8f0ef;--teal-d:#4a6e6b;--mauve:#B75D69;--mauve-l:#f5e8eb;--mauve-d:#8f4652;--brown:#414535;--silk-l:#f7f0ec;--bg:#fff;--bg2:#f8f6f4;--border:rgba(0,0,0,0.1);--text:#1a1a1a;--text2:#666;--text3:#999;}
-body{background:#f0ebe6;padding:1.5rem;padding-bottom:calc(80px + env(safe-area-inset-bottom));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text);}
+body{background:#f0ebe6;padding:1.5rem;padding-bottom:calc(70px + env(safe-area-inset-bottom));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text);}
 .db{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:12px;}
 .row{display:grid;gap:12px;}
 .r2{grid-template-columns:1fr 1fr;}
@@ -38,12 +38,11 @@ body{background:#f0ebe6;padding:1.5rem;padding-bottom:calc(80px + env(safe-area-
 #cal-card{display:block;}
 @media(max-width:600px){
   .cal-quote-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-#settings-btn-wrap{display:none;position:fixed!important;bottom:calc(20px + env(safe-area-inset-bottom))!important;right:20px!important;z-index:200!important;}
-#main-menu-btn{width:40px;height:40px;border-radius:50%;background:var(--mauve);color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;}
-#main-menu-dropdown{display:none;position:absolute;bottom:48px;right:0;background:var(--bg);border:0.5px solid var(--border);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.12);overflow:hidden;min-width:160px;}
-#main-menu-dropdown button{display:block;width:100%;padding:10px 16px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);white-space:nowrap;}
-#main-menu-dropdown button:hover{background:var(--bg2);}
-#main-menu-dropdown .menu-divider{height:0.5px;background:var(--border);}
+#settings-btn-wrap{display:none;position:fixed!important;bottom:0!important;left:0!important;right:0!important;z-index:200!important;background:var(--bg)!important;border-top:0.5px solid var(--border)!important;padding:8px 20px calc(8px + env(safe-area-inset-bottom)) 20px!important;}
+#bottom-bar-inner{display:flex;flex-direction:row;align-items:center;justify-content:space-between;width:100%;}
+.bar-btn{background:none;border:none;cursor:pointer;font-size:13px;color:var(--text2);padding:6px 10px;border-radius:8px;display:flex;align-items:center;gap:6px;}
+.bar-btn:active{background:var(--bg2);}
+#logout-btn{color:var(--text3)!important;font-size:13px;}
   .desktop-quote{display:none;}
   #cal-card{display:none;}
 }
@@ -398,14 +397,11 @@ body{padding:.75rem;}
 
 <!-- SETTINGS BUTTON -->
 <div id="settings-btn-wrap">
-  <div id="main-menu-dropdown">
-    <button onclick="openReport();toggleMenu()">📊 Reporte mensual</button>
-    <div class="menu-divider"></div>
-    <button id="settings-btn" onclick="openSettings();toggleMenu()">⚙️ Ajustes</button>
-    <div class="menu-divider"></div>
-    <button onclick="signOut()" id="logout-btn" style="display:none;color:var(--text3)!important;">↩ Cerrar sesión</button>
+  <div id="bottom-bar-inner">
+    <button class="bar-btn" onclick="openReport()">📊 <span>Reporte</span></button>
+    <button class="bar-btn" id="settings-btn" onclick="openSettings()">⚙️ <span>Ajustes</span></button>
+    <button class="bar-btn" onclick="signOut()" id="logout-btn" style="display:none;">↩ <span>Salir</span></button>
   </div>
-  <button id="main-menu-btn" onclick="toggleMenu()">···</button>
 </div>
 
 <div class="db">
@@ -1048,7 +1044,10 @@ function renderEvts(di){
   const gcal=(gcalEvts[dk(weekDays[di])]||[]).map(e=>({...e,src:'gcal'}));
   const manual=dayEvts(di).map((e,i)=>({...e,src:'manual',idx:i}));
   const ts=t=>{if(!t||t==='Todo el día')return -1;const p=t.includes('PM');const pts=t.replace(/AM|PM/,'').trim().split(':');let h=parseInt(pts[0]);if(p&&h!==12)h+=12;if(!p&&h===12)h=0;return h*60+parseInt(pts[1]||0);};
-  const all=[...gcal,...manual].sort((a,b)=>ts(a.time)-ts(b.time));
+  // Deduplicate: if same title exists in both gcal and manual, prefer gcal
+  const gcalTitles=new Set(gcal.map(e=>e.title.toLowerCase()));
+  const manualFiltered=manual.filter(e=>!gcalTitles.has(e.title.toLowerCase()));
+  const all=[...gcal,...manualFiltered].sort((a,b)=>ts(a.time)-ts(b.time));
   list.innerHTML='';
   if(!all.length){list.innerHTML='<div class="ev-empty">'+(isEn()?'No events for this day':'Sin eventos para este día')+'</div>';return;}
   all.forEach(ev=>{
@@ -1429,7 +1428,13 @@ function addShCat(cat){
   const v=inp.value.trim();if(!v)return;
   if(!shoppingItems[cat])shoppingItems[cat]=[];
   shoppingItems[cat].push({text:v,done:false});
-  saveShoppingDB();renderSh();inp.value='';
+  saveShoppingDB();
+  renderSh();
+  // Refocus the input after render rebuilds DOM
+  setTimeout(()=>{
+    const newInp=document.getElementById('sh-'+cat+'-in');
+    if(newInp)newInp.focus();
+  },50);
 }
 function updateShCat(el){
   const cat=el.dataset.cat;
@@ -2715,21 +2720,6 @@ function signInEmail(){
         ?'Email o contraseña incorrectos.'
         :'Error al iniciar sesión. Intenta de nuevo.';
     });
-}
-
-function toggleMenu(){
-  const d=document.getElementById('main-menu-dropdown');
-  d.style.display=d.style.display==='block'?'none':'block';
-  setTimeout(()=>{
-    if(d.style.display==='block'){
-      document.addEventListener('click',function close(e){
-        if(!e.target.closest('#settings-btn-wrap')){
-          d.style.display='none';
-          document.removeEventListener('click',close);
-        }
-      });
-    }
-  },0);
 }
 
 function signOut(){
