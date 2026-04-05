@@ -227,7 +227,7 @@ body{padding:.75rem;}
   <div style="max-width:520px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:2rem;">
       <h1 style="font-size:28px;font-weight:500;color:#1a1a1a;margin-bottom:6px;">Weekly Planner</h1>
-      <p style="font-size:14px;color:#888;" id="setup-tagline">Configúralo a tu gusto — solo una vez</p>
+      <p style="font-size:14px;color:#888;" id="setup-tagline">Por cada minuto dedicado a organizarte, ganas una hora.</p>
     </div>
 
     <!-- PASO 1: Nombre e idioma -->
@@ -2053,7 +2053,7 @@ function selectLang(el){
 
 const SETUP_T={
   es:{
-    subtitle:'Solo necesitas hacer esto una vez',
+    subtitle:'Por cada minuto dedicado a organizarte, ganas una hora.',
     basics:'Lo básico',
     name:'Tu nombre',
     namePh:'Ej. Fernanda',
@@ -2084,7 +2084,7 @@ const SETUP_T={
     currencies:['MXN — Peso mexicano ($)','USD — Dólar ($)','EUR — Euro (€)','COP — Peso colombiano ($)','ARS — Peso argentino ($)','Otra'],
   },
   en:{
-    subtitle:'Only needs to be done once',
+    subtitle:'For every minute spent organizing, an hour is earned.',
     basics:'The basics',
     name:'Your name',
     namePh:'e.g. Sarah',
@@ -2123,7 +2123,7 @@ function translateSetup(lang){
   const setText=(sel,v)=>{const e=document.querySelector(sel);if(e)e.textContent=v;};
 
   // Subtitle
-  set('setup-tagline',lang==='en'?'Set it up your way — only once':'Configúralo a tu gusto — solo una vez');
+  set('setup-tagline',lang==='en'?'For every minute spent organizing, an hour is earned.':'Por cada minuto dedicado a organizarte, ganas una hora.');
   // Section headers — find by current text
   document.querySelectorAll('#setup-screen .setup-sec').forEach((el,i)=>{
     const secLabels=[t.basics,t.palette,t.features,t.workouts,t.habitos,t.shopCats,t.gastoCats];
