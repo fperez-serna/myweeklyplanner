@@ -2184,6 +2184,10 @@ function saveSetup(){
   setupCfg.currency=document.getElementById('cfg-currency').value;
   setupCfg.palette=selectedPal;
   localStorage.setItem('wp_config',JSON.stringify(setupCfg));
+  // Also save to Firebase so all devices sync
+  if(db&&currentUser){
+    userCol().doc('config').set({cfg:setupCfg}).catch(e=>console.error('Config save:',e));
+  }
   document.getElementById('setup-screen').style.display='none';
   location.reload();
 }
@@ -2788,6 +2792,15 @@ function signOut(){
       document.getElementById('ev-date').value=dk(today);
       
       try{
+        // Load user config from Firebase first
+        try{
+          const cfgSnap=await userCol().doc('config').get();
+          if(cfgSnap.exists){
+            const remoteCfg=cfgSnap.data().cfg;
+            setupCfg={...setupCfg,...remoteCfg};
+            localStorage.setItem('wp_config',JSON.stringify(setupCfg));
+          }
+        }catch(e){console.log('No remote config');}
         await loadDB();
         await loadPendingTasks();
         await loadShoppingDB();
