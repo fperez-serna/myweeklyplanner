@@ -1800,9 +1800,12 @@ function updateGastosLang(lang){
   // Gastos dropdown
   const sel=document.getElementById('gasto-cat');
   if(sel){
-    const cats=isEn
+    // Use user's custom categories if available
+    const userCats=setupCfg&&setupCfg.gastoCats&&setupCfg.gastoCats.length?setupCfg.gastoCats:null;
+    const defaultCats=isEn
       ?['🍽 Restaurant','🛒 Grocery','🎬 Entertainment','⛽ Gas','🚗 Transport','📱 Subscription','💪 Exercise','📚 School','🔧 Service payment','💼 Business','🏠 Home','💳 Loan','✈️ Travel','💸 Other']
       :['🍽 Restaurante','🛒 Supermercado','🎬 Entretenimiento','⛽ Gasolina','🚗 Transporte','📱 Suscripción','💪 Ejercicio','📚 Escuela','🔧 Pago a servicio','💼 Negocio','🏠 Casa','💳 Préstamo','✈️ Viaje','💸 Otro'];
+    const cats=userCats||defaultCats;
     sel.innerHTML=cats.map(c=>'<option>'+c+'</option>').join('');
   }
   // Total label
