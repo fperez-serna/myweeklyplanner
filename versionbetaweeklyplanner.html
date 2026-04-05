@@ -772,6 +772,24 @@ function subscribeShoppingDB(){
   });
 }
 
+let unsubConfig=null;
+function subscribeConfig(){
+  if(unsubConfig)unsubConfig();
+  if(!db)return;
+  unsubConfig=userCol().doc('config').onSnapshot(snap=>{
+    if(snap.exists){
+      const remoteCfg=snap.data().cfg;
+      if(remoteCfg){
+        const currentCfg=JSON.parse(localStorage.getItem('wp_config')||'{}');
+        // Only update if remote is newer (has more categories etc)
+        setupCfg={...setupCfg,...remoteCfg};
+        localStorage.setItem('wp_config',JSON.stringify(setupCfg));
+        applyConfig(setupCfg);
+      }
+    }
+  });
+}
+
 function subscribeDB(){
   if(unsub)unsub();
   if(!db)return;
@@ -2012,12 +2030,21 @@ function addChip(type){
   arr.push(v);
   inp.value='';
   renderChips(type,arr);
+  saveConfigToFirebase();
+}
+
+function saveConfigToFirebase(){
+  if(db&&currentUser){
+    localStorage.setItem('wp_config',JSON.stringify(setupCfg));
+    userCol().doc('config').set({cfg:setupCfg}).catch(e=>console.error('Config sync:',e));
+  }
 }
 
 function removeChip(type,i){
   const arr={workout:setupCfg.workouts,habito:setupCfg.habitos,shop:setupCfg.shopCats,gasto:setupCfg.gastoCats}[type];
   arr.splice(i,1);
   renderChips(type,arr);
+  saveConfigToFirebase();
 }
 
 function selectPal(el){
@@ -2810,6 +2837,7 @@ function signOut(){
         setTimeout(()=>{showQ(QS[qcur]);fetchWeather();},200);
         subscribeDB();
         subscribeShoppingDB();
+        subscribeConfig();
       }catch(e){
         console.warn('Firebase error:', e);
         renderDay();
