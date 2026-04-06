@@ -2781,9 +2781,11 @@ function renderBudget(dashboardTotals){
       rubroMap[sub.rubro].manual+=sub.actual;
     });
   });
-  // Add all dashboard rubros even if not in budget
-  Object.keys(dashboardTotals).forEach(cat=>{
-    if(!rubroMap[cat])rubroMap[cat]={presup:0,manual:0};
+  // Only add dashboard rubros that have actual spending (>0)
+  Object.entries(dashboardTotals).forEach(([cat,total])=>{
+    if(total>0){
+      if(!rubroMap[cat])rubroMap[cat]={presup:0,manual:0};
+    }
   });
 
   const rubroRows=Object.entries(rubroMap);
