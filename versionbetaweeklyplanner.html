@@ -2590,6 +2590,27 @@ async function loadBudgetData(){
       } else {
         budgetData={income:[],groups:getDefaultGroups()};
       }
+      // Load actuals for this specific month (separate doc)
+      const monthKey='budget_actual_'+budgetYear+'_'+String(budgetMonth+1).padStart(2,'0');
+      const actualSnap=await userCol().doc(monthKey).get();
+      if(actualSnap.exists){
+        const monthActuals=actualSnap.data();
+        // Apply monthly actuals to groups
+        budgetData.groups.forEach((g,gi)=>{
+          g.subs.forEach((sub,si)=>{
+            const key=gi+'_'+si;
+            if(monthActuals[key]!==undefined)sub.actual=monthActuals[key];
+            else sub.actual=0;
+          });
+        });
+        // Apply monthly income
+        if(monthActuals.income)budgetData.income=monthActuals.income;
+        else budgetData.income=[];
+      } else {
+        // New month - reset actuals to 0
+        budgetData.groups.forEach(g=>g.subs.forEach(sub=>sub.actual=0));
+        budgetData.income=[];
+      }
     }catch(e){budgetData={income:[],groups:getDefaultGroups()};}
   }
 
@@ -2656,8 +2677,23 @@ async function loadMonthGastos(){
 
 async function saveBudgetData(){
   if(!db||!currentUser)return;
-  try{await userCol().doc('budget_config').set(budgetData);}
-  catch(e){console.error('Budget save:',e);}
+  try{
+    // Save base config (presup + rubro only, not actuals)
+    const config={groups:budgetData.groups.map(g=>({
+      id:g.id,name:g.name,
+      subs:g.subs.map(sub=>({name:sub.name,presup:sub.presup,rubro:sub.rubro}))
+    }))};
+    await userCol().doc('budget_config').set(config);
+    // Save actuals for this month separately
+    const monthKey='budget_actual_'+budgetYear+'_'+String(budgetMonth+1).padStart(2,'0');
+    const actuals={income:budgetData.income};
+    budgetData.groups.forEach((g,gi)=>{
+      g.subs.forEach((sub,si)=>{
+        actuals[gi+'_'+si]=sub.actual||0;
+      });
+    });
+    await userCol().doc(monthKey).set(actuals);
+  }catch(e){console.error('Budget save:',e);}
 }
 
 function renderBudget(dashboardTotals){
