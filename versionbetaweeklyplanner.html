@@ -2603,13 +2603,15 @@ async function loadBudgetData(){
             else sub.actual=0;
           });
         });
-        // Apply monthly income
-        if(monthActuals.income)budgetData.income=monthActuals.income;
+        // Apply monthly income - fallback to budget_config income if monthly is empty
+        if(monthActuals.income&&monthActuals.income.length>0)budgetData.income=monthActuals.income;
+        else if(budgetData.income&&budgetData.income.length>0){} // keep from config
         else budgetData.income=[];
       } else {
-        // New month - reset actuals to 0
+        // New month - reset actuals to 0, keep income from config if exists
         budgetData.groups.forEach(g=>g.subs.forEach(sub=>sub.actual=0));
-        budgetData.income=[];
+        // Keep income from config doc if it has some (migration from old format)
+        if(!budgetData.income||budgetData.income.length===0)budgetData.income=[];
       }
     }catch(e){budgetData={income:[],groups:getDefaultGroups()};}
   }
