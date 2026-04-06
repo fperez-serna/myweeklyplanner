@@ -1176,7 +1176,9 @@ function addEv(){
 
 function setSelectVal(id, val){
   const sel=document.getElementById(id);
-  if(!sel||!val)return;
+  if(!sel)return;
+  // If empty, reset to blank option
+  if(!val){sel.value='';return;}
   // Try direct match first
   if([...sel.options].some(o=>o.value===val)){sel.value=val;return;}
   // Try translated match (ES->EN or EN->ES)
@@ -1184,6 +1186,7 @@ function setSelectVal(id, val){
   const hmapped=HABITO_MAP[val]||Object.keys(HABITO_MAP).find(k=>HABITO_MAP[k]===val);
   const alt=mapped||hmapped;
   if(alt&&[...sel.options].some(o=>o.value===alt)){sel.value=alt;}
+  else sel.value=''; // Not found - reset to blank
 }
 function renderWo(di){
   const w=dayWo(di);
