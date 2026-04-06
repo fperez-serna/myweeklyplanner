@@ -1530,7 +1530,8 @@ const QS_EN=[
   {t:"Make each day your masterpiece.",a:"Maya Angelou"},
   {t:"Well-behaved women seldom make history.",a:"Laurel Thatcher Ulrich"},
 ];
-let QS=[...QS_ES];
+function shuffleArr(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+let QS=shuffleArr([...QS_ES]);
 let qcur=Math.floor(Math.random()*QS.length);
 function showQ(q){
   const txt='\u201C'+q.t+'\u201D';
@@ -2009,7 +2010,7 @@ function applyLang(lang){
   MES=lang==='en'?MES_EN:MES_ES;
   CAL_DIAS=lang==='en'?CAL_DIAS_EN:CAL_DIAS_ES;
   CAL_MESES=lang==='en'?CAL_MESES_EN:CAL_MESES_ES;
-  QS=lang==='en'?[...QS_EN]:[...QS_ES];
+  QS=shuffleArr(lang==='en'?[...QS_EN]:[...QS_ES]);
   qcur=Math.floor(Math.random()*QS.length);
   showQ(QS[qcur]);
   buildCalendar();
@@ -2429,7 +2430,7 @@ function openSettings(){
   document.getElementById('setup-screen').style.display='block';
 }
 
-function initApp(){
+function initApp(){if(typeof QS!=='undefined')shuffleArr(QS);
   const saved=localStorage.getItem('wp_config');
   if(!saved){
     // First time — show setup
@@ -2738,7 +2739,7 @@ function renderBudget(dashboardTotals){
       const cls=sub.presup>0?(sub.actual>sub.presup?'over':'ok'):'neutral';
       const catOpts2=cats.map(c=>`<option value="${c}" ${c===sub.rubro?'selected':''}>${c}</option>`).join('');
       html+=`<div class="budget-sub-row" style="grid-template-columns:1fr 70px 70px 100px 24px;">
-        <div class="budget-sub-name ${cls}">${sub.name}</div>
+        <div class="budget-sub-name ${cls}" onclick="budgetEditSubName(${gi},${si},this)" style="cursor:pointer;" title="${es?'Clic para editar':'Click to edit'}">${sub.name}</div>
         <div class="budget-amt editable" onclick="budgetEditSub(${gi},${si},'presup',this)">${fmt(sub.presup)}</div>
         <div class="budget-amt ${cls} editable" onclick="budgetEditSub(${gi},${si},'actual',this)">${fmt(sub.actual)}</div>
         <select class="budget-sinput" style="font-size:10px;padding:2px 4px;" onchange="budgetChangeRubro(${gi},${si},this.value)">
@@ -2933,6 +2934,38 @@ async function budgetAddGroup(){
   budgetData.groups.push({id:'grp_'+Date.now(),name,subs:[]});
   await saveBudgetData();
   loadBudgetData();
+}
+
+async function budgetEditSubName(gi,si,el){
+  const cur=el.textContent;
+  const inp=document.createElement('input');
+  inp.type='text';inp.value=cur;
+  inp.style.cssText='font-size:12px;padding:3px 6px;border:0.5px solid var(--mauve);border-radius:6px;outline:none;width:100%;background:var(--bg);color:var(--text);';
+  inp.onblur=async()=>{
+    const v=inp.value.trim()||cur;
+    budgetData.groups[gi].subs[si].name=v;
+    await saveBudgetData();
+    const dash=await loadMonthGastos();
+    renderBudget(dash);
+  };
+  inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape'){inp.replaceWith(el);}};
+  el.replaceWith(inp);inp.focus();inp.select();
+}
+
+async function budgetEditSubName(gi,si,el){
+  const cur=el.textContent;
+  const inp=document.createElement('input');
+  inp.type='text';inp.value=cur;
+  inp.style.cssText='font-size:12px;padding:3px 6px;border:0.5px solid var(--mauve);border-radius:6px;outline:none;width:100%;background:var(--bg);color:var(--text);';
+  inp.onblur=async()=>{
+    const v=inp.value.trim()||cur;
+    budgetData.groups[gi].subs[si].name=v;
+    await saveBudgetData();
+    const dash=await loadMonthGastos();
+    renderBudget(dash);
+  };
+  inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape'){inp.replaceWith(el);}};
+  el.replaceWith(inp);inp.focus();inp.select();
 }
 
 async function budgetDelSub(gi,si){
