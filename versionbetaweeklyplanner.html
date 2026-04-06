@@ -202,6 +202,75 @@ body{padding:.75rem;}
 .rcal-cell.today-cell{outline:2px solid var(--mauve);}
 .report-loading{text-align:center;padding:2rem;color:var(--text3);font-size:14px;}
 
+
+/* ── MONTHLY BUDGET ─────────────────────── */
+#budget-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:9998;overflow-y:auto;padding:1rem;}
+#budget-panel{background:var(--bg);border-radius:16px;max-width:580px;margin:0 auto;padding:1.5rem;position:relative;}
+.budget-close{position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);}
+.budget-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;}
+.budget-month{font-size:16px;font-weight:500;color:var(--text);}
+.budget-nav-btn{background:none;border:0.5px solid var(--border);border-radius:8px;padding:4px 12px;cursor:pointer;color:var(--text2);font-size:14px;}
+.budget-sec-title{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+.budget-income-box{border:0.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1rem;}
+.budget-income-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg2);border-bottom:0.5px solid var(--border);}
+.budget-income-total{font-size:16px;font-weight:500;color:var(--text);}
+.budget-income-lbl{font-size:10px;color:var(--text3);margin-bottom:2px;}
+.budget-inc-row{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:0.5px solid var(--border);}
+.budget-inc-row:last-of-type{border-bottom:none;}
+.budget-inc-name{font-size:12px;color:var(--text);}
+.budget-inc-amt{font-size:12px;font-weight:500;color:var(--text);cursor:pointer;border-bottom:1px dashed var(--border);padding:1px 2px;}
+.budget-inc-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px;}
+.budget-add-inc{display:grid;grid-template-columns:1fr 100px 32px;gap:6px;padding:8px 12px;background:var(--bg2);border-top:0.5px dashed var(--border);}
+.budget-finput{font-size:12px;padding:5px 9px;border:0.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);outline:none;width:100%;}
+.budget-finput:focus{border-color:var(--mauve);}
+.budget-add-btn-sm{width:32px;height:32px;border-radius:8px;background:var(--mauve);color:#fff;border:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;}
+.budget-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:1rem;}
+.budget-stat{background:var(--bg2);border-radius:10px;padding:8px 10px;}
+.budget-stat-val{font-size:14px;font-weight:500;color:var(--text);}
+.budget-stat-val.green{color:var(--teal);}
+.budget-stat-val.red{color:#c0392b;}
+.budget-stat-lbl{font-size:10px;color:var(--text3);margin-top:1px;}
+.budget-group{margin-bottom:0.75rem;border:0.5px solid var(--border);border-radius:12px;overflow:hidden;}
+.budget-group-header{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;background:var(--bg2);}
+.budget-group-name{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;}
+.budget-col-hds{display:grid;grid-template-columns:1fr 70px 70px 100px;gap:4px;padding:5px 12px;background:var(--bg2);border-bottom:0.5px solid var(--border);}
+.budget-col-h{font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;text-align:right;}
+.budget-col-h:first-child{text-align:left;}
+.budget-sub-row{display:grid;grid-template-columns:1fr 70px 70px 100px;gap:4px;align-items:center;padding:7px 12px;border-bottom:0.5px solid var(--border);}
+.budget-sub-row:last-child{border-bottom:none;}
+.budget-sub-name{font-size:12px;color:var(--text);}
+.budget-sub-name.over{text-decoration:underline;text-decoration-color:#c0392b;text-decoration-thickness:2px;text-underline-offset:3px;}
+.budget-sub-name.ok{text-decoration:underline;text-decoration-color:var(--teal);text-decoration-thickness:2px;text-underline-offset:3px;}
+.budget-sub-name.neutral{color:var(--text3);}
+.budget-amt{font-size:12px;text-align:right;color:var(--text2);}
+.budget-amt.over{color:#c0392b;}
+.budget-amt.ok{color:var(--teal);}
+.budget-amt.neutral{color:var(--text3);}
+.budget-amt.editable{cursor:pointer;border-bottom:1px dashed var(--border);}
+.budget-rubro-tag{font-size:10px;text-align:right;color:var(--text3);background:var(--bg2);padding:2px 6px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.budget-add-sub{display:grid;grid-template-columns:1fr 70px 70px 100px;gap:4px;padding:6px 12px;border-top:0.5px dashed var(--border);background:var(--bg2);}
+.budget-sinput{font-size:11px;padding:4px 7px;border:0.5px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);outline:none;width:100%;}
+.budget-sinput:focus{border-color:var(--mauve);}
+.budget-add-group-btn{display:flex;align-items:center;gap:6px;background:none;border:0.5px dashed var(--border);border-radius:8px;padding:8px 14px;cursor:pointer;color:var(--text3);font-size:12px;width:100%;margin:8px 0 0;}
+.budget-divider{height:0.5px;background:var(--border);margin:1rem 0;}
+.budget-res-table{width:100%;border-collapse:collapse;}
+.budget-res-table th{font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;padding:6px 8px;text-align:right;border-bottom:0.5px solid var(--border);}
+.budget-res-table th:first-child{text-align:left;}
+.budget-res-table td{font-size:11px;padding:7px 8px;text-align:right;border-bottom:0.5px solid var(--border);color:var(--text2);vertical-align:middle;}
+.budget-res-table td:first-child{text-align:left;color:var(--text);font-size:12px;}
+.budget-res-table tr:last-child td{border-bottom:none;}
+.budget-total-row td{font-weight:600;color:var(--text)!important;border-top:1px solid var(--border);font-size:12px!important;}
+.budget-tag-sinc{font-size:10px;background:#fff3e0;color:#e65100;padding:2px 7px;border-radius:6px;white-space:nowrap;}
+.budget-tag-ok{font-size:10px;background:#e8f5e9;color:#2e7d32;padding:2px 7px;border-radius:6px;white-space:nowrap;}
+.budget-tag-over{font-size:10px;background:#fce4ec;color:#c62828;padding:2px 7px;border-radius:6px;white-space:nowrap;}
+.budget-mini-bar{height:3px;background:var(--border);border-radius:99px;overflow:hidden;width:50px;margin-top:3px;}
+.budget-mini-fill{height:100%;border-radius:99px;}
+.budget-legend{background:var(--bg2);border-radius:10px;padding:10px 12px;margin-top:10px;}
+.budget-leg-row{display:flex;gap:10px;padding:5px 0;border-bottom:0.5px solid var(--border);}
+.budget-leg-row:last-child{border-bottom:none;}
+.budget-leg-lbl{font-size:11px;font-weight:600;color:var(--text2);min-width:110px;}
+.budget-leg-desc{font-size:11px;color:var(--text3);line-height:1.5;}
+
 </style>
 </head>
 <body>
@@ -396,14 +465,17 @@ body{padding:.75rem;}
 <!-- SETTINGS BUTTON -->
 <div id="settings-btn-wrap" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9990;background:#fff;border-top:1px solid rgba(0,0,0,0.1);padding:6px 24px calc(6px + env(safe-area-inset-bottom)) 24px;">
   <div style="display:flex;flex-direction:row;align-items:center;justify-content:space-around;width:100%;max-width:500px;margin:0 auto;">
+    <button onclick="openBudget()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#666;font-size:11px;">
+      <span style="font-size:20px;">💰</span><span style="font-size:11px;">Presupuesto</span>
+    </button>
     <button onclick="openReport()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#666;font-size:11px;">
-      <span style="font-size:20px;">📊</span><span>Reporte</span>
+      <span style="font-size:20px;">📊</span><span style="font-size:11px;">Reporte</span>
     </button>
     <button id="settings-btn" onclick="openSettings()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#666;font-size:11px;">
-      <span style="font-size:20px;">⚙️</span><span>Ajustes</span>
+      <span style="font-size:20px;">⚙️</span><span style="font-size:11px;">Ajustes</span>
     </button>
     <button id="logout-btn" onclick="signOut()" style="display:none;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#999;font-size:11px;">
-      <span style="font-size:20px;">↩</span><span>Salir</span>
+      <span style="font-size:20px;">↩</span><span style="font-size:11px;">Salir</span>
     </button>
   </div>
 </div>
@@ -575,6 +647,22 @@ body{padding:.75rem;}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;" id="sh-all" class="sh-grid"></div>
   </div>
   <div style="height:80px;"></div>
+</div>
+
+
+<!-- MONTHLY BUDGET MODAL -->
+<div id="budget-modal" onclick="if(event.target===this)closeBudget()">
+  <div id="budget-panel">
+    <button class="budget-close" onclick="closeBudget()">×</button>
+    <div class="budget-nav">
+      <button class="budget-nav-btn" onclick="budgetPrevMonth()">‹</button>
+      <div class="budget-month" id="budget-month-lbl"></div>
+      <button class="budget-nav-btn" onclick="budgetNextMonth()" id="budget-next-btn">›</button>
+    </div>
+    <div id="budget-content">
+      <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px;">Cargando...</div>
+    </div>
+  </div>
 </div>
 
 <!-- MONTHLY REPORT MODAL -->
@@ -2451,6 +2539,393 @@ function shareFocus(){
     txt+=(isEn()?'No focus set':'Sin enfoques aún');
   }
   shareText(txt.trim());
+}
+
+// ── MONTHLY BUDGET ──────────────────────────
+let budgetYear=new Date().getFullYear();
+let budgetMonth=new Date().getMonth();
+let budgetData={income:[],groups:[]};
+
+const MES_ES_B=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MES_EN_B=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function openBudget(){
+  budgetYear=new Date().getFullYear();
+  budgetMonth=new Date().getMonth();
+  document.getElementById('budget-modal').style.display='block';
+  document.body.style.overflow='hidden';
+  loadBudgetData();
+}
+
+function closeBudget(){
+  document.getElementById('budget-modal').style.display='none';
+  document.body.style.overflow='';
+}
+
+function budgetPrevMonth(){budgetMonth--;if(budgetMonth<0){budgetMonth=11;budgetYear--;}loadBudgetData();}
+function budgetNextMonth(){
+  const now=new Date();
+  if(budgetYear===now.getFullYear()&&budgetMonth>=now.getMonth())return;
+  budgetMonth++;if(budgetMonth>11){budgetMonth=0;budgetYear++;}
+  loadBudgetData();
+}
+
+async function loadBudgetData(){
+  const meses=isEn()?MES_EN_B:MES_ES_B;
+  document.getElementById('budget-month-lbl').textContent=meses[budgetMonth]+' '+budgetYear;
+  const nextBtn=document.getElementById('budget-next-btn');
+  const now=new Date();
+  if(nextBtn)nextBtn.style.opacity=(budgetYear===now.getFullYear()&&budgetMonth>=now.getMonth())?'0.3':'1';
+
+  // Load budget config from Firebase
+  if(db&&currentUser){
+    try{
+      const snap=await userCol().doc('budget_config').get();
+      if(snap.exists){
+        budgetData=snap.data();
+        if(!budgetData.income)budgetData.income=[];
+        if(!budgetData.groups)budgetData.groups=getDefaultGroups();
+      } else {
+        budgetData={income:[],groups:getDefaultGroups()};
+      }
+    }catch(e){budgetData={income:[],groups:getDefaultGroups()};}
+  }
+
+  // Load dashboard gastos for this month
+  const dashboardTotals=await loadMonthGastos();
+  renderBudget(dashboardTotals);
+}
+
+function getDefaultGroups(){
+  const es=!isEn();
+  return [
+    {id:'hogar',name:es?'Hogar':'Home',subs:[
+      {name:es?'Renta/Hipoteca':'Rent/Mortgage',presup:0,actual:0,rubro:''},
+      {name:es?'Electricidad':'Electricity',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
+      {name:es?'Internet':'Internet',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
+      {name:es?'Gas/Agua':'Gas/Water',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
+    ]},
+    {id:'transporte',name:es?'Transporte':'Transport',subs:[
+      {name:es?'Gasolina':'Gas',presup:0,actual:0,rubro:es?'⛽ Gasolina':'⛽ Gas'},
+      {name:es?'Seguro auto':'Car insurance',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
+    ]},
+    {id:'salud',name:es?'Salud':'Health',subs:[
+      {name:es?'Ejercicio/Gym':'Exercise/Gym',presup:0,actual:0,rubro:es?'💪 Ejercicio':'💪 Exercise'},
+      {name:es?'Seguro médico':'Health insurance',presup:0,actual:0,rubro:''},
+    ]},
+    {id:'ahorros',name:es?'Ahorros':'Savings',subs:[
+      {name:es?'Fondo emergencia':'Emergency fund',presup:0,actual:0,rubro:''},
+      {name:es?'Inversiones':'Investments',presup:0,actual:0,rubro:''},
+    ]},
+  ];
+}
+
+async function loadMonthGastos(){
+  // Sum all gastos for this month from Firebase by category
+  const totals={};
+  const firstDay=new Date(budgetYear,budgetMonth,1);
+  const lastDay=new Date(budgetYear,budgetMonth+1,0);
+  // Get week starts that overlap
+  const d=new Date(firstDay);
+  const dow=d.getDay();
+  d.setDate(d.getDate()-(dow===0?6:dow-1));
+  const promises=[];
+  while(d<=lastDay){
+    const key='week_'+dk(new Date(d));
+    promises.push(userCol().doc(key).get().then(snap=>{
+      if(!snap.exists)return;
+      const data=snap.data();
+      if(!data.gastos)return;
+      Object.entries(data.gastos).forEach(([di,items])=>{
+        if(!Array.isArray(items))return;
+        const dayDate=new Date(d);
+        dayDate.setDate(d.getDate()); // approximate - just use week data
+        items.forEach(g=>{
+          if(!g.cat||!g.monto)return;
+          totals[g.cat]=(totals[g.cat]||0)+g.monto;
+        });
+      });
+    }).catch(()=>{}));
+    d.setDate(d.getDate()+7);
+  }
+  await Promise.all(promises);
+  return totals;
+}
+
+async function saveBudgetData(){
+  if(!db||!currentUser)return;
+  try{await userCol().doc('budget_config').set(budgetData);}
+  catch(e){console.error('Budget save:',e);}
+}
+
+function renderBudget(dashboardTotals){
+  const cats=setupCfg.gastoCats||DEFAULT_GASTOS;
+  const totalIncome=budgetData.income.reduce((s,i)=>s+i.amt,0);
+  const totalPresup=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.presup,0),0);
+  const totalManual=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.actual,0),0);
+  const totalDash=Object.values(dashboardTotals).reduce((s,v)=>s+v,0);
+  const disponible=totalIncome-totalDash;
+  const sinPresup=totalIncome-totalPresup;
+
+  const fmt=n=>'$'+(Math.round(n)||0).toLocaleString();
+  const es=!isEn();
+
+  let html=`
+  <!-- INGRESOS -->
+  <div class="budget-sec-title">${es?'Ingresos':'Income'}</div>
+  <div class="budget-income-box">
+    <div class="budget-income-header">
+      <div>
+        <div class="budget-income-lbl">${es?'Total ingresos':'Total income'}</div>
+        <div class="budget-income-total">${fmt(totalIncome)}</div>
+      </div>
+    </div>
+    <div id="budget-inc-list">`;
+
+  budgetData.income.forEach((inc,i)=>{
+    html+=`<div class="budget-inc-row">
+      <div class="budget-inc-name">${inc.desc}</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="budget-inc-amt" onclick="budgetEditAmt(this,'income',${i})">${fmt(inc.amt)}</div>
+        <button class="budget-inc-del" onclick="budgetDelIncome(${i})">×</button>
+      </div>
+    </div>`;
+  });
+
+  html+=`</div>
+    <div class="budget-add-inc">
+      <input class="budget-finput" type="text" placeholder="${es?'Descripción (ej. Nómina)':'Description (e.g. Salary)'}" id="budget-inc-desc"/>
+      <input class="budget-finput" type="number" placeholder="$0" id="budget-inc-amt" style="text-align:right;"/>
+      <button class="budget-add-btn-sm" onclick="budgetAddIncome()">+</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="budget-stats">
+    <div class="budget-stat"><div class="budget-stat-val">${fmt(totalIncome)}</div><div class="budget-stat-lbl">${es?'Total ingresos':'Total income'}</div></div>
+    <div class="budget-stat"><div class="budget-stat-val">${fmt(totalPresup)}</div><div class="budget-stat-lbl">${es?'Presupuestado':'Budgeted'}</div></div>
+    <div class="budget-stat"><div class="budget-stat-val ${sinPresup>=0?'green':'red'}">${fmt(sinPresup)}</div><div class="budget-stat-lbl">${es?'Sin presupuestar':'Unbudgeted'}</div></div>
+    <div class="budget-stat"><div class="budget-stat-val">${fmt(totalManual)}</div><div class="budget-stat-lbl">${es?'Actual — ingreso manual':'Actual — manual entry'}</div></div>
+    <div class="budget-stat"><div class="budget-stat-val">${fmt(totalDash)}</div><div class="budget-stat-lbl">${es?'Total dashboard':'Total dashboard'}</div></div>
+    <div class="budget-stat"><div class="budget-stat-val ${disponible>=0?'green':'red'}">${fmt(disponible)}</div><div class="budget-stat-lbl">${es?'Disponible':'Available'}</div></div>
+  </div>
+
+  <!-- GROUPS -->
+  <div class="budget-sec-title">${es?'Gastos planeados':'Planned expenses'}</div>`;
+
+  budgetData.groups.forEach((group,gi)=>{
+    const groupPresup=group.subs.reduce((s,sub)=>s+sub.presup,0);
+    const groupActual=group.subs.reduce((s,sub)=>s+sub.actual,0);
+    html+=`<div class="budget-group">
+      <div class="budget-group-header" onclick="budgetToggle('grp-${gi}')">
+        <div class="budget-group-name">${group.name}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;color:var(--text3);">${fmt(groupActual)} / ${fmt(groupPresup)}</span>
+          <span style="font-size:11px;color:var(--text3);">▾</span>
+        </div>
+      </div>
+      <div id="grp-${gi}">
+        <div class="budget-col-hds">
+          <div class="budget-col-h" style="text-align:left;">${es?'Subcategoría':'Subcategory'}</div>
+          <div class="budget-col-h">${es?'Presup.':'Budget'}</div>
+          <div class="budget-col-h">${es?'Actual':'Actual'}</div>
+          <div class="budget-col-h">${es?'Rubro':'Category'}</div>
+        </div>`;
+
+    group.subs.forEach((sub,si)=>{
+      const cls=sub.presup>0?(sub.actual>sub.presup?'over':'ok'):'neutral';
+      html+=`<div class="budget-sub-row">
+        <div class="budget-sub-name ${cls}">${sub.name}</div>
+        <div class="budget-amt editable" onclick="budgetEditSub(${gi},${si},'presup',this)">${fmt(sub.presup)}</div>
+        <div class="budget-amt ${cls} editable" onclick="budgetEditSub(${gi},${si},'actual',this)">${fmt(sub.actual)}</div>
+        <div class="budget-rubro-tag">${sub.rubro||'—'}</div>
+      </div>`;
+    });
+
+    // Add sub row
+    const catOpts=cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+    html+=`<div class="budget-add-sub" id="addsub-${gi}">
+        <input class="budget-sinput" type="text" placeholder="${es?'Nueva subcategoría...':'New subcategory...'}" id="bsub-name-${gi}"/>
+        <input class="budget-sinput" type="number" placeholder="$0" id="bsub-presup-${gi}" style="text-align:right;"/>
+        <input class="budget-sinput" type="number" placeholder="$0" id="bsub-actual-${gi}" style="text-align:right;"/>
+        <div style="display:flex;gap:4px;">
+          <select class="budget-sinput" id="bsub-rubro-${gi}" style="flex:1;font-size:10px;">
+            <option value="">${es?'Rubro...':'Category...'}</option>
+            ${catOpts}
+          </select>
+          <button style="background:var(--mauve);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:14px;height:28px;width:28px;" onclick="budgetAddSub(${gi})">+</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  });
+
+  html+=`<button class="budget-add-group-btn" onclick="budgetAddGroup()">+ ${es?'Agregar grupo':'Add group'}</button>`;
+
+  // RESUMEN POR RUBRO
+  // Build rubro summary from all subs
+  const rubroMap={};
+  budgetData.groups.forEach(g=>{
+    g.subs.forEach(sub=>{
+      if(!sub.rubro||sub.rubro==='—')return;
+      if(!rubroMap[sub.rubro])rubroMap[sub.rubro]={presup:0,manual:0};
+      rubroMap[sub.rubro].presup+=sub.presup;
+      rubroMap[sub.rubro].manual+=sub.actual;
+    });
+  });
+  // Add all dashboard rubros even if not in budget
+  Object.keys(dashboardTotals).forEach(cat=>{
+    if(!rubroMap[cat])rubroMap[cat]={presup:0,manual:0};
+  });
+
+  const rubroRows=Object.entries(rubroMap);
+  let totalResPresup=0,totalResManual=0,totalResDash=0,totalResSinc=0;
+
+  html+=`<div class="budget-divider"></div>
+  <div class="budget-sec-title">${es?'Resumen por rubro de gastos':'Expense summary by category'}</div>
+  <div style="background:var(--bg2);border-radius:12px;overflow:hidden;">
+  <table class="budget-res-table">
+    <thead><tr>
+      <th style="text-align:left;">${es?'Rubro':'Category'}</th>
+      <th>${es?'Presup.':'Budget'}</th>
+      <th>${es?'Actual — ingreso manual':'Actual — manual'}</th>
+      <th>Dashboard</th>
+      <th>${es?'Diferencia':'Difference'}</th>
+      <th>${es?'Sin clasificar':'Unclassified'}</th>
+    </tr></thead>
+    <tbody>`;
+
+  rubroRows.forEach(([rubro,data])=>{
+    const dash=dashboardTotals[rubro]||0;
+    const diff=data.presup-dash;
+    const sinc=Math.max(0,dash-data.manual);
+    totalResPresup+=data.presup;totalResManual+=data.manual;totalResDash+=dash;totalResSinc+=sinc;
+    const pct=data.presup>0?Math.min(100,Math.round((dash/data.presup)*100)):0;
+    const diffTag=diff===0?`<span style="color:var(--text3);">$0</span>`
+      :diff>0?`<span class="budget-tag-ok">+${fmt(diff)}</span>`
+      :`<span class="budget-tag-over">${fmt(diff)}</span>`;
+    const sincTag=sinc>0?`<span class="budget-tag-sinc">${fmt(sinc)}</span>`:`<span style="color:var(--text3);">$0</span>`;
+    html+=`<tr>
+      <td><div>${rubro}<div class="budget-mini-bar"><div class="budget-mini-fill" style="width:${pct}%;background:${diff>=0?'var(--teal)':'#c0392b'};"></div></div></div></td>
+      <td>${fmt(data.presup)}</td>
+      <td>${fmt(data.manual)}</td>
+      <td>${fmt(dash)}</td>
+      <td>${diffTag}</td>
+      <td>${sincTag}</td>
+    </tr>`;
+  });
+
+  const totalDiff=totalResPresup-totalResDash;
+  html+=`<tr class="budget-total-row">
+    <td>Total</td>
+    <td>${fmt(totalResPresup)}</td>
+    <td>${fmt(totalResManual)}</td>
+    <td>${fmt(totalResDash)}</td>
+    <td>${totalDiff>=0?`<span class="budget-tag-ok">+${fmt(totalDiff)}</span>`:`<span class="budget-tag-over">${fmt(totalDiff)}</span>`}</td>
+    <td>${totalResSinc>0?`<span class="budget-tag-sinc">${fmt(totalResSinc)}</span>`:`<span style="color:var(--text3);">$0</span>`}</td>
+  </tr>
+  </tbody></table></div>
+
+  <!-- LEGEND -->
+  <div class="budget-legend">
+    <div class="budget-leg-row"><div class="budget-leg-lbl">${es?'Presupuesto':'Budget'}</div><div class="budget-leg-desc">${es?'Lo que planeaste gastar en cada rubro este mes.':'What you planned to spend per category this month.'}</div></div>
+    <div class="budget-leg-row"><div class="budget-leg-lbl">${es?'Actual':'Actual'}</div><div class="budget-leg-desc">${es?'Lo que tú mismo registraste como gastado en cada subcategoría — ingresado manualmente.':'What you manually entered as spent in each subcategory.'}</div></div>
+    <div class="budget-leg-row"><div class="budget-leg-lbl">Dashboard</div><div class="budget-leg-desc">${es?'Los gastos reales registrados en tu Weekly Planner, jalados automáticamente.':'Real expenses recorded in your Weekly Planner, pulled automatically.'}</div></div>
+    <div class="budget-leg-row"><div class="budget-leg-lbl">${es?'Diferencia':'Difference'}</div><div class="budget-leg-desc">${es?'Cuánto te alejaste de tu presupuesto — compara lo planeado contra tus gastos reales del dashboard.':'How far off your budget — planned vs real dashboard expenses.'}</div></div>
+    <div class="budget-leg-row"><div class="budget-leg-lbl"><span class="budget-tag-sinc">${es?'Sin clasificar':'Unclassified'}</span></div><div class="budget-leg-desc">${es?'Gastos del dashboard que aún no has asignado a ninguna subcategoría de tu presupuesto.':'Dashboard expenses not yet assigned to any budget subcategory.'}</div></div>
+  </div>`;
+
+  document.getElementById('budget-content').innerHTML=html;
+
+  // Add enter key listeners
+  setTimeout(()=>{
+    const desc=document.getElementById('budget-inc-desc');
+    const amt=document.getElementById('budget-inc-amt');
+    if(desc)desc.addEventListener('keydown',e=>{if(e.key==='Enter')amt.focus();});
+    if(amt)amt.addEventListener('keydown',e=>{if(e.key==='Enter')budgetAddIncome();});
+    // Sub row enter keys
+    budgetData.groups.forEach((g,gi)=>{
+      const nameEl=document.getElementById(`bsub-name-${gi}`);
+      const presupEl=document.getElementById(`bsub-presup-${gi}`);
+      const actualEl=document.getElementById(`bsub-actual-${gi}`);
+      const rubroEl=document.getElementById(`bsub-rubro-${gi}`);
+      if(nameEl)nameEl.addEventListener('keydown',e=>{if(e.key==='Enter')presupEl.focus();});
+      if(presupEl)presupEl.addEventListener('keydown',e=>{if(e.key==='Enter')actualEl.focus();});
+      if(actualEl)actualEl.addEventListener('keydown',e=>{if(e.key==='Enter')rubroEl.focus();});
+      if(rubroEl)rubroEl.addEventListener('keydown',e=>{if(e.key==='Enter')budgetAddSub(gi);});
+    });
+  },100);
+}
+
+function budgetToggle(id){
+  const el=document.getElementById(id);
+  if(el)el.style.display=el.style.display==='none'?'block':'none';
+}
+
+function budgetEditAmt(el,type,idx){
+  const cur=parseFloat(el.textContent.replace(/[$,]/g,''))||0;
+  const inp=document.createElement('input');
+  inp.type='number';inp.value=cur;
+  inp.style.cssText='font-size:12px;padding:3px 6px;border:0.5px solid var(--mauve);border-radius:6px;outline:none;text-align:right;width:80px;background:var(--bg);color:var(--text);';
+  inp.onblur=async()=>{
+    const v=parseFloat(inp.value)||0;
+    if(type==='income')budgetData.income[idx].amt=v;
+    await saveBudgetData();
+    const dash=await loadMonthGastos();
+    renderBudget(dash);
+  };
+  inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape'){inp.replaceWith(el);}};
+  el.replaceWith(inp);inp.focus();inp.select();
+}
+
+function budgetEditSub(gi,si,field,el){
+  const cur=parseFloat(el.textContent.replace(/[$,]/g,''))||0;
+  const inp=document.createElement('input');
+  inp.type='number';inp.value=cur;
+  inp.style.cssText='font-size:12px;padding:3px 6px;border:0.5px solid var(--mauve);border-radius:6px;outline:none;text-align:right;width:65px;background:var(--bg);color:var(--text);';
+  inp.onblur=async()=>{
+    const v=parseFloat(inp.value)||0;
+    budgetData.groups[gi].subs[si][field]=v;
+    await saveBudgetData();
+    const dash=await loadMonthGastos();
+    renderBudget(dash);
+  };
+  inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape'){inp.replaceWith(el);}};
+  el.replaceWith(inp);inp.focus();inp.select();
+}
+
+function budgetDelIncome(i){
+  budgetData.income.splice(i,1);
+  saveBudgetData();
+  loadBudgetData();
+}
+
+async function budgetAddIncome(){
+  const desc=document.getElementById('budget-inc-desc').value.trim();
+  const amt=parseFloat(document.getElementById('budget-inc-amt').value)||0;
+  if(!desc||!amt)return;
+  budgetData.income.push({desc,amt});
+  await saveBudgetData();
+  loadBudgetData();
+}
+
+async function budgetAddSub(gi){
+  const name=document.getElementById(`bsub-name-${gi}`).value.trim();
+  const presup=parseFloat(document.getElementById(`bsub-presup-${gi}`).value)||0;
+  const actual=parseFloat(document.getElementById(`bsub-actual-${gi}`).value)||0;
+  const rubro=document.getElementById(`bsub-rubro-${gi}`).value;
+  if(!name)return;
+  budgetData.groups[gi].subs.push({name,presup,actual,rubro});
+  await saveBudgetData();
+  loadBudgetData();
+}
+
+async function budgetAddGroup(){
+  const name=prompt(isEn()?'Group name:':'Nombre del grupo:');
+  if(!name)return;
+  budgetData.groups.push({id:'grp_'+Date.now(),name,subs:[]});
+  await saveBudgetData();
+  loadBudgetData();
 }
 
 // ── MONTHLY REPORT ──────────────────────────
