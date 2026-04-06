@@ -1459,8 +1459,8 @@ function addShCat(cat){
   // Refocus the input after render rebuilds DOM
   setTimeout(()=>{
     const newInp=document.getElementById('sh-'+cat+'-in');
-    if(newInp)newInp.focus();
-  },50);
+    if(newInp){newInp.focus();newInp.scrollIntoView({behavior:'smooth',block:'center'});}
+  },100);
 }
 function updateShCat(el){
   const cat=el.dataset.cat;
