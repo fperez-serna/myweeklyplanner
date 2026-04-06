@@ -2758,14 +2758,21 @@ function renderBudget(dashboardTotals){
     const groupActual=group.subs.reduce((s,sub)=>s+sub.actual,0);
     html+=`<div class="budget-group">
       <div class="budget-group-header" onclick="budgetToggle('grp-${gi}')">
-        <div class="budget-group-name">${group.name}</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="display:flex;flex-direction:column;gap:1px;">
+            <button onclick="event.stopPropagation();budgetMoveGroup(${gi},-1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;padding:0;line-height:1;" ${gi===0?'disabled style="opacity:.3;pointer-events:none;"':''}>▲</button>
+            <button onclick="event.stopPropagation();budgetMoveGroup(${gi},1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;padding:0;line-height:1;" ${gi===budgetData.groups.length-1?'disabled style="opacity:.3;pointer-events:none;"':''}>▼</button>
+          </div>
+          <div class="budget-group-name">${group.name}</div>
+        </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:11px;color:var(--text3);">${fmt(groupActual)} / ${fmt(groupPresup)}</span>
           <span style="font-size:11px;color:var(--text3);">▾</span>
         </div>
       </div>
       <div id="grp-${gi}">
-        <div class="budget-col-hds" style="grid-template-columns:1fr 70px 70px 100px 24px;">
+        <div class="budget-col-hds" style="grid-template-columns:20px 1fr 70px 70px 100px 24px;">
+          <div class="budget-col-h"></div>
           <div class="budget-col-h" style="text-align:left;">${es?'Subcategoría':'Subcategory'}</div>
           <div class="budget-col-h">${es?'Presup.':'Budget'}</div>
           <div class="budget-col-h">${es?'Actual':'Actual'}</div>
@@ -2966,6 +2973,29 @@ async function budgetAddSub(gi){
   budgetData.groups[gi].subs.push({name,presup,actual,rubro});
   await saveBudgetData();
   loadBudgetData();
+}
+
+async function budgetMoveGroup(gi,dir){
+  const newIdx=gi+dir;
+  if(newIdx<0||newIdx>=budgetData.groups.length)return;
+  const tmp=budgetData.groups[gi];
+  budgetData.groups[gi]=budgetData.groups[newIdx];
+  budgetData.groups[newIdx]=tmp;
+  await saveBudgetData();
+  const dash=await loadMonthGastos();
+  renderBudget(dash);
+}
+
+async function budgetMoveSub(gi,si,dir){
+  const subs=budgetData.groups[gi].subs;
+  const newIdx=si+dir;
+  if(newIdx<0||newIdx>=subs.length)return;
+  const tmp=subs[si];
+  subs[si]=subs[newIdx];
+  subs[newIdx]=tmp;
+  await saveBudgetData();
+  const dash=await loadMonthGastos();
+  renderBudget(dash);
 }
 
 async function budgetAddGroup(){
