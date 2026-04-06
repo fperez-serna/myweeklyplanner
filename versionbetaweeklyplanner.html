@@ -2557,7 +2557,8 @@ function openBudget(){
   loadBudgetData();
 }
 
-function closeBudget(){
+async function closeBudget(){
+  await saveBudgetData();
   document.getElementById('budget-modal').style.display='none';
   document.body.style.overflow='';
 }
@@ -2725,20 +2726,26 @@ function renderBudget(dashboardTotals){
         </div>
       </div>
       <div id="grp-${gi}">
-        <div class="budget-col-hds">
+        <div class="budget-col-hds" style="grid-template-columns:1fr 70px 70px 100px 24px;">
           <div class="budget-col-h" style="text-align:left;">${es?'Subcategoría':'Subcategory'}</div>
           <div class="budget-col-h">${es?'Presup.':'Budget'}</div>
           <div class="budget-col-h">${es?'Actual':'Actual'}</div>
           <div class="budget-col-h">${es?'Rubro':'Category'}</div>
+          <div class="budget-col-h"></div>
         </div>`;
 
     group.subs.forEach((sub,si)=>{
       const cls=sub.presup>0?(sub.actual>sub.presup?'over':'ok'):'neutral';
-      html+=`<div class="budget-sub-row">
+      const catOpts2=cats.map(c=>`<option value="${c}" ${c===sub.rubro?'selected':''}>${c}</option>`).join('');
+      html+=`<div class="budget-sub-row" style="grid-template-columns:1fr 70px 70px 100px 24px;">
         <div class="budget-sub-name ${cls}">${sub.name}</div>
         <div class="budget-amt editable" onclick="budgetEditSub(${gi},${si},'presup',this)">${fmt(sub.presup)}</div>
         <div class="budget-amt ${cls} editable" onclick="budgetEditSub(${gi},${si},'actual',this)">${fmt(sub.actual)}</div>
-        <div class="budget-rubro-tag">${sub.rubro||'—'}</div>
+        <select class="budget-sinput" style="font-size:10px;padding:2px 4px;" onchange="budgetChangeRubro(${gi},${si},this.value)">
+          <option value="">${es?'Rubro...':'Category...'}</option>
+          ${catOpts2}
+        </select>
+        <button onclick="budgetDelSub(${gi},${si})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0;line-height:1;">×</button>
       </div>`;
     });
 
@@ -2926,6 +2933,20 @@ async function budgetAddGroup(){
   budgetData.groups.push({id:'grp_'+Date.now(),name,subs:[]});
   await saveBudgetData();
   loadBudgetData();
+}
+
+async function budgetDelSub(gi,si){
+  budgetData.groups[gi].subs.splice(si,1);
+  await saveBudgetData();
+  const dash=await loadMonthGastos();
+  renderBudget(dash);
+}
+
+async function budgetChangeRubro(gi,si,val){
+  budgetData.groups[gi].subs[si].rubro=val;
+  await saveBudgetData();
+  const dash=await loadMonthGastos();
+  renderBudget(dash);
 }
 
 // ── MONTHLY REPORT ──────────────────────────
