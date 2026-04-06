@@ -527,6 +527,8 @@ body{padding:.75rem;}
   </div>
 
   <!-- GASTOS -->
+  <div id="wk-nav-mini" style="display:flex;justify-content:space-between;background:var(--bg);border-radius:12px;padding:8px 4px;margin-bottom:8px;"></div>
+
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div class="sec" id="gastos-title">Gastos del día</div>
@@ -861,6 +863,22 @@ function buildNav(){
     btn.onclick=()=>{activeDate=new Date(d);document.getElementById('ev-date').value=dk(d);renderDay();};
     nav.appendChild(btn);
   });
+
+  // Mini nav above gastos
+  const miniNav=document.getElementById('wk-nav-mini');
+  if(miniNav){
+    miniNav.innerHTML='';
+    weekDays.forEach((d,i)=>{
+      const isT=dk(d)===dk(today);
+      const isA=dk(d)===dk(activeDate);
+      const col=document.createElement('div');
+      col.style.cssText='flex:1;text-align:center;cursor:pointer;padding:6px 2px;border-radius:8px;'+(isA?'background:var(--mauve);':'');
+      col.innerHTML='<div style="font-size:9px;font-weight:500;color:'+(isA?'#fff':'var(--text3)')+'">'+DS[d.getDay()]+'</div>'+
+        '<div style="font-size:14px;font-weight:'+(isA?'600':'400')+';color:'+(isA?'#fff':(isT?'var(--mauve)':'var(--text)'))+' ">'+d.getDate()+'</div>';
+      col.onclick=()=>{activeDate=new Date(d);document.getElementById('ev-date').value=dk(d);renderDay();};
+      miniNav.appendChild(col);
+    });
+  }
 }
 
 function buildOv(){
