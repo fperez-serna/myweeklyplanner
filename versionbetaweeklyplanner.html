@@ -2760,13 +2760,14 @@ function renderBudget(dashboardTotals){
       <div class="budget-group-header" onclick="budgetToggle('grp-${gi}')">
         <div style="display:flex;align-items:center;gap:6px;">
           <div style="display:flex;flex-direction:column;gap:1px;">
-            <button onclick="event.stopPropagation();budgetMoveGroup(${gi},-1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;padding:0;line-height:1;" ${gi===0?'disabled style="opacity:.3;pointer-events:none;"':''}>▲</button>
-            <button onclick="event.stopPropagation();budgetMoveGroup(${gi},1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;padding:0;line-height:1;" ${gi===budgetData.groups.length-1?'disabled style="opacity:.3;pointer-events:none;"':''}>▼</button>
+            <button onclick="event.stopPropagation();budgetMoveGroup(${gi},-1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;padding:0;line-height:1;" ${gi===0?'disabled style=\"opacity:.3;\"':''}>▲</button>
+            <button onclick="event.stopPropagation();budgetMoveGroup(${gi},1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;padding:0;line-height:1;" ${gi===budgetData.groups.length-1?'disabled style=\"opacity:.3;\"':''}>▼</button>
           </div>
-          <div class="budget-group-name">${group.name}</div>
+          <div class="budget-group-name" id="grp-name-${gi}" onclick="event.stopPropagation();budgetEditGroupName(${gi})" style="cursor:text;border-bottom:1px dashed var(--border);">${group.name}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:11px;color:var(--text3);">${fmt(groupActual)} / ${fmt(groupPresup)}</span>
+          <button onclick="event.stopPropagation();budgetDelGroup(${gi})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0 2px;line-height:1;" title="${es?'Eliminar grupo':'Delete group'}">×</button>
           <span style="font-size:11px;color:var(--text3);">▾</span>
         </div>
       </div>
@@ -2973,6 +2974,32 @@ async function budgetAddSub(gi){
   budgetData.groups[gi].subs.push({name,presup,actual,rubro});
   await saveBudgetData();
   loadBudgetData();
+}
+
+async function budgetDelGroup(gi){
+  if(!confirm(isEn()?'Delete this group and all its subcategories?':'¿Eliminar este grupo y todas sus subcategorías?'))return;
+  budgetData.groups.splice(gi,1);
+  await saveBudgetData();
+  const dash=await loadMonthGastos();
+  renderBudget(dash);
+}
+
+async function budgetEditGroupName(gi){
+  const el=document.getElementById('grp-name-'+gi);
+  if(!el)return;
+  const cur=budgetData.groups[gi].name;
+  const inp=document.createElement('input');
+  inp.type='text';inp.value=cur;
+  inp.style.cssText='font-size:12px;font-weight:600;padding:2px 6px;border:0.5px solid var(--mauve);border-radius:6px;outline:none;background:var(--bg);color:var(--text);width:120px;text-transform:uppercase;letter-spacing:.04em;';
+  inp.onblur=async()=>{
+    const v=inp.value.trim();
+    if(v)budgetData.groups[gi].name=v;
+    await saveBudgetData();
+    const dash=await loadMonthGastos();
+    renderBudget(dash);
+  };
+  inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape')inp.replaceWith(el);};
+  el.replaceWith(inp);inp.focus();inp.select();
 }
 
 async function budgetMoveGroup(gi,dir){
