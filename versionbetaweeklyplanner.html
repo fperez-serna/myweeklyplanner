@@ -115,11 +115,11 @@ body{background:#f0ebe6;padding:1.5rem;padding-bottom:130px;font-family:-apple-s
 .sh-text.bought{color:var(--text3);text-decoration:line-through;}
 .snote{font-size:10px;color:var(--text3);margin-top:6px;}
 .ch{font-size:11px;color:var(--mauve);margin-bottom:6px;padding:4px 8px;background:var(--mauve-l);border-radius:8px;}
-.wkov{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;}
-.wcol{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.wkov{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;align-items:start;}
+.wcol{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1;}
 .wovn{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;margin-bottom:3px;}
 .wovn.today{color:var(--mauve);}
-.wtag{font-size:10px;border-radius:4px;padding:2px 4px;line-height:1.4;}
+.wtag{font-size:10px;border-radius:4px;padding:2px 4px;line-height:1.4;word-break:break-word;white-space:normal;}
 .wwo{background:var(--teal-l);color:var(--teal-d);}
 .whb{background:var(--silk-l);color:var(--brown);}
 .wev{background:transparent;color:var(--text2);border:0.5px solid var(--border);border-radius:4px;}
@@ -995,7 +995,7 @@ function buildOv(){
     const manualEvDay=dayEvts(i);
     const gcalTitlesOv=new Set(gcalEvDay.map(e=>e.title.toLowerCase()));
     const evs=[...gcalEvDay,...manualEvDay.filter(e=>!gcalTitlesOv.has(e.title.toLowerCase()))];
-    evs.slice(0,2).forEach(ev=>{const t=document.createElement('div');t.className='wtag wev';t.textContent=ev.title;col.appendChild(t);});
+    evs.forEach(ev=>{const t=document.createElement('div');t.className='wtag wev';t.textContent=ev.title;col.appendChild(t);});
     ov.appendChild(col);
   });
 }
