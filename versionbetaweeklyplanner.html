@@ -4023,7 +4023,7 @@ function initSmartSelects(){
     const ss = createSmartSelect({
       id: 'gasto-cat_ss',
       options: gaOpts,
-      value: gaOpts[0]||'',
+      value: '',
       placeholder: es?'Categoría...':'Category...',
       onChange: (v) => { gastoCatSel.value=v; },
       onAddNew: (name) => {
