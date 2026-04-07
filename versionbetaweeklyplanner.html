@@ -2355,23 +2355,20 @@ function updateFavicon(b64){
   link2.href=b64;
 }
 
-async async function saveSetup(){
+function saveSetup(){
   setupCfg.name=document.getElementById('cfg-name').value.trim()||'';
   setupCfg.lang=selectedLang;
   setupCfg.currency=document.getElementById('cfg-currency').value;
   setupCfg.palette=selectedPal;
-  // Save to localStorage FIRST
   localStorage.setItem('wp_config',JSON.stringify(setupCfg));
-  // Save to Firebase and WAIT before reloading
-  if(db&&currentUser){
-    try{await userCol().doc('config').set({cfg:setupCfg});}
-    catch(e){console.error('Config save:',e);}
-  }
   document.getElementById('setup-screen').style.display='none';
-  // Apply changes without full reload to avoid race condition
   applyConfig(setupCfg);
   applyLang(setupCfg.lang);
   renderDay();
+  // Save to Firebase in background
+  if(db&&currentUser){
+    userCol().doc('config').set({cfg:setupCfg}).catch(e=>console.error('Config save:',e));
+  }
 }
 
 function applyConfig(cfg){
