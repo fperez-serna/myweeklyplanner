@@ -3456,8 +3456,13 @@ function toggleResumenSection(){
 }
 function budgetToggleAll(){
   const allGroups=budgetData.groups||[];
-  const anyOpen=allGroups.some((_,gi)=>!budgetCollapsedGroups.has(gi));
-  // If any is open -> collapse all. If all collapsed -> expand all
+  const debtEl=document.getElementById('debt-body');
+  const resEl=document.getElementById('resumen-body');
+  const debtOpen=debtEl&&debtEl.style.display!=='none';
+  const resOpen=resEl&&resEl.style.display!=='none';
+  const anyGroupOpen=allGroups.some((_,gi)=>!budgetCollapsedGroups.has(gi));
+  const anyOpen=anyGroupOpen||debtOpen||resOpen;
+
   allGroups.forEach((_,gi)=>{
     const el=document.getElementById('grp-'+gi);
     if(anyOpen){
@@ -3468,6 +3473,10 @@ function budgetToggleAll(){
       if(el)el.style.display='block';
     }
   });
+  // Also toggle debt and resumen sections
+  if(debtEl){debtEl.style.display=anyOpen?'none':'block';budgetDebtOpen=!anyOpen;}
+  if(resEl){resEl.style.display=anyOpen?'none':'block';budgetResumenOpen=!anyOpen;}
+
   const btn=document.getElementById('budget-toggle-all-btn');
   if(btn)btn.textContent=anyOpen?'⊕':'⊖';
 }
