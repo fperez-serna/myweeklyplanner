@@ -696,6 +696,7 @@ body{padding:.75rem;}
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
         <button class="budget-nav-btn" onclick="budgetNextMonth()" id="budget-next-btn">›</button>
+        <button onclick="budgetToggleAll()" id="budget-toggle-all-btn" style="background:none;border:0.5px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer;color:var(--text2);font-size:12px;" title="Colapsar/expandir todo">⊖</button>
         <button onclick="showBudgetExportMenu()" style="background:none;border:0.5px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer;color:var(--text2);display:flex;align-items:center;" title="Exportar">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </button>
@@ -3453,6 +3454,24 @@ function toggleResumenSection(){
     if(arrow)arrow.style.transform=budgetResumenOpen?'rotate(0deg)':'rotate(-90deg)';
   }
 }
+function budgetToggleAll(){
+  const allGroups=budgetData.groups||[];
+  const anyOpen=allGroups.some((_,gi)=>!budgetCollapsedGroups.has(gi));
+  // If any is open -> collapse all. If all collapsed -> expand all
+  allGroups.forEach((_,gi)=>{
+    const el=document.getElementById('grp-'+gi);
+    if(anyOpen){
+      budgetCollapsedGroups.add(gi);
+      if(el)el.style.display='none';
+    } else {
+      budgetCollapsedGroups.delete(gi);
+      if(el)el.style.display='block';
+    }
+  });
+  const btn=document.getElementById('budget-toggle-all-btn');
+  if(btn)btn.textContent=anyOpen?'⊕':'⊖';
+}
+
 function toggleDebtSection(){
   budgetDebtOpen=!budgetDebtOpen;
   const el=document.getElementById('debt-body');
