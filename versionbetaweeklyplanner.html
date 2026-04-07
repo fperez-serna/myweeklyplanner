@@ -3524,6 +3524,270 @@ function budgetDelDebt(di){
 }
 // ---- END DEBT FUNCTIONS ----
 
+
+// ── MONTHLY REPORT ─────────────────────────
+let reportYear=new Date().getFullYear();
+let reportMonth=new Date().getMonth();
+let reportSections={gastos:true,workout:true,productivity:true};
+let reportData=[];
+
+function openReport(){
+  reportYear=new Date().getFullYear();
+  reportMonth=new Date().getMonth();
+  document.getElementById('report-modal').style.display='block';
+  document.body.style.overflow='hidden';
+  loadReportData();
+}
+
+function closeReport(){
+  document.getElementById('report-modal').style.display='none';
+  document.body.style.overflow='';
+}
+
+function toggleReportSection(el){
+  el.classList.toggle('on');
+  reportSections[el.dataset.key]=el.classList.contains('on');
+  renderReport();
+}
+
+function reportPrevMonth(){
+  reportMonth--;
+  if(reportMonth<0){reportMonth=11;reportYear--;}
+  loadReportData();
+}
+
+function reportNextMonth(){
+  const now=new Date();
+  if(reportYear===now.getFullYear()&&reportMonth>=now.getMonth())return;
+  reportMonth++;
+  if(reportMonth>11){reportMonth=0;reportYear++;}
+  loadReportData();
+}
+
+async function loadReportData(){
+  const MES_ES_FULL=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const MES_EN_FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const meses=isEn()?MES_EN_FULL:MES_ES_FULL;
+  document.getElementById('report-month-lbl').textContent=meses[reportMonth]+' '+reportYear;
+  const now=new Date();
+  const nextBtn=document.getElementById('report-next-btn');
+  if(nextBtn)nextBtn.style.opacity=(reportYear===now.getFullYear()&&reportMonth>=now.getMonth())?'0.3':'1';
+  document.getElementById('report-content').innerHTML='<div class="report-loading">'+(isEn()?'Loading...':'Cargando...')+'</div>';
+  const firstDay=new Date(reportYear,reportMonth,1);
+  const lastDay=new Date(reportYear,reportMonth+1,0);
+  const weekStarts=[];
+  const d=new Date(firstDay);
+  const dow=d.getDay();
+  d.setDate(d.getDate()-(dow===0?6:dow-1));
+  while(d<=lastDay){weekStarts.push(new Date(d));d.setDate(d.getDate()+7);}
+  reportData=[];
+  if(db){
+    const promises=weekStarts.map(ws=>{
+      const key=dk(ws);
+      return userCol().doc(key).get()
+        .then(snap=>({key,weekStart:new Date(ws),data:snap.exists?snap.data():null}))
+        .catch(()=>({key,weekStart:new Date(ws),data:null}));
+    });
+    reportData=await Promise.all(promises);
+  }
+  renderReport();
+}
+
+function renderReport(){
+  const container=document.getElementById('report-content');
+  let html='';
+  const firstDay=new Date(reportYear,reportMonth,1);
+  const lastDay=new Date(reportYear,reportMonth+1,0);
+  const daysInMonth=lastDay.getDate();
+  const dayMap={};
+  reportData.forEach(({weekStart,data})=>{
+    if(!data)return;
+    for(let di=0;di<7;di++){
+      const d=new Date(weekStart);d.setDate(d.getDate()+di);
+      if(d.getMonth()===reportMonth&&d.getFullYear()===reportYear)dayMap[d.getDate()]={di,data};
+    }
+  });
+  if(reportSections.gastos){
+    const catTotals={};let monthTotal=0;let maxDay=0,maxDayAmt=0;
+    for(let day=1;day<=daysInMonth;day++){
+      const entry=dayMap[day];if(!entry)continue;
+      const gastos=(entry.data.gastos&&entry.data.gastos[entry.di])||[];
+      let dayTotal=0;
+      gastos.forEach(g=>{monthTotal+=g.monto;dayTotal+=g.monto;catTotals[g.cat]=(catTotals[g.cat]||0)+g.monto;});
+      if(dayTotal>maxDayAmt){maxDayAmt=dayTotal;maxDay=day;}
+    }
+    const weekCount=Math.ceil(daysInMonth/7);
+    const avgWeekly=weekCount>0?(monthTotal/weekCount):0;
+    html+=`<div class="report-section">
+      <div class="report-sec-title">${isEn()?'💸 Expenses':'💸 Gastos'}</div>
+      <div class="report-stat-grid">
+        <div class="rstat"><div class="rstat-val">$${monthTotal.toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Month total':'Total del mes'}</div></div>
+        <div class="rstat"><div class="rstat-val">$${Math.round(avgWeekly).toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Weekly avg':'Promedio semanal'}</div></div>
+        ${maxDay?`<div class="rstat"><div class="rstat-val">${isEn()?'Day ':'Día '}${maxDay}</div><div class="rstat-lbl">${isEn()?'Most expensive':'Día más caro'} $${maxDayAmt.toLocaleString()}</div></div>`:''}
+        ${Object.keys(catTotals).length?`<div class="rstat"><div class="rstat-val">${Object.keys(catTotals).length}</div><div class="rstat-lbl">${isEn()?'Categories':'Categorías'}</div></div>`:''}
+      </div>`;
+    if(Object.keys(catTotals).length){
+      const sorted=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
+      const max=sorted[0][1];
+      html+=`<div style="margin-top:8px;">`;
+      sorted.forEach(([cat,amt])=>{
+        const c=GASTO_COLORS[cat]||GASTO_COLORS['Otro']||{bg:'#eee',color:'#666'};
+        const pct=Math.round((amt/max)*100);
+        html+=`<div class="rbar-row"><div class="rbar-lbl">${cat}</div><div class="rbar-track"><div class="rbar-fill" style="width:${pct}%;background:${c.color};"></div></div><div class="rbar-amt">$${amt.toLocaleString()}</div></div>`;
+      });
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  }
+  if(reportSections.workout){
+    const woCounts={};const haCounts={};let activeDays=0;let maxStreak=0,curStreak=0;
+    for(let day=1;day<=daysInMonth;day++){
+      const entry=dayMap[day];
+      const wo=entry?(entry.data.workout&&entry.data.workout[entry.di]):null;
+      const hasActivity=wo&&(wo.wo1||wo.wo2||wo.ha1||wo.ha2);
+      if(hasActivity){activeDays++;curStreak++;if(curStreak>maxStreak)maxStreak=curStreak;
+        if(wo.wo1)woCounts[wo.wo1]=(woCounts[wo.wo1]||0)+1;
+        if(wo.wo2)woCounts[wo.wo2]=(woCounts[wo.wo2]||0)+1;
+        if(wo.ha1)haCounts[wo.ha1]=(haCounts[wo.ha1]||0)+1;
+        if(wo.ha2)haCounts[wo.ha2]=(haCounts[wo.ha2]||0)+1;
+      } else {curStreak=0;}
+    }
+    const topWo=Object.entries(woCounts).sort((a,b)=>b[1]-a[1])[0];
+    const topHa=Object.entries(haCounts).sort((a,b)=>b[1]-a[1])[0];
+    html+=`<div class="report-section">
+      <div class="report-sec-title">${isEn()?'💪 Workouts & Habits':'💪 Workouts & Hábitos'}</div>
+      <div class="report-stat-grid">
+        <div class="rstat"><div class="rstat-val">${activeDays}/${daysInMonth}</div><div class="rstat-lbl">${isEn()?'Active days':'Días activos'}</div></div>
+        <div class="rstat"><div class="rstat-val">${maxStreak}</div><div class="rstat-lbl">${isEn()?'Best streak':'Racha máxima'}</div></div>
+        ${topWo?`<div class="rstat"><div class="rstat-val" style="font-size:13px;">${topWo[0]}</div><div class="rstat-lbl">${isEn()?'Top workout':'Fav workout'} (${topWo[1]}x)</div></div>`:''}
+        ${topHa?`<div class="rstat"><div class="rstat-val" style="font-size:13px;">${topHa[0]}</div><div class="rstat-lbl">${isEn()?'Top habit':'Hábito fav'} (${topHa[1]}x)</div></div>`:''}
+      </div>
+      <div class="rcal-grid">`;
+    const dayLabels=isEn()?['M','T','W','T','F','S','S']:['L','M','M','J','V','S','D'];
+    dayLabels.forEach(d=>{html+=`<div class="rcal-day-lbl">${d}</div>`;});
+    const firstDow=firstDay.getDay();const offset=firstDow===0?6:firstDow-1;
+    for(let i=0;i<offset;i++)html+=`<div></div>`;
+    const todayStr=dk(new Date());
+    for(let day=1;day<=daysInMonth;day++){
+      const entry=dayMap[day];
+      const wo=entry?(entry.data.workout&&entry.data.workout[entry.di]):null;
+      const hasWo=wo&&(wo.wo1||wo.wo2);const hasHa=wo&&(wo.ha1||wo.ha2);
+      const cls=hasWo&&hasHa?'both':hasWo?'has-workout':hasHa?'has-focus':'';
+      const dateStr=reportYear+'-'+String(reportMonth+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+      const isToday=dateStr===todayStr?'today-cell':'';
+      html+=`<div class="rcal-cell ${cls} ${isToday}" title="${day}"></div>`;
+    }
+    html+=`</div></div>`;
+  }
+  if(reportSections.productivity){
+    let focusTotal=0,focusDone=0,tasksTotal=0,tasksDone=0,bestDay=0,bestPct=0;
+    for(let day=1;day<=daysInMonth;day++){
+      const entry=dayMap[day];if(!entry)continue;
+      const f=(entry.data.focus&&entry.data.focus[entry.di])||{};
+      const fd=entry.data.focusDone||{};
+      const fTotal=Object.values(f).filter(Boolean).length;
+      const fDone=[1,2,3].filter(n=>fd[entry.di+'_'+n]!==undefined).length;
+      focusTotal+=fTotal;focusDone+=Math.min(fDone,fTotal);
+      const tasks=(entry.data.tasks||[]).filter(t=>t.addedOnDay===entry.di);
+      const done=tasks.filter(t=>t.doneOnDay!==undefined).length;
+      tasksTotal+=tasks.length;tasksDone+=done;
+      const dayPct=fTotal>0?Math.round((fDone/fTotal)*100):0;
+      if(dayPct>bestPct){bestPct=dayPct;bestDay=day;}
+    }
+    const focusPct=focusTotal>0?Math.round((focusDone/focusTotal)*100):0;
+    const taskPct=tasksTotal>0?Math.round((tasksDone/tasksTotal)*100):0;
+    html+=`<div class="report-section">
+      <div class="report-sec-title">${isEn()?'🎯 Productivity':'🎯 Productividad'}</div>
+      <div class="report-stat-grid">
+        <div class="rstat"><div class="rstat-val">${focusPct}%</div><div class="rstat-lbl">${isEn()?'Focus completed':'Enfoques completados'}</div></div>
+        <div class="rstat"><div class="rstat-val">${taskPct}%</div><div class="rstat-lbl">${isEn()?'Tasks done':'Pendientes resueltos'}</div></div>
+        <div class="rstat"><div class="rstat-val">${focusDone}/${focusTotal}</div><div class="rstat-lbl">${isEn()?'Focus goals':'Metas de enfoque'}</div></div>
+        ${bestDay?`<div class="rstat"><div class="rstat-val">${isEn()?'Day ':'Día '}${bestDay}</div><div class="rstat-lbl">${isEn()?'Best day':'Día más productivo'} ${bestPct}%</div></div>`:''}
+      </div>
+      <div style="margin-top:8px;">
+        <div class="rbar-row"><div class="rbar-lbl">${isEn()?'Focus':'Enfoque'}</div><div class="rbar-track"><div class="rbar-fill" style="width:${focusPct}%;"></div></div><div class="rbar-amt">${focusPct}%</div></div>
+        <div class="rbar-row"><div class="rbar-lbl">${isEn()?'Tasks':'Tareas'}</div><div class="rbar-track"><div class="rbar-fill" style="width:${taskPct}%;background:var(--teal);"></div></div><div class="rbar-amt">${taskPct}%</div></div>
+      </div>
+    </div>`;
+  }
+  if(!html)html=`<div style="text-align:center;color:var(--text3);padding:2rem;font-size:14px;">${isEn()?'Select at least one section above':'Selecciona al menos una sección arriba'}</div>`;
+  container.innerHTML=html;
+}
+
+// ── AUTH ───────────────────────────────────
+async function signInEmail(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-error');
+  if(!email||!pass){if(err){err.style.display='block';err.textContent=isEn()?'Enter email and password':'Ingresa email y contraseña';}return;}
+  try{
+    await auth.signInWithEmailAndPassword(email,pass);
+    if(err)err.style.display='none';
+  }catch(e){
+    if(err){err.style.display='block';err.textContent=isEn()?'Incorrect email or password':'Email o contraseña incorrectos';}
+  }
+}
+
+async function forgotPassword(){
+  const email=document.getElementById('login-email').value.trim();
+  if(!email){alert(isEn()?'Enter your email first':'Ingresa tu email primero');return;}
+  try{
+    await auth.sendPasswordResetEmail(email);
+    alert(isEn()?'Reset email sent!':'¡Email de recuperación enviado!');
+  }catch(e){alert(isEn()?'Error sending email':'Error al enviar el email');}
+}
+
+function signOut(){
+  auth.signOut().then(()=>{
+    currentUser=null;
+    document.getElementById('login-screen').style.display='flex';
+    document.querySelector('.db').style.display='none';
+    document.getElementById('logout-btn').style.display='none';
+  });
+}
+
+// ── MAIN INIT ──────────────────────────────
+(function(){
+  initFirebase();
+  document.getElementById('login-screen').style.display='flex';
+  document.querySelector('.db').style.display='none';
+
+  auth.onAuthStateChanged(async user=>{
+    if(user){
+      currentUser=user;
+      document.getElementById('login-screen').style.display='none';
+      document.querySelector('.db').style.display='';
+      document.getElementById('settings-btn-wrap').style.display='flex';
+      document.getElementById('logout-btn').style.display='block';
+
+      initApp();
+      document.getElementById('ev-date').value=dk(today);
+      try{
+        await loadDB();
+        await loadPendingTasks();
+        await loadShoppingDB();
+        applyConfig(setupCfg);
+        applyLang(setupCfg.lang||'es');
+        renderDay();
+        buildCalendar();
+        setTimeout(()=>{showQ(QS[qcur]);fetchWeather();},200);
+        subscribeDB();
+        subscribeShoppingDB();
+        subscribeConfig();
+      }catch(e){
+        console.warn('Firebase error:',e);
+        renderDay();
+        renderSh();
+      }
+      fetchGCal();
+      initGCal();
+    } else {
+      document.getElementById('login-screen').style.display='flex';
+      document.querySelector('.db').style.display='none';
+      document.getElementById('logout-btn').style.display='none';
+    }
+  });
+})();
 </script>
 </body>
 </html>
