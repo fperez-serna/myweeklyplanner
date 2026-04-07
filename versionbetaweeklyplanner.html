@@ -3082,7 +3082,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
     const groupPresup=group.subs.reduce((s,sub)=>s+sub.presup,0);
     const groupActual=group.subs.reduce((s,sub)=>s+sub.actual,0);
     html+=`<div class="budget-group">
-      <div class="budget-group-header" onclick="budgetToggle('grp-${gi}')">
+      <div class="budget-group-header" onclick="budgetToggle(${gi})">
         <div style="display:flex;align-items:center;gap:6px;">
           <div style="display:flex;flex-direction:column;gap:1px;">
             <button onclick="event.stopPropagation();budgetMoveGroup(${gi},-1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;padding:0;line-height:1;" ${gi===0?'disabled style=\"opacity:.3;\"':''}>▲</button>
@@ -3096,7 +3096,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
           <span style="font-size:11px;color:var(--text3);">▾</span>
         </div>
       </div>
-      <div id="grp-${gi}" style="display:block;">
+      <div id="grp-${gi}" style="display:${budgetCollapsedGroups.has(gi)?'none':'block'};">
         <div class="budget-col-hds" style="grid-template-columns:20px 1fr 70px 70px 100px 24px;">
           <div class="budget-col-h"></div>
           <div class="budget-col-h" style="text-align:left;">${es?'Subcategoría':'Subcategory'}</div>
@@ -3344,10 +3344,16 @@ function renderBudget(dashboardTotals,forceExpand=false){
   },100);
 }
 
-function budgetToggle(id){
-  const el=document.getElementById(id);
+function budgetToggle(gi){
+  const el=document.getElementById('grp-'+gi);
   if(!el)return;
-  el.style.display=(el.style.display===''||el.style.display==='none')?'block':'none';
+  if(budgetCollapsedGroups.has(gi)){
+    budgetCollapsedGroups.delete(gi);
+    el.style.display='block';
+  } else {
+    budgetCollapsedGroups.add(gi);
+    el.style.display='none';
+  }
 }
 
 function budgetEditAmt(el,type,idx){
@@ -3437,13 +3443,24 @@ async function budgetEditGroupName(gi){
 // ---- DEBT FUNCTIONS ----
 let budgetDebtOpen=true;
 let budgetResumenOpen=true;
+const budgetCollapsedGroups=new Set();
 function toggleResumenSection(){
   budgetResumenOpen=!budgetResumenOpen;
-  loadMonthGastos().then(d=>renderBudget(d));
+  const el=document.getElementById('resumen-body');
+  if(el){
+    el.style.display=budgetResumenOpen?'block':'none';
+    const arrow=el.previousElementSibling&&el.previousElementSibling.querySelector('span[style*="rotate"]');
+    if(arrow)arrow.style.transform=budgetResumenOpen?'rotate(0deg)':'rotate(-90deg)';
+  }
 }
 function toggleDebtSection(){
   budgetDebtOpen=!budgetDebtOpen;
-  loadMonthGastos().then(d=>renderBudget(d));
+  const el=document.getElementById('debt-body');
+  if(el){
+    el.style.display=budgetDebtOpen?'block':'none';
+    const arrow=el.previousElementSibling&&el.previousElementSibling.querySelector('span');
+    if(arrow)arrow.style.transform=budgetDebtOpen?'rotate(0deg)':'rotate(-90deg)';
+  }
 }
 function budgetAddDebt(){
   const es=!isEn();
