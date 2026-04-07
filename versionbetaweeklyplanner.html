@@ -819,6 +819,7 @@ let auth=null;
 let currentUser=null;
 function userCol(){if(!db||!currentUser)throw new Error('Not authenticated');return db.collection('users').doc(currentUser.uid).collection('data');}
 let unsub=null;
+let unsubBudget=null;
 let fdone={1:false,2:false,3:false};
 
 // ── HELPERS ────────────────────────────────
@@ -874,8 +875,8 @@ function initFirebase(){
 
 async function saveDB(){
   if(!db)return;
-  // Safety: don't save if weekData is empty object
-  if(!weekData||Object.keys(weekData).length===0){console.warn('saveDB: skipped empty data');return;}
+  // Safety: only skip if weekData is null/undefined (not just empty)
+  if(weekData===null||weekData===undefined){console.warn('saveDB: skipped null data');return;}
   try{await userCol().doc(wid()).set(weekData);showSync();}
   catch(e){console.error('Save error:',e);}
 }
@@ -941,6 +942,24 @@ function subscribeShoppingDB(){
 }
 
 let unsubConfig=null;
+function subscribeBudget(){
+  if(unsubBudget)unsubBudget();
+  if(!db)return;
+  unsubBudget=userCol().doc('budget_config').onSnapshot(snap=>{
+    if(snap.exists){
+      const remote=snap.data();
+      // Only update if modal is closed (don't interrupt editing)
+      const modalOpen=document.getElementById('budget-modal')?.style.display==='block';
+      if(!modalOpen&&remote){
+        budgetData={...remote};
+        if(!budgetData.debts)budgetData.debts=[];
+        if(!budgetData.groups)budgetData.groups=[];
+        if(!budgetData.income)budgetData.income=[];
+      }
+    }
+  });
+}
+
 function subscribeConfig(){
   if(unsubConfig)unsubConfig();
   if(!db)return;
@@ -3058,12 +3077,14 @@ async function loadMonthGastos(){
 function saveBudgetConfig(){saveBudgetData();}
 async function saveBudgetData(){
   if(!db||!currentUser)return;
-  // SAFETY: never save if data looks empty/corrupt
-  const hasGroups=(budgetData.groups||[]).length>0;
-  const hasIncome=(budgetData.income||[]).length>0;
-  const hasDebts=(budgetData.debts||[]).length>0;
-  if(!hasGroups&&!hasIncome&&!hasDebts){
-    console.warn('saveBudgetData: skipped — data appears empty, refusing to overwrite');
+  // SAFETY: only skip if budgetData itself is null/undefined (truly corrupt)
+  if(!budgetData||typeof budgetData!=='object'){
+    console.warn('saveBudgetData: skipped — budgetData is null/undefined');
+    return;
+  }
+  // Also skip if groups is undefined (not initialized yet)
+  if(!Array.isArray(budgetData.groups)){
+    console.warn('saveBudgetData: skipped — groups not initialized');
     return;
   }
   try{
@@ -3461,9 +3482,9 @@ function budgetEditSub(gi,si,field,el){
   el.replaceWith(inp);inp.focus();inp.select();
 }
 
-function budgetDelIncome(i){
+async function budgetDelIncome(i){
   budgetData.income.splice(i,1);
-  saveBudgetData();
+  await saveBudgetData();
   loadBudgetData();
 }
 
@@ -3477,10 +3498,12 @@ async function budgetAddIncome(){
 }
 
 async function budgetAddSub(gi){
-  const name=document.getElementById(`bsub-name-${gi}`).value.trim();
-  const presup=parseFloat(document.getElementById(`bsub-presup-${gi}`).value)||0;
-  const actual=parseFloat(document.getElementById(`bsub-actual-${gi}`).value)||0;
-  const rubro=document.getElementById(`bsub-rubro-${gi}`).value;
+  const name=document.getElementById(`bsub-name-${gi}`) ? document.getElementById(`bsub-name-${gi}`).value.trim() : '';
+  const presup=parseFloat(document.getElementById(`bsub-presup-${gi}`)?.value)||0;
+  const actual=parseFloat(document.getElementById(`bsub-actual-${gi}`)?.value)||0;
+  // Read rubro from SmartSelect input (SS replaced the original select)
+  const rubroSS=document.getElementById(`bsub-rubro-${gi}_ss`);
+  const rubro=rubroSS?rubroSS.value:'';
   if(!name)return;
   budgetData.groups[gi].subs.push({name,presup,actual,rubro});
   await saveBudgetData();
@@ -4029,180 +4052,133 @@ function resetSmartSelects(){
 }
 
 // ── SMART SELECT COMPONENT ─────────────────────────────────────────
-let _ssActive = null;
+let _ssOpenId = null;
 
-function createSmartSelect({id, options, value='', placeholder='—', onChange, onAddNew, inputClass='', small=false}){
+function ssClose(){
+  const existing = document.getElementById('ss-dropdown-active');
+  if(existing) existing.remove();
+  _ssOpenId = null;
+}
+
+function ssOpen(inputEl, options, onChange, onAddNew){
+  ssClose();
+  const id = 'ss-dropdown-active';
+  const rect = inputEl.getBoundingClientRect();
+  const drop = document.createElement('div');
+  drop.id = id;
+  drop.className = 'ss-dropdown';
+  
+  // Position
+  const spaceBelow = window.innerHeight - rect.bottom - 8;
+  drop.style.position = 'fixed';
+  drop.style.left = Math.max(4, rect.left) + 'px';
+  drop.style.width = Math.max(180, rect.width) + 'px';
+  drop.style.zIndex = '999999';
+  if(spaceBelow > 150 || spaceBelow > rect.top){
+    drop.style.top = (rect.bottom + 2) + 'px';
+  } else {
+    drop.style.top = Math.max(4, rect.top - Math.min(220, rect.top) - 2) + 'px';
+  }
+
+  const filter = inputEl.value.toLowerCase();
+  const filtered = filter ? options.filter(o => o.toLowerCase().includes(filter)) : options;
+  
+  // Empty option
+  const addRow = (text, val, isAdd) => {
+    const div = document.createElement('div');
+    div.className = 'ss-item' + (isAdd ? ' ss-add' : '');
+    div.textContent = text;
+    div.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      if(isAdd){
+        const name = inputEl.value.trim() || prompt(isEn()?'New name:':'Nombre nuevo:','');
+        if(name){ onAddNew && onAddNew(name); onChange && onChange(name); inputEl.value = name; }
+      } else {
+        inputEl.value = val;
+        onChange && onChange(val);
+      }
+      ssClose();
+    });
+    drop.appendChild(div);
+  };
+
+  addRow('— ' + (isEn()?'None':'Ninguno'), '', false);
+  if(!filtered.length && filter){
+    const empty = document.createElement('div');
+    empty.className = 'ss-empty';
+    empty.textContent = isEn()?'No results':'Sin resultados';
+    drop.appendChild(empty);
+  }
+  filtered.forEach(o => addRow(o, o, false));
+  if(onAddNew){
+    addRow(filter ? (isEn()?`+ Add "${inputEl.value}"`:`+ Agregar "${inputEl.value}"`) : (isEn()?'+ Add new...':'+ Agregar nuevo...'), '', true);
+  }
+
+  document.body.appendChild(drop);
+  _ssOpenId = inputEl.id;
+}
+
+document.addEventListener('mousedown', e => {
+  const drop = document.getElementById('ss-dropdown-active');
+  if(drop && !drop.contains(e.target)){
+    const activeInput = _ssOpenId ? document.getElementById(_ssOpenId) : null;
+    if(!activeInput || !activeInput.contains(e.target)) ssClose();
+  }
+});
+
+function createSmartSelect({id, options, value='', placeholder='—', onChange, onAddNew, small=false}){
   const wrap = document.createElement('div');
   wrap.className = 'ss-wrap';
-  wrap.style.cssText = small ? 'width:100%;' : 'width:100%;';
-
+  
   const input = document.createElement('input');
   input.id = id;
-  input.className = 'ss-input' + (inputClass?' '+inputClass:'');
-  if(small) input.style.cssText = 'font-size:10px;padding:2px 22px 2px 6px;';
+  input.className = 'ss-input';
+  if(small) input.style.cssText = 'font-size:10px;padding:2px 22px 2px 6px;height:26px;';
   input.placeholder = placeholder;
   input.value = value;
   input.autocomplete = 'off';
-  input.readOnly = false;
+  input.spellcheck = false;
 
   const arrow = document.createElement('span');
   arrow.className = 'ss-arrow';
   arrow.textContent = '▾';
+  arrow.addEventListener('mousedown', e => { e.preventDefault(); input.focus(); });
+
+  input.addEventListener('focus', () => ssOpen(input, options, onChange, onAddNew));
+  input.addEventListener('input', () => ssOpen(input, options, onChange, onAddNew));
+  input.addEventListener('blur', () => setTimeout(ssClose, 150));
+  input.addEventListener('keydown', e => {
+    if(e.key === 'Escape'){ ssClose(); input.blur(); return; }
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      const drop = document.getElementById('ss-dropdown-active');
+      if(drop){
+        // Select first real option (skip "None")
+        const items = Array.from(drop.querySelectorAll('.ss-item')).filter(el => !el.textContent.startsWith('—'));
+        if(items.length){
+          items[0].dispatchEvent(new MouseEvent('mousedown', {bubbles:true}));
+        } else if(onAddNew && input.value.trim()){
+          onAddNew(input.value.trim());
+          onChange && onChange(input.value.trim());
+          ssClose();
+        }
+      } else if(input.value.trim()){
+        // No dropdown open - if value matches an option, confirm it
+        const match = options.find(o => o.toLowerCase() === input.value.toLowerCase());
+        if(match){ onChange && onChange(match); input.value = match; }
+        else if(onAddNew){ onAddNew(input.value.trim()); onChange && onChange(input.value.trim()); }
+        input.blur();
+      }
+    }
+    if(e.key === 'ArrowDown'){
+      e.preventDefault();
+      if(!document.getElementById('ss-dropdown-active')) ssOpen(input, options, onChange, onAddNew);
+    }
+  });
 
   wrap.appendChild(input);
   wrap.appendChild(arrow);
-
-  let dropdown = null;
-
-  function openDropdown(filter=''){
-    closeAllSmartSelects();
-    const rect = input.getBoundingClientRect();
-    dropdown = document.createElement('div');
-    dropdown.className = 'ss-dropdown';
-
-    // Position below or above depending on space
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceAbove = rect.top;
-    const maxH = 220;
-    let top, bottom;
-    if(spaceBelow >= Math.min(maxH, 160) || spaceBelow >= spaceAbove){
-      dropdown.style.top = (rect.bottom + window.scrollY + 2) + 'px';
-    } else {
-      dropdown.style.bottom = (window.innerHeight - rect.top + 2) + 'px';
-    }
-    dropdown.style.left = Math.max(8, rect.left) + 'px';
-    dropdown.style.width = Math.max(180, rect.width) + 'px';
-    if(spaceBelow >= Math.min(maxH,160) || spaceBelow >= spaceAbove){
-      dropdown.style.top = (rect.bottom + 2) + 'px';
-    } else {
-      dropdown.style.top = Math.max(8, rect.top - Math.min(spaceAbove, maxH) - 2) + 'px';
-    }
-
-    const filtered = options.filter(o => o.toLowerCase().includes(filter.toLowerCase()));
-
-    if(!filtered.length && !filter){
-      const empty = document.createElement('div');
-      empty.className = 'ss-empty';
-      empty.textContent = '—';
-      dropdown.appendChild(empty);
-    }
-
-    filtered.forEach(opt => {
-      const item = document.createElement('div');
-      item.className = 'ss-item' + (opt===value?' active':'');
-      item.textContent = opt;
-      item.onmousedown = (e) => {
-        e.preventDefault();
-        input.value = opt;
-        onChange && onChange(opt);
-        closeAllSmartSelects();
-      };
-      dropdown.appendChild(item);
-    });
-
-    // Empty option
-    const clearItem = document.createElement('div');
-    clearItem.className = 'ss-item';
-    clearItem.style.color = 'var(--text3)';
-    clearItem.textContent = '— ' + (isEn() ? 'None' : 'Ninguno');
-    clearItem.onmousedown = (e) => {
-      e.preventDefault();
-      input.value = '';
-      onChange && onChange('');
-      closeAllSmartSelects();
-    };
-    dropdown.insertBefore(clearItem, dropdown.firstChild);
-
-    // Add new option
-    if(onAddNew){
-      const addItem = document.createElement('div');
-      addItem.className = 'ss-item ss-add';
-      const label = filter
-        ? (isEn() ? `+ Add "${filter}"` : `+ Agregar "${filter}"`)
-        : (isEn() ? '+ Add new...' : '+ Agregar nuevo...');
-      addItem.textContent = label;
-      addItem.onmousedown = (e) => {
-        e.preventDefault();
-        const name = filter || prompt(isEn()?'New name:':'Nombre nuevo:');
-        if(name && name.trim()){
-          onAddNew(name.trim());
-          input.value = name.trim();
-          onChange && onChange(name.trim());
-        }
-        closeAllSmartSelects();
-      };
-      dropdown.appendChild(addItem);
-    }
-
-    document.body.appendChild(dropdown);
-    _ssActive = {dropdown, input};
-  }
-
-  input.addEventListener('focus', () => { openDropdown(input.value==='—'?'':input.value); });
-  input.addEventListener('input', () => { openDropdown(input.value); });
-  input.addEventListener('blur', () => {
-    setTimeout(() => {
-      // If typed value not in options and not empty, revert or keep
-      closeAllSmartSelects();
-    }, 200);
-  });
-  input.addEventListener('keydown', (e) => {
-    if(e.key === 'Escape') { closeAllSmartSelects(); input.blur(); }
-    if(e.key === 'Enter') {
-      e.preventDefault();
-      if(!dropdown) { openDropdown(input.value); return; }
-      const items = dropdown.querySelectorAll('.ss-item:not(.ss-add):not([style*="text3"])');
-      if(items.length > 0){
-        items[0].onmousedown({preventDefault:()=>{}});
-      } else if(onAddNew && input.value.trim()){
-        const name = input.value.trim();
-        onAddNew(name);
-        onChange && onChange(name);
-        closeAllSmartSelects();
-      }
-    }
-  });
-
   return wrap;
-}
-
-function closeAllSmartSelects(){
-  if(_ssActive && _ssActive.dropdown && _ssActive.dropdown.parentNode){
-    _ssActive.dropdown.parentNode.removeChild(_ssActive.dropdown);
-  }
-  _ssActive = null;
-}
-
-document.addEventListener('mousedown', (e) => {
-  if(_ssActive && !_ssActive.dropdown.contains(e.target) && e.target !== _ssActive.input){
-    closeAllSmartSelects();
-  }
-});
-
-// Helper: replace a native select with SmartSelect
-function replaceWithSmartSelect(selectEl, onAddNew){
-  if(!selectEl || selectEl.dataset.ssReplaced) return;
-  selectEl.dataset.ssReplaced = '1';
-  const options = Array.from(selectEl.options).map(o=>o.value||o.text).filter(o=>o&&o!=='—');
-  const val = selectEl.value || '';
-  const id = selectEl.id + '_ss';
-  const small = selectEl.classList.contains('budget-sinput');
-  const ss = createSmartSelect({
-    id,
-    options,
-    value: val,
-    placeholder: selectEl.options[0]?.text || '—',
-    onChange: (v) => {
-      // Keep original select in sync for compatibility
-      selectEl.value = v;
-      const ev = new Event('change', {bubbles:true});
-      selectEl.dispatchEvent(ev);
-    },
-    onAddNew,
-    small
-  });
-  selectEl.style.display = 'none';
-  selectEl.parentNode.insertBefore(ss, selectEl.nextSibling);
 }
 // ── END SMART SELECT ───────────────────────────────────────────────
 
