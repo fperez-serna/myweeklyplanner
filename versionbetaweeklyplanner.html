@@ -290,6 +290,10 @@ body{padding:.75rem;}
   .budget-hide-mobile{display:none!important;}
   .budget-res-table-wrap{display:none;}
   .budget-rubro-cards{display:flex!important;}
+  .budget-sub-arrows{display:none!important;}
+  .budget-sub-row{grid-template-columns:1fr 65px 65px auto 20px!important;}
+  .budget-sinput{font-size:10px!important;padding:2px 3px!important;}
+  .budget-col-hds{grid-template-columns:1fr 65px 65px auto!important;}
 }
 @media(min-width:521px){
   .budget-rubro-cards{display:none!important;}
@@ -3118,7 +3122,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
           <option value="">${es?'Rubro...':'Category...'}</option>
           ${catOpts2}
         </select>
-        <div style="display:flex;flex-direction:column;gap:0px;">
+        <div class="budget-sub-arrows" style="display:flex;flex-direction:column;gap:0px;">
           <button onclick="budgetMoveSub(${gi},${si},-1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1;${si===0?'opacity:.25;pointer-events:none;':''}" title="Subir">▲</button>
           <button onclick="budgetMoveSub(${gi},${si},1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1;${si===group.subs.length-1?'opacity:.25;pointer-events:none;':''}" title="Bajar">▼</button>
         </div>
