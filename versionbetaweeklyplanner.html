@@ -686,8 +686,8 @@ body{padding:.75rem;}
       </div>
     </div>
     <div id="budget-export-menu" style="display:none;position:absolute;top:56px;right:16px;background:var(--bg);border:0.5px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:10;overflow:hidden;min-width:180px;">
-      <button onclick="budgetExportPDF()" style="display:block;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);">📄 Descargar PDF</button>
-      <button onclick="budgetExportExcel()" style="display:block;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);border-top:0.5px solid var(--border);">📊 Descargar Excel</button>
+      <button onclick="budgetExportPDF()" id="budget-pdf-btn" style="display:block;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);">📄 Descargar PDF</button>
+      <button onclick="budgetExportExcel()" id="budget-excel-btn" style="display:block;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);border-top:0.5px solid var(--border);">📊 Descargar Excel</button>
     </div>
     <div id="budget-content">
       <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px;">Cargando...</div>
@@ -2620,12 +2620,12 @@ function showBudgetExportMenu(){
 async function budgetExportPDF(){
   document.getElementById('budget-export-menu').style.display='none';
   const panel=document.getElementById('budget-panel');
-  const closeBtn=panel.querySelector('.budget-close');
-  const exportBtn=panel.querySelector('[onclick="showBudgetExportMenu()"]');
-  const exportMenu=document.getElementById('budget-export-menu');
-  if(closeBtn)closeBtn.style.display='none';
-  if(exportBtn)exportBtn.style.display='none';
-  if(exportMenu)exportMenu.style.display='none';
+  // Hide all interactive UI elements before capture
+  const toHide=panel.querySelectorAll('button, select, input, .budget-nav-btn, .budget-close, .budget-add-group-btn, .budget-add-sub, .budget-add-inc');
+  toHide.forEach(el=>el.style.display='none');
+  // Also hide move arrows and delete buttons
+  const arrows=panel.querySelectorAll('[onclick*="budgetMove"],[onclick*="budgetDel"],[onclick*="budgetEdit"]');
+  arrows.forEach(el=>el.style.visibility='hidden');
   try{
     const canvas=await html2canvas(panel,{
       backgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--bg')||'#ffffff',
@@ -2639,8 +2639,14 @@ async function budgetExportPDF(){
     const monthLbl=document.getElementById('budget-month-lbl').textContent.replace(' ','_');
     pdf.save('presupuesto_'+monthLbl+'.pdf');
   }catch(e){console.error('PDF error:',e);}
-  if(closeBtn)closeBtn.style.display='';
-  if(exportBtn)exportBtn.style.display='';
+  // Restore all hidden elements
+  const toHide2=panel.querySelectorAll('button, select, input, .budget-nav-btn, .budget-close, .budget-add-group-btn, .budget-add-sub, .budget-add-inc');
+  toHide2.forEach(el=>el.style.display='');
+  const arrows2=panel.querySelectorAll('[onclick*="budgetMove"],[onclick*="budgetDel"],[onclick*="budgetEdit"]');
+  arrows2.forEach(el=>el.style.visibility='');
+  // Re-render to restore proper state
+  const dash=await loadMonthGastos();
+  renderBudget(dash);
 }
 
 function budgetExportExcel(){
@@ -2716,6 +2722,10 @@ async function loadBudgetData(){
   document.getElementById('budget-month-lbl').textContent=meses[budgetMonth]+' '+budgetYear;
   const modalTitle=document.getElementById('budget-modal-title');
   if(modalTitle)modalTitle.textContent=isEn()?'Monthly Budget':'Presupuesto mensual';
+  const pdfBtn=document.getElementById('budget-pdf-btn');
+  const xlsBtn=document.getElementById('budget-excel-btn');
+  if(pdfBtn)pdfBtn.innerHTML=isEn()?'📄 Download PDF':'📄 Descargar PDF';
+  if(xlsBtn)xlsBtn.innerHTML=isEn()?'📊 Download Excel':'📊 Descargar Excel';
   const loadingEl=document.getElementById('budget-loading');
   if(loadingEl)loadingEl.textContent=isEn()?'Loading...':'Cargando...';
   const nextBtn=document.getElementById('budget-next-btn');
