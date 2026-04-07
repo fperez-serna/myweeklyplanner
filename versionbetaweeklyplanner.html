@@ -2931,8 +2931,15 @@ async function loadBudgetData(){
   }
 
   // Load dashboard gastos for this month
-  const dashboardTotals=await loadMonthGastos();
-  renderBudget(dashboardTotals);
+  let dashboardTotals={};
+  try{dashboardTotals=await loadMonthGastos();}catch(e){console.error('loadMonthGastos error:',e);}
+  try{
+    renderBudget(dashboardTotals);
+  }catch(e){
+    console.error('renderBudget crashed:',e);
+    const el=document.getElementById('budget-content');
+    if(el)el.innerHTML='<div style="padding:2rem;color:#c0392b;font-size:13px;">Error: '+e.message+'</div>';
+  }
 }
 
 function getDefaultGroups(){
