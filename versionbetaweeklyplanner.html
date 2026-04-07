@@ -311,6 +311,19 @@ body{padding:.75rem;}
 .budget-rubro-card-val.red{color:#c0392b;}
 .budget-rubro-card-val.orange{color:#e65100;}
 
+
+/* ── SMART SELECT ─────────────────────────────── */
+.ss-wrap{position:relative;display:inline-block;width:100%;}
+.ss-input{width:100%;padding:5px 28px 5px 8px;font-size:12px;border:0.5px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);outline:none;cursor:pointer;box-sizing:border-box;appearance:none;-webkit-appearance:none;}
+.ss-input:focus{border-color:var(--mauve);}
+.ss-arrow{position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:10px;color:var(--text3);}
+.ss-dropdown{position:fixed;background:var(--bg);border:0.5px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:99999;max-height:220px;overflow-y:auto;min-width:160px;}
+.ss-item{padding:8px 12px;font-size:13px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border);}
+.ss-item:last-child{border-bottom:none;}
+.ss-item:hover,.ss-item.active{background:var(--mauve-l);color:var(--mauve);}
+.ss-item.ss-add{color:var(--mauve);font-weight:500;}
+.ss-item.ss-add:hover{background:var(--mauve);color:#fff;}
+.ss-empty{padding:8px 12px;font-size:12px;color:var(--text3);font-style:italic;}
 </style>
 </head>
 <body>
@@ -1056,6 +1069,7 @@ function buildOv(){
 }
 
 function renderDay(){
+  resetSmartSelects();
   const di=dayIdx();
   
   document.getElementById('active-date').textContent=isEn()
@@ -1064,6 +1078,7 @@ function renderDay(){
   setWeekRange();buildNav();buildOv();
   if(setupCfg&&setupCfg.lang)updateGastosLang(setupCfg.lang);
   renderTasks(di);renderFocus(di);renderEvts(di);renderWo(di);updateProg(di);renderSh();renderGastos(di);
+  initSmartSelects();
 }
 
 function renderTasks(di){
@@ -1330,6 +1345,9 @@ function setSelectVal(id, val){
   const alt=mapped||hmapped;
   if(alt&&[...sel.options].some(o=>o.value===alt)){sel.value=alt;}
   else sel.value=''; // Not found - reset to blank
+  // Sync SmartSelect input
+  const ssEl=document.getElementById(id+'_ss');
+  if(ssEl)ssEl.value=sel.value;
 }
 function renderWo(di){
   const w=dayWo(di);
@@ -1338,7 +1356,8 @@ function renderWo(di){
 }
 function saveWorkout(){
   const di=dayIdx();if(!weekData.workout)weekData.workout={};
-  weekData.workout[di]={wo1:document.getElementById('wo1').value,wo2:document.getElementById('wo2').value,ha1:document.getElementById('ha1').value,ha2:document.getElementById('ha2').value};
+  const _v=id=>{const ss=document.getElementById(id+'_ss');return ss?ss.value:(document.getElementById(id)?.value||'');};
+  weekData.workout[di]={wo1:_v('wo1'),wo2:_v('wo2'),ha1:_v('ha1'),ha2:_v('ha2')};
   saveDB();buildOv();
 }
 
@@ -3121,10 +3140,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
         <div class="budget-sub-name ${cls}" onclick="budgetEditSubName(${gi},${si},this)" style="cursor:pointer;" title="${es?'Clic para editar':'Click to edit'}">${sub.name}</div>
         <div class="budget-amt editable" onclick="budgetEditSub(${gi},${si},'presup',this)">${fmt(sub.presup)}</div>
         <div class="budget-amt ${cls} editable" onclick="budgetEditSub(${gi},${si},'actual',this)">${fmt(sub.actual)}</div>
-        <select class="budget-sinput" style="font-size:10px;padding:2px 4px;" onchange="budgetChangeRubro(${gi},${si},this.value)">
-          <option value="">${es?'Rubro...':'Category...'}</option>
-          ${catOpts2}
-        </select>
+        <div class="ss-budget-rubro" data-gi="${gi}" data-si="${si}" data-val="${sub.rubro||''}"></div>
         <div class="budget-sub-arrows" style="display:flex;flex-direction:column;gap:0px;">
           <button onclick="budgetMoveSub(${gi},${si},-1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1;${si===0?'opacity:.25;pointer-events:none;':''}" title="Subir">▲</button>
           <button onclick="budgetMoveSub(${gi},${si},1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1;${si===group.subs.length-1?'opacity:.25;pointer-events:none;':''}" title="Bajar">▼</button>
@@ -3140,10 +3156,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
         <input class="budget-sinput" type="text" placeholder="${es?'Nueva subcategoría...':'New subcategory...'}" id="bsub-name-${gi}"/>
         <input class="budget-sinput" type="number" placeholder="$0" id="bsub-presup-${gi}" style="text-align:right;"/>
         <input class="budget-sinput" type="number" placeholder="$0" id="bsub-actual-${gi}" style="text-align:right;"/>
-        <select class="budget-sinput" id="bsub-rubro-${gi}" style="font-size:10px;">
-          <option value="">${es?'Rubro...':'Category...'}</option>
-          ${catOpts}
-        </select>
+        <div class="ss-budget-addrubro" data-gi="${gi}" data-val=""></div>
         <div></div>
         <button style="background:var(--mauve);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:14px;height:28px;width:28px;" onclick="budgetAddSub(${gi})">+</button>
       </div>
@@ -3331,6 +3344,8 @@ function renderBudget(dashboardTotals,forceExpand=false){
   // Populate mobile cards
   const cardsEl=document.getElementById('budget-rubro-cards');
   if(cardsEl)cardsEl.innerHTML=mobileCards;
+  // Init budget SmartSelects
+  initBudgetSmartSelects(cats);
 
   // Add enter key listeners
   setTimeout(()=>{
@@ -3818,6 +3833,317 @@ function renderReport(){
   if(!html)html=`<div style="text-align:center;color:var(--text3);padding:2rem;font-size:14px;">${isEn()?'Select at least one section above':'Selecciona al menos una sección arriba'}</div>`;
   container.innerHTML=html;
 }
+
+function initBudgetSmartSelects(cats){
+  const es = !isEn();
+  const rubroOpts = cats || setupCfg.gastoCats || DEFAULT_GASTOS;
+
+  function onAddRubro(name){
+    if(!setupCfg.gastoCats) setupCfg.gastoCats=[...DEFAULT_GASTOS];
+    if(!setupCfg.gastoCats.includes(name)){
+      setupCfg.gastoCats.push(name);
+      saveConfigToFirebase();
+      localStorage.setItem('wp_config', JSON.stringify(setupCfg));
+      showToast(es?'Rubro agregado ✓':'Category added ✓');
+    }
+  }
+
+  // Existing sub rows
+  document.querySelectorAll('.ss-budget-rubro').forEach(placeholder => {
+    const gi = parseInt(placeholder.dataset.gi);
+    const si = parseInt(placeholder.dataset.si);
+    const val = placeholder.dataset.val || '';
+    const ss = createSmartSelect({
+      id: `rubro_${gi}_${si}`,
+      options: rubroOpts,
+      value: val,
+      placeholder: es?'Rubro...':'Category...',
+      onChange: (v) => budgetChangeRubro(gi, si, v),
+      onAddNew: onAddRubro,
+      small: true
+    });
+    placeholder.replaceWith(ss);
+  });
+
+  // Add-sub rows
+  document.querySelectorAll('.ss-budget-addrubro').forEach(placeholder => {
+    const gi = parseInt(placeholder.dataset.gi);
+    const ss = createSmartSelect({
+      id: `bsub-rubro-${gi}`,
+      options: rubroOpts,
+      value: '',
+      placeholder: es?'Rubro...':'Category...',
+      onChange: () => {},
+      onAddNew: onAddRubro,
+      small: true
+    });
+    placeholder.replaceWith(ss);
+  });
+}
+
+function initSmartSelects(){
+  const es = !isEn();
+
+  // Workout selects
+  const woOpts = (setupCfg.workouts||DEFAULT_WORKOUTS).map(w=>emoji(w,WORKOUT_MAP));
+  ['wo1','wo2'].forEach(id => {
+    const sel = document.getElementById(id);
+    if(!sel || sel.dataset.ssReplaced) return;
+    const opts = woOpts;
+    sel.dataset.ssReplaced = '1';
+    const cur = sel.value || '';
+    const ss = createSmartSelect({
+      id: id+'_ss',
+      options: opts,
+      value: cur,
+      placeholder: '—',
+      onChange: (v) => { sel.value=v; saveWorkout(); },
+      onAddNew: (name) => {
+        if(!setupCfg.workouts) setupCfg.workouts=[...DEFAULT_WORKOUTS];
+        if(!setupCfg.workouts.includes(name)) setupCfg.workouts.push(name);
+        saveConfigToFirebase();
+        localStorage.setItem('wp_config', JSON.stringify(setupCfg));
+        showToast(es?'Workout agregado ✓':'Workout added ✓');
+      }
+    });
+    sel.style.cssText = 'display:none!important;';
+    sel.parentNode.insertBefore(ss, sel.nextSibling);
+  });
+
+  // Hábito selects
+  const haOpts = (setupCfg.habitos||DEFAULT_HABITOS).map(h=>emoji(h,HABITO_MAP));
+  ['ha1','ha2'].forEach(id => {
+    const sel = document.getElementById(id);
+    if(!sel || sel.dataset.ssReplaced) return;
+    sel.dataset.ssReplaced = '1';
+    const cur = sel.value || '';
+    const ss = createSmartSelect({
+      id: id+'_ss',
+      options: haOpts,
+      value: cur,
+      placeholder: '—',
+      onChange: (v) => { sel.value=v; saveWorkout(); },
+      onAddNew: (name) => {
+        if(!setupCfg.habitos) setupCfg.habitos=[...DEFAULT_HABITOS];
+        if(!setupCfg.habitos.includes(name)) setupCfg.habitos.push(name);
+        saveConfigToFirebase();
+        localStorage.setItem('wp_config', JSON.stringify(setupCfg));
+        showToast(es?'Hábito agregado ✓':'Habit added ✓');
+      }
+    });
+    sel.style.cssText = 'display:none!important;';
+    sel.parentNode.insertBefore(ss, sel.nextSibling);
+  });
+
+  // Gasto category select
+  const gastoCatSel = document.getElementById('gasto-cat');
+  if(gastoCatSel && !gastoCatSel.dataset.ssReplaced){
+    gastoCatSel.dataset.ssReplaced = '1';
+    const gaOpts = (setupCfg.gastoCats||DEFAULT_GASTOS);
+    const ss = createSmartSelect({
+      id: 'gasto-cat_ss',
+      options: gaOpts,
+      value: gaOpts[0]||'',
+      placeholder: es?'Categoría...':'Category...',
+      onChange: (v) => { gastoCatSel.value=v; },
+      onAddNew: (name) => {
+        if(!setupCfg.gastoCats) setupCfg.gastoCats=[...DEFAULT_GASTOS];
+        if(!setupCfg.gastoCats.includes(name)) setupCfg.gastoCats.push(name);
+        saveConfigToFirebase();
+        localStorage.setItem('wp_config', JSON.stringify(setupCfg));
+        // Rebuild gasto cat select options
+        gastoCatSel.innerHTML = setupCfg.gastoCats.map(c=>`<option>${c}</option>`).join('');
+        showToast(es?'Categoría agregada ✓':'Category added ✓');
+      }
+    });
+    gastoCatSel.style.cssText = 'display:none!important;flex:2;';
+    gastoCatSel.parentNode.insertBefore(ss, gastoCatSel.nextSibling);
+    ss.style.flex = '2';
+  }
+}
+
+// Reset SmartSelects on re-render (remove old ones first)
+function resetSmartSelects(){
+  document.querySelectorAll('.ss-wrap').forEach(el => el.remove());
+  document.querySelectorAll('[data-ss-replaced]').forEach(el => {
+    el.style.display = '';
+    delete el.dataset.ssReplaced;
+  });
+}
+
+// ── SMART SELECT COMPONENT ─────────────────────────────────────────
+let _ssActive = null;
+
+function createSmartSelect({id, options, value='', placeholder='—', onChange, onAddNew, inputClass='', small=false}){
+  const wrap = document.createElement('div');
+  wrap.className = 'ss-wrap';
+  wrap.style.cssText = small ? 'width:100%;' : 'width:100%;';
+
+  const input = document.createElement('input');
+  input.id = id;
+  input.className = 'ss-input' + (inputClass?' '+inputClass:'');
+  if(small) input.style.cssText = 'font-size:10px;padding:2px 22px 2px 6px;';
+  input.placeholder = placeholder;
+  input.value = value;
+  input.autocomplete = 'off';
+  input.readOnly = false;
+
+  const arrow = document.createElement('span');
+  arrow.className = 'ss-arrow';
+  arrow.textContent = '▾';
+
+  wrap.appendChild(input);
+  wrap.appendChild(arrow);
+
+  let dropdown = null;
+
+  function openDropdown(filter=''){
+    closeAllSmartSelects();
+    const rect = input.getBoundingClientRect();
+    dropdown = document.createElement('div');
+    dropdown.className = 'ss-dropdown';
+
+    // Position below or above depending on space
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const maxH = 220;
+    let top, bottom;
+    if(spaceBelow >= Math.min(maxH, 160) || spaceBelow >= spaceAbove){
+      dropdown.style.top = (rect.bottom + window.scrollY + 2) + 'px';
+    } else {
+      dropdown.style.bottom = (window.innerHeight - rect.top + 2) + 'px';
+    }
+    dropdown.style.left = Math.max(8, rect.left) + 'px';
+    dropdown.style.width = Math.max(180, rect.width) + 'px';
+    if(spaceBelow >= Math.min(maxH,160) || spaceBelow >= spaceAbove){
+      dropdown.style.top = (rect.bottom + 2) + 'px';
+    } else {
+      dropdown.style.top = Math.max(8, rect.top - Math.min(spaceAbove, maxH) - 2) + 'px';
+    }
+
+    const filtered = options.filter(o => o.toLowerCase().includes(filter.toLowerCase()));
+
+    if(!filtered.length && !filter){
+      const empty = document.createElement('div');
+      empty.className = 'ss-empty';
+      empty.textContent = '—';
+      dropdown.appendChild(empty);
+    }
+
+    filtered.forEach(opt => {
+      const item = document.createElement('div');
+      item.className = 'ss-item' + (opt===value?' active':'');
+      item.textContent = opt;
+      item.onmousedown = (e) => {
+        e.preventDefault();
+        input.value = opt;
+        onChange && onChange(opt);
+        closeAllSmartSelects();
+      };
+      dropdown.appendChild(item);
+    });
+
+    // Empty option
+    const clearItem = document.createElement('div');
+    clearItem.className = 'ss-item';
+    clearItem.style.color = 'var(--text3)';
+    clearItem.textContent = '— ' + (isEn() ? 'None' : 'Ninguno');
+    clearItem.onmousedown = (e) => {
+      e.preventDefault();
+      input.value = '';
+      onChange && onChange('');
+      closeAllSmartSelects();
+    };
+    dropdown.insertBefore(clearItem, dropdown.firstChild);
+
+    // Add new option
+    if(onAddNew){
+      const addItem = document.createElement('div');
+      addItem.className = 'ss-item ss-add';
+      const label = filter
+        ? (isEn() ? `+ Add "${filter}"` : `+ Agregar "${filter}"`)
+        : (isEn() ? '+ Add new...' : '+ Agregar nuevo...');
+      addItem.textContent = label;
+      addItem.onmousedown = (e) => {
+        e.preventDefault();
+        const name = filter || prompt(isEn()?'New name:':'Nombre nuevo:');
+        if(name && name.trim()){
+          onAddNew(name.trim());
+          input.value = name.trim();
+          onChange && onChange(name.trim());
+        }
+        closeAllSmartSelects();
+      };
+      dropdown.appendChild(addItem);
+    }
+
+    document.body.appendChild(dropdown);
+    _ssActive = {dropdown, input};
+  }
+
+  input.addEventListener('focus', () => { openDropdown(input.value==='—'?'':input.value); });
+  input.addEventListener('input', () => { openDropdown(input.value); });
+  input.addEventListener('blur', () => {
+    setTimeout(() => {
+      // If typed value not in options and not empty, revert or keep
+      closeAllSmartSelects();
+    }, 200);
+  });
+  input.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape') { closeAllSmartSelects(); input.blur(); }
+    if(e.key === 'Enter') {
+      const items = dropdown ? dropdown.querySelectorAll('.ss-item:not(.ss-add)') : [];
+      if(items.length > 0) items[0].onmousedown({preventDefault:()=>{}});
+      else if(onAddNew && input.value.trim()){
+        onAddNew(input.value.trim());
+        onChange && onChange(input.value.trim());
+        closeAllSmartSelects();
+      }
+    }
+  });
+
+  return wrap;
+}
+
+function closeAllSmartSelects(){
+  if(_ssActive && _ssActive.dropdown && _ssActive.dropdown.parentNode){
+    _ssActive.dropdown.parentNode.removeChild(_ssActive.dropdown);
+  }
+  _ssActive = null;
+}
+
+document.addEventListener('mousedown', (e) => {
+  if(_ssActive && !_ssActive.dropdown.contains(e.target) && e.target !== _ssActive.input){
+    closeAllSmartSelects();
+  }
+});
+
+// Helper: replace a native select with SmartSelect
+function replaceWithSmartSelect(selectEl, onAddNew){
+  if(!selectEl || selectEl.dataset.ssReplaced) return;
+  selectEl.dataset.ssReplaced = '1';
+  const options = Array.from(selectEl.options).map(o=>o.value||o.text).filter(o=>o&&o!=='—');
+  const val = selectEl.value || '';
+  const id = selectEl.id + '_ss';
+  const small = selectEl.classList.contains('budget-sinput');
+  const ss = createSmartSelect({
+    id,
+    options,
+    value: val,
+    placeholder: selectEl.options[0]?.text || '—',
+    onChange: (v) => {
+      // Keep original select in sync for compatibility
+      selectEl.value = v;
+      const ev = new Event('change', {bubbles:true});
+      selectEl.dispatchEvent(ev);
+    },
+    onAddNew,
+    small
+  });
+  selectEl.style.display = 'none';
+  selectEl.parentNode.insertBefore(ss, selectEl.nextSibling);
+}
+// ── END SMART SELECT ───────────────────────────────────────────────
 
 // ── AUTH ───────────────────────────────────
 async function signInEmail(){
