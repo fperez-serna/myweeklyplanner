@@ -275,7 +275,7 @@ body{padding:.75rem;}
 .debt-card-name{font-size:13px;font-weight:600;color:var(--text);}
 .debt-card-balance{font-size:15px;font-weight:700;color:var(--text);}
 .debt-card-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;}
-.debt-card-item{background:var(--bg2);border-radius:8px;padding:5px 8px;}
+.debt-card-item{background:rgba(255,255,255,0.7);border-radius:8px;padding:5px 8px;}
 .debt-card-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
 .debt-card-val{font-size:12px;font-weight:500;color:var(--text);}
 .debt-bar-wrap{height:5px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-top:6px;}
@@ -2746,6 +2746,7 @@ async function budgetExportPDF(){
     y+=3;
   });
 
+  </div>\`;  // close debt-body
   // RESUMEN POR RUBRO
   if(y>220){pdf.addPage();y=10;}
   y+=2;pdf.setDrawColor(220,215,210);pdf.line(10,y,200,y);y+=6;
@@ -3146,11 +3147,18 @@ function renderBudget(dashboardTotals,forceExpand=false){
   html+=`<button class="budget-add-group-btn" onclick="budgetAddGroup()">+ ${es?'Agregar grupo':'Add group'}</button>`;
 
   // PRESTAMOS & DEUDAS SECTION
+  const debtOpen=budgetDebtOpen===undefined?true:budgetDebtOpen;
   html+=`<div class="budget-divider"></div>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;cursor:pointer;" onclick="toggleDebtSection()">
     <div class="debt-section-title" style="margin:0;">🏦 ${es?'Préstamos & Deudas':'Loans & Debts'}</div>
-    <button onclick="budgetAddDebt()" style="background:var(--mauve);color:#fff;border:none;border-radius:8px;padding:4px 12px;cursor:pointer;font-size:12px;">+ ${es?'Agregar':'Add'}</button>
-  </div>`;
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:11px;color:var(--text3);transition:transform .2s;display:inline-block;transform:${debtOpen?'rotate(0deg)':'rotate(-90deg)'}">▾</span>
+    </div>
+  </div>
+  <div id="debt-body" style="display:${debtOpen?'block':'none'}">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
+      <button onclick="event.stopPropagation();budgetAddDebt()" style="background:var(--mauve);color:#fff;border:none;border-radius:8px;padding:4px 12px;cursor:pointer;font-size:12px;">+ ${es?'Agregar':'Add'}</button>
+    </div>`;
   if(budgetData.debts.length===0){
     html+=`<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px;">${es?'Sin préstamos registrados':'No loans registered'}</div>`;
   } else {
@@ -3186,9 +3194,9 @@ function renderBudget(dashboardTotals,forceExpand=false){
             <div class="debt-card-lbl">${es?'Pago mínimo est.':'Min. payment est.'}</div>
             <div class="debt-card-val" style="color:var(--mauve);">${fmt(Math.round(minPago))}</div>
           </div>
-          <div class="debt-card-item">
-            <div class="debt-card-lbl">${es?'Abonado este mes':'Paid this month'}</div>
-            <div class="debt-card-val" style="color:var(--teal);">${fmt(debt.abono||0)}</div>
+          <div class="debt-card-item" onclick="debtEditAbono(${di},this)" style="cursor:pointer;" title="${es?'Clic para editar':'Click to edit'}">
+            <div class="debt-card-lbl">${es?'Abonado este mes ✏️':'Paid this month ✏️'}</div>
+            <div class="debt-card-val" style="color:var(--teal);" id="debt-abono-${di}">${fmt(debt.abono||0)}</div>
           </div>
           <div class="debt-card-item">
             <div class="debt-card-lbl">${es?'Saldo original':'Original balance'}</div>
@@ -3225,8 +3233,13 @@ function renderBudget(dashboardTotals,forceExpand=false){
   const rubroRows=Object.entries(rubroMap);
   let totalResPresup=0,totalResManual=0,totalResDash=0,totalResSinc=0;
 
+  const resumenOpen=budgetResumenOpen===undefined?true:budgetResumenOpen;
   html+=`<div class="budget-divider"></div>
-  <div class="budget-sec-title">${es?'Resumen por rubro de gastos':'Expense summary by category'}</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:6px;" onclick="toggleResumenSection()">
+    <div class="budget-sec-title" style="margin:0;">${es?'Resumen por rubro de gastos':'Expense summary by category'}</div>
+    <span style="font-size:11px;color:var(--text3);display:inline-block;transform:${resumenOpen?'rotate(0deg)':'rotate(-90deg)'};transition:transform .2s;">▾</span>
+  </div>
+  <div id="resumen-body" style="display:${resumenOpen?'block':'none'}">
   <div class="budget-res-table-wrap" style="background:var(--bg2);border-radius:12px;overflow:hidden;">
   <table class="budget-res-table">
     <thead><tr>
@@ -3305,6 +3318,8 @@ function renderBudget(dashboardTotals,forceExpand=false){
     <div class="budget-leg-row"><div class="budget-leg-lbl"><span class="budget-tag-sinc">${es?'Sin clasificar':'Unclassified'}</span></div><div class="budget-leg-desc">${es?'Gastos del dashboard que aún no has asignado a ninguna subcategoría de tu presupuesto.':'Dashboard expenses not yet assigned to any budget subcategory.'}</div></div>
   </div>`;
 
+  html+=`</div>`; // close resumen-body (table+cards+legend+mobile cards)
+  html+=`</div>`; // close resumen-body wrapper div
   document.getElementById('budget-content').innerHTML=html;
   // Populate mobile cards
   const cardsEl=document.getElementById('budget-rubro-cards');
@@ -3421,6 +3436,16 @@ async function budgetEditGroupName(gi){
 }
 
 // ---- DEBT FUNCTIONS ----
+let budgetDebtOpen=true;
+let budgetResumenOpen=true;
+function toggleResumenSection(){
+  budgetResumenOpen=!budgetResumenOpen;
+  loadMonthGastos().then(d=>renderBudget(d));
+}
+function toggleDebtSection(){
+  budgetDebtOpen=!budgetDebtOpen;
+  loadMonthGastos().then(d=>renderBudget(d));
+}
 function budgetAddDebt(){
   const es=!isEn();
   const modal=document.createElement('div');
@@ -3529,6 +3554,28 @@ function budgetDelDebt(di){
   saveBudgetConfig();
   loadMonthGastos().then(d=>renderBudget(d));
 }
+function debtEditAbono(di,cardEl){
+  const debt=budgetData.debts[di];
+  const es=!isEn();
+  const valEl=document.getElementById('debt-abono-'+di);
+  if(!valEl)return;
+  const cur=debt.abono||0;
+  const input=document.createElement('input');
+  input.type='number';
+  input.value=cur;
+  input.style.cssText='width:80px;font-size:13px;font-weight:500;color:var(--teal);background:transparent;border:none;border-bottom:1.5px solid var(--teal);outline:none;padding:0;';
+  valEl.replaceWith(input);
+  input.focus();input.select();
+  function save(){
+    const val=parseFloat(input.value)||0;
+    debt.abono=val;
+    saveBudgetConfig();
+    loadMonthGastos().then(d=>renderBudget(d));
+  }
+  input.addEventListener('blur',save);
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')input.blur();if(e.key==='Escape'){input.value=cur;input.blur();}});
+}
+
 // ---- END DEBT FUNCTIONS ----
 
 
