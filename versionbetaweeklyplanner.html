@@ -724,6 +724,7 @@ body{padding:.75rem;}
     <div id="budget-export-menu" style="display:none;position:absolute;top:56px;right:16px;background:var(--bg);border:0.5px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:10;overflow:hidden;min-width:180px;">
       <button onclick="budgetExportPDF()" id="budget-pdf-btn" style="display:block;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);">📄 Descargar PDF</button>
       <button onclick="budgetExportExcel()" id="budget-excel-btn" style="display:block;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);border-top:0.5px solid var(--border);">📊 Descargar Excel</button>
+      <button onclick="restoreBudgetFromBackup()" style="display:block;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text3);border-top:0.5px solid var(--border);">↩ Restaurar respaldo</button>
     </div>
     <div id="budget-content">
       <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px;">Cargando...</div>
@@ -1045,9 +1046,9 @@ function buildOv(){
     const n=document.createElement('div');n.className='wovn'+(isT?' today':'');n.textContent=DS[d.getDay()];col.appendChild(n);
     const w=dayWo(i);
     if(w.wo1){const t=document.createElement('div');t.className='wtag wwo';t.textContent=emoji(w.wo1,WE);col.appendChild(t);}
-    if(w.wo2){const t=document.createElement('div');t.className='wtag wwo';t.textContent=emoji(w.wo2,WE);col.appendChild(t);}
-    if(w.ha1){const t=document.createElement('div');t.className='wtag whb';t.textContent=emoji(w.ha1,HE);col.appendChild(t);}
-    if(w.ha2){const t=document.createElement('div');t.className='wtag whb';t.textContent=emoji(w.ha2,HE);col.appendChild(t);}
+    if(w.wo2){const t=document.createElement('div');t.className='wtag wwo';t.textContent=w.wo2;col.appendChild(t);}
+    if(w.ha1){const t=document.createElement('div');t.className='wtag whb';t.textContent=w.ha1;col.appendChild(t);}
+    if(w.ha2){const t=document.createElement('div');t.className='wtag whb';t.textContent=w.ha2;col.appendChild(t);}
     const df=focusForDay(i);
     const fd=weekData.focusDone||{};
     [1,2,3].forEach(n=>{
@@ -2889,8 +2890,27 @@ function budgetExportExcel(){
   XLSX.writeFile(wb,fileName);
 }
 
+async function restoreBudgetFromBackup(){
+  if(!db||!currentUser)return;
+  try{
+    const snap=await userCol().doc('budget_config_backup').get();
+    if(!snap.exists){alert(isEn()?'No backup found':'No se encontró respaldo');return;}
+    const data=snap.data();
+    delete data._backup_ts;
+    await userCol().doc('budget_config').set(data);
+    budgetData=data;
+    if(!budgetData.debts)budgetData.debts=[];
+    const dash=await loadMonthGastos();
+    renderBudget(dash);
+    showToast(isEn()?'✅ Budget restored from backup':'✅ Presupuesto restaurado del respaldo');
+  }catch(e){
+    console.error('Restore failed:',e);
+    alert(isEn()?'Restore failed: '+e.message:'Error al restaurar: '+e.message);
+  }
+}
+
 async function closeBudget(){
-  await saveBudgetData();
+  await saveBudgetData(); // safe - won't save if data is empty
   document.getElementById('budget-modal').style.display='none';
   document.body.style.overflow='';
 }
@@ -3027,7 +3047,26 @@ async function loadMonthGastos(){
 function saveBudgetConfig(){saveBudgetData();}
 async function saveBudgetData(){
   if(!db||!currentUser)return;
+  // SAFETY: never save if data looks empty/corrupt
+  const hasGroups=(budgetData.groups||[]).length>0;
+  const hasIncome=(budgetData.income||[]).length>0;
+  const hasDebts=(budgetData.debts||[]).length>0;
+  if(!hasGroups&&!hasIncome&&!hasDebts){
+    console.warn('saveBudgetData: skipped — data appears empty, refusing to overwrite');
+    return;
+  }
   try{
+    // Save backup BEFORE overwriting (so we can restore if something goes wrong)
+    try{
+      const prev=await userCol().doc('budget_config').get();
+      if(prev.exists){
+        await userCol().doc('budget_config_backup').set({
+          ...prev.data(),
+          _backup_ts: Date.now()
+        });
+      }
+    }catch(e){console.warn('Backup failed (non-critical):',e);}
+
     // Save base config (presup + rubro only, not actuals)
     const config={
       groups:budgetData.groups.map(g=>({
@@ -3935,6 +3974,13 @@ function initSmartSelects(){
     sel.parentNode.insertBefore(ss, sel.nextSibling);
   });
 
+  // Sync all select values to SS inputs
+  ['wo1','wo2','ha1','ha2'].forEach(id=>{
+    const sel=document.getElementById(id);
+    const ss=document.getElementById(id+'_ss');
+    if(sel&&ss&&sel.value)ss.value=sel.value;
+  });
+
   // Gasto category select
   const gastoCatSel = document.getElementById('gasto-cat');
   if(gastoCatSel && !gastoCatSel.dataset.ssReplaced){
@@ -4092,11 +4138,15 @@ function createSmartSelect({id, options, value='', placeholder='—', onChange, 
   input.addEventListener('keydown', (e) => {
     if(e.key === 'Escape') { closeAllSmartSelects(); input.blur(); }
     if(e.key === 'Enter') {
-      const items = dropdown ? dropdown.querySelectorAll('.ss-item:not(.ss-add)') : [];
-      if(items.length > 0) items[0].onmousedown({preventDefault:()=>{}});
-      else if(onAddNew && input.value.trim()){
-        onAddNew(input.value.trim());
-        onChange && onChange(input.value.trim());
+      e.preventDefault();
+      if(!dropdown) { openDropdown(input.value); return; }
+      const items = dropdown.querySelectorAll('.ss-item:not(.ss-add):not([style*="text3"])');
+      if(items.length > 0){
+        items[0].onmousedown({preventDefault:()=>{}});
+      } else if(onAddNew && input.value.trim()){
+        const name = input.value.trim();
+        onAddNew(name);
+        onChange && onChange(name);
         closeAllSmartSelects();
       }
     }
