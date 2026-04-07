@@ -233,7 +233,7 @@ body{padding:.75rem;}
 .budget-group{margin-bottom:0.75rem;border:0.5px solid var(--border);border-radius:12px;overflow:hidden;}
 .budget-group-header{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;background:var(--bg2);}
 .budget-group-name{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;}
-.budget-col-hds{display:grid;grid-template-columns:1fr 70px 70px 100px;gap:4px;padding:5px 12px;background:var(--bg2);border-bottom:0.5px solid var(--border);}
+.budget-col-hds{display:grid;grid-template-columns:20px 1fr 65px 65px 90px 20px 20px;gap:4px;padding:5px 12px;background:var(--bg2);border-bottom:0.5px solid var(--border);}
 .budget-col-h{font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;text-align:right;}
 .budget-col-h:first-child{text-align:left;}
 .budget-sub-row{display:grid;grid-template-columns:1fr 70px 70px 100px;gap:4px;align-items:center;padding:7px 12px;border-bottom:0.5px solid var(--border);}
@@ -248,7 +248,7 @@ body{padding:.75rem;}
 .budget-amt.neutral{color:var(--text3);}
 .budget-amt.editable{cursor:pointer;border-bottom:1px dashed var(--border);}
 .budget-rubro-tag{font-size:10px;text-align:right;color:var(--text3);background:var(--bg2);padding:2px 6px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.budget-add-sub{display:grid;grid-template-columns:1fr 70px 70px 100px;gap:4px;padding:6px 12px;border-top:0.5px dashed var(--border);background:var(--bg2);}
+.budget-add-sub{display:grid;grid-template-columns:20px 1fr 65px 65px 90px 20px 20px;gap:4px;padding:6px 12px;border-top:0.5px dashed var(--border);background:var(--bg2);}
 .budget-sinput{font-size:11px;padding:4px 7px;border:0.5px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);outline:none;width:100%;}
 .budget-sinput:focus{border-color:var(--mauve);}
 .budget-add-group-btn{display:flex;align-items:center;gap:6px;background:none;border:0.5px dashed var(--border);border-radius:8px;padding:8px 14px;cursor:pointer;color:var(--text3);font-size:12px;width:100%;margin:8px 0 0;}
@@ -291,9 +291,11 @@ body{padding:.75rem;}
   .budget-res-table-wrap{display:none;}
   .budget-rubro-cards{display:flex!important;}
   .budget-sub-arrows{display:none!important;}
-  .budget-sub-row{grid-template-columns:1fr 65px 65px auto 20px!important;}
-  .budget-sinput{font-size:10px!important;padding:2px 3px!important;}
-  .budget-col-hds{grid-template-columns:1fr 65px 65px auto!important;}
+  .budget-sub-row{grid-template-columns:0 1fr 58px 58px 1fr 0 20px!important;}
+  .budget-col-hds{grid-template-columns:0 1fr 58px 58px 1fr 0 0!important;}
+  .budget-sinput{font-size:10px!important;padding:2px 2px!important;}
+  .budget-col-hds>div:first-child,.budget-col-hds>div:nth-child(6),.budget-col-hds>div:nth-child(7){display:none!important;}
+  .budget-sub-row>div:first-child{display:none!important;}
 }
 @media(min-width:521px){
   .budget-rubro-cards{display:none!important;}
@@ -3102,7 +3104,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
         </div>
       </div>
       <div id="grp-${gi}" style="display:${budgetCollapsedGroups.has(gi)?'none':'block'};">
-        <div class="budget-col-hds" style="grid-template-columns:20px 1fr 70px 70px 100px 24px;">
+        <div class="budget-col-hds" style="grid-template-columns:20px 1fr 65px 65px 90px 20px 20px;">
           <div class="budget-col-h"></div>
           <div class="budget-col-h" style="text-align:left;">${es?'Subcategoría':'Subcategory'}</div>
           <div class="budget-col-h">${es?'Presupuesto':'Budget'}</div>
@@ -3114,7 +3116,8 @@ function renderBudget(dashboardTotals,forceExpand=false){
     group.subs.forEach((sub,si)=>{
       const cls=sub.presup>0?(sub.actual>sub.presup?'over':'ok'):'neutral';
       const catOpts2=cats.map(c=>`<option value="${c}" ${c===sub.rubro?'selected':''}>${c}</option>`).join('');
-      html+=`<div class="budget-sub-row" style="grid-template-columns:1fr 70px 70px 100px 20px 20px;">
+      html+=`<div class="budget-sub-row" style="grid-template-columns:20px 1fr 65px 65px 90px 20px 20px;">
+        <div></div>
         <div class="budget-sub-name ${cls}" onclick="budgetEditSubName(${gi},${si},this)" style="cursor:pointer;" title="${es?'Clic para editar':'Click to edit'}">${sub.name}</div>
         <div class="budget-amt editable" onclick="budgetEditSub(${gi},${si},'presup',this)">${fmt(sub.presup)}</div>
         <div class="budget-amt ${cls} editable" onclick="budgetEditSub(${gi},${si},'actual',this)">${fmt(sub.actual)}</div>
@@ -3133,16 +3136,16 @@ function renderBudget(dashboardTotals,forceExpand=false){
     // Add sub row
     const catOpts=cats.map(c=>`<option value="${c}">${c}</option>`).join('');
     html+=`<div class="budget-add-sub" id="addsub-${gi}">
+        <div></div>
         <input class="budget-sinput" type="text" placeholder="${es?'Nueva subcategoría...':'New subcategory...'}" id="bsub-name-${gi}"/>
         <input class="budget-sinput" type="number" placeholder="$0" id="bsub-presup-${gi}" style="text-align:right;"/>
         <input class="budget-sinput" type="number" placeholder="$0" id="bsub-actual-${gi}" style="text-align:right;"/>
-        <div style="display:flex;gap:4px;">
-          <select class="budget-sinput" id="bsub-rubro-${gi}" style="flex:1;font-size:10px;">
-            <option value="">${es?'Rubro...':'Category...'}</option>
-            ${catOpts}
-          </select>
-          <button style="background:var(--mauve);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:14px;height:28px;width:28px;" onclick="budgetAddSub(${gi})">+</button>
-        </div>
+        <select class="budget-sinput" id="bsub-rubro-${gi}" style="font-size:10px;">
+          <option value="">${es?'Rubro...':'Category...'}</option>
+          ${catOpts}
+        </select>
+        <div></div>
+        <button style="background:var(--mauve);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:14px;height:28px;width:28px;" onclick="budgetAddSub(${gi})">+</button>
       </div>
     </div>
   </div>`;
