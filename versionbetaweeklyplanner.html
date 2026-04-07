@@ -270,6 +270,22 @@ body{padding:.75rem;}
 .budget-leg-row:last-child{border-bottom:none;}
 .budget-leg-lbl{font-size:11px;font-weight:600;color:var(--text2);min-width:110px;}
 .budget-leg-desc{font-size:11px;color:var(--text3);line-height:1.5;}
+.debt-card{background:var(--bg);border:0.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
+.debt-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.debt-card-name{font-size:13px;font-weight:600;color:var(--text);}
+.debt-card-balance{font-size:15px;font-weight:700;color:var(--text);}
+.debt-card-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;}
+.debt-card-item{background:var(--bg2);border-radius:8px;padding:5px 8px;}
+.debt-card-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
+.debt-card-val{font-size:12px;font-weight:500;color:var(--text);}
+.debt-bar-wrap{height:5px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-top:6px;}
+.debt-bar-fill{height:100%;border-radius:3px;background:var(--mauve);transition:width .4s;}
+.debt-add-form{background:var(--bg2);border-radius:10px;padding:10px 12px;margin-top:8px;}
+.debt-add-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;}
+.debt-sinput{font-size:11px;padding:5px 8px;border:0.5px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);outline:none;width:100%;box-sizing:border-box;}
+.debt-sinput:focus{border-color:var(--mauve);}
+.debt-section-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px;}
+@media(max-width:520px){.debt-card-grid{grid-template-columns:1fr 1fr;}}
 @media(max-width:520px){
   .budget-hide-mobile{display:none!important;}
   .budget-res-table-wrap{display:none;}
@@ -2622,6 +2638,8 @@ async function budgetExportPDF(){
   const {jsPDF}=window.jspdf;
   const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const es=!isEn();
+  // Strip emojis from any string
+  const clean=s=>(s||'').replace(/[\u{1F000}-\u{1FFFF}\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\u{2300}-\u{23FF}\u{FE00}-\u{FEFF}]/gu,'').trim();
   const monthLbl=document.getElementById('budget-month-lbl').textContent;
   const fmt=n=>'$'+(Math.round(n)||0).toLocaleString();
   const pw=190; // page width usable
@@ -2700,7 +2718,7 @@ async function budgetExportPDF(){
     // Group header
     pdf.setFillColor(...mauveC);pdf.roundedRect(10,y,pw,7,1,1,'F');
     pdf.setFontSize(8);pdf.setFont('helvetica','bold');pdf.setTextColor(255,255,255);
-    pdf.text(group.name.toUpperCase(),13,y+4.5);
+    pdf.text(clean(group.name).toUpperCase(),13,y+4.5);
     pdf.text(fmt(gActual)+' / '+fmt(gPresup),200,y+4.5,{align:'right'});
     y+=9;
     // Col headers
@@ -2716,13 +2734,13 @@ async function budgetExportPDF(){
       const ok=sub.presup>0&&sub.actual<=sub.presup;
       const over=sub.presup>0&&sub.actual>sub.presup;
       pdf.setFontSize(8);pdf.setFont('helvetica','normal');pdf.setTextColor(...darkC);
-      if(ok){pdf.setDrawColor(...tealC);pdf.line(13,y+0.5,13+pdf.getTextWidth(sub.name),y+0.5);}
-      if(over){pdf.setDrawColor(192,57,43);pdf.line(13,y+0.5,13+pdf.getTextWidth(sub.name),y+0.5);}
-      pdf.text(sub.name,13,y);
+      if(ok){pdf.setDrawColor(...tealC);pdf.line(13,y+0.5,13+pdf.getTextWidth(clean(sub.name)),y+0.5);}
+      if(over){pdf.setDrawColor(192,57,43);pdf.line(13,y+0.5,13+pdf.getTextWidth(clean(sub.name)),y+0.5);}
+      pdf.text(clean(sub.name),13,y);
       pdf.text(fmt(sub.presup),130,y,{align:'right'});
       pdf.text(fmt(sub.actual),158,y,{align:'right'});
       pdf.setFontSize(7);pdf.setTextColor(...grayC);
-      pdf.text(sub.rubro||'—',200,y,{align:'right'});
+      pdf.text(clean(sub.rubro||'—'),200,y,{align:'right'});
       y+=5;
     });
     y+=3;
@@ -2738,11 +2756,11 @@ async function budgetExportPDF(){
   pdf.setFillColor(...lightC);pdf.rect(10,y,pw,6,'F');
   pdf.setFontSize(7);pdf.setFont('helvetica','bold');pdf.setTextColor(...grayC);
   pdf.text(es?'Rubro':'Category',13,y+4);
-  pdf.text(es?'Presup.':'Budget',90,y+4,{align:'right'});
-  pdf.text(es?'Manual':'Manual',120,y+4,{align:'right'});
-  pdf.text('Dashboard',152,y+4,{align:'right'});
-  pdf.text(es?'Diferencia':'Difference',176,y+4,{align:'right'});
-  pdf.text(es?'Sin clasif.':'Unclass.',200,y+4,{align:'right'});
+  pdf.text(es?'Presupuesto':'Budget',85,y+4,{align:'right'});
+  pdf.text(es?'Manual':'Manual',115,y+4,{align:'right'});
+  pdf.text('Dashboard',148,y+4,{align:'right'});
+  pdf.text(es?'Diferencia':'Difference',174,y+4,{align:'right'});
+  pdf.text(es?'Sin clasificar':'Unclassified',200,y+4,{align:'right'});
   y+=8;
 
   const rubroMap={};
@@ -2764,12 +2782,12 @@ async function budgetExportPDF(){
     const sinc=Math.max(0,dash-data.manual);
     tP+=data.presup;tM+=data.manual;tD+=dash;tS+=sinc;
     pdf.setFontSize(8);pdf.setFont('helvetica','normal');pdf.setTextColor(...darkC);
-    pdf.text(rubro,13,y);
-    pdf.text(fmt(data.presup),90,y,{align:'right'});
-    pdf.text(fmt(data.manual),120,y,{align:'right'});
-    pdf.text(fmt(dash),152,y,{align:'right'});
+    pdf.text(clean(rubro),13,y);
+    pdf.text(fmt(data.presup),85,y,{align:'right'});
+    pdf.text(fmt(data.manual),115,y,{align:'right'});
+    pdf.text(fmt(dash),148,y,{align:'right'});
     diff>=0?pdf.setTextColor(...tealC):pdf.setTextColor(192,57,43);
-    pdf.text((diff>=0?'+':'')+fmt(diff),176,y,{align:'right'});
+    pdf.text((diff>=0?'+':'')+fmt(diff),174,y,{align:'right'});
     sinc>0?pdf.setTextColor(230,100,0):pdf.setTextColor(...grayC);
     pdf.text(fmt(sinc),200,y,{align:'right'});
     pdf.setDrawColor(230,225,220);pdf.line(10,y+1.5,200,y+1.5);
@@ -2779,11 +2797,11 @@ async function budgetExportPDF(){
   pdf.setFillColor(...lightC);pdf.rect(10,y,pw,7,'F');
   pdf.setFontSize(8);pdf.setFont('helvetica','bold');pdf.setTextColor(...darkC);
   pdf.text('Total',13,y+5);
-  pdf.text(fmt(tP),90,y+5,{align:'right'});
-  pdf.text(fmt(tM),120,y+5,{align:'right'});
-  pdf.text(fmt(tD),152,y+5,{align:'right'});
+  pdf.text(fmt(tP),85,y+5,{align:'right'});
+  pdf.text(fmt(tM),115,y+5,{align:'right'});
+  pdf.text(fmt(tD),148,y+5,{align:'right'});
   tP-tD>=0?pdf.setTextColor(...tealC):pdf.setTextColor(192,57,43);
-  pdf.text((tP-tD>=0?'+':'')+fmt(tP-tD),176,y+5,{align:'right'});
+  pdf.text((tP-tD>=0?'+':'')+fmt(tP-tD),174,y+5,{align:'right'});
   tS>0?pdf.setTextColor(230,100,0):pdf.setTextColor(...grayC);
   pdf.text(fmt(tS),200,y+5,{align:'right'});
 
@@ -2882,8 +2900,9 @@ async function loadBudgetData(){
         budgetData=snap.data();
         if(!budgetData.income)budgetData.income=[];
         if(!budgetData.groups)budgetData.groups=getDefaultGroups();
+        if(!budgetData.debts)budgetData.debts=[];
       } else {
-        budgetData={income:[],groups:getDefaultGroups()};
+        budgetData={income:[],groups:getDefaultGroups(),debts:[]};
       }
       // Load actuals for this specific month (separate doc)
       const monthKey='budget_actual_'+budgetYear+'_'+String(budgetMonth+1).padStart(2,'0');
@@ -2908,7 +2927,7 @@ async function loadBudgetData(){
         // Keep income from config doc if it has some (migration from old format)
         if(!budgetData.income||budgetData.income.length===0)budgetData.income=[];
       }
-    }catch(e){budgetData={income:[],groups:getDefaultGroups()};}
+    }catch(e){budgetData={income:[],groups:getDefaultGroups(),debts:[]};}
   }
 
   // Load dashboard gastos for this month
@@ -2972,14 +2991,18 @@ async function loadMonthGastos(){
   return totals;
 }
 
+function saveBudgetConfig(){saveBudgetData();}
 async function saveBudgetData(){
   if(!db||!currentUser)return;
   try{
     // Save base config (presup + rubro only, not actuals)
-    const config={groups:budgetData.groups.map(g=>({
-      id:g.id,name:g.name,
-      subs:g.subs.map(sub=>({name:sub.name,presup:sub.presup,rubro:sub.rubro}))
-    }))};
+    const config={
+      groups:budgetData.groups.map(g=>({
+        id:g.id,name:g.name,
+        subs:g.subs.map(sub=>({name:sub.name,presup:sub.presup,rubro:sub.rubro}))
+      })),
+      debts:budgetData.debts||[]
+    };
     await userCol().doc('budget_config').set(config);
     // Save actuals for this month separately
     const monthKey='budget_actual_'+budgetYear+'_'+String(budgetMonth+1).padStart(2,'0');
@@ -3079,7 +3102,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
     group.subs.forEach((sub,si)=>{
       const cls=sub.presup>0?(sub.actual>sub.presup?'over':'ok'):'neutral';
       const catOpts2=cats.map(c=>`<option value="${c}" ${c===sub.rubro?'selected':''}>${c}</option>`).join('');
-      html+=`<div class="budget-sub-row" style="grid-template-columns:1fr 70px 70px 100px 24px;">
+      html+=`<div class="budget-sub-row" style="grid-template-columns:1fr 70px 70px 100px 20px 20px;">
         <div class="budget-sub-name ${cls}" onclick="budgetEditSubName(${gi},${si},this)" style="cursor:pointer;" title="${es?'Clic para editar':'Click to edit'}">${sub.name}</div>
         <div class="budget-amt editable" onclick="budgetEditSub(${gi},${si},'presup',this)">${fmt(sub.presup)}</div>
         <div class="budget-amt ${cls} editable" onclick="budgetEditSub(${gi},${si},'actual',this)">${fmt(sub.actual)}</div>
@@ -3087,6 +3110,10 @@ function renderBudget(dashboardTotals,forceExpand=false){
           <option value="">${es?'Rubro...':'Category...'}</option>
           ${catOpts2}
         </select>
+        <div style="display:flex;flex-direction:column;gap:0px;">
+          <button onclick="budgetMoveSub(${gi},${si},-1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1;${si===0?'opacity:.25;pointer-events:none;':''}" title="Subir">▲</button>
+          <button onclick="budgetMoveSub(${gi},${si},1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1;${si===g.subs.length-1?'opacity:.25;pointer-events:none;':''}" title="Bajar">▼</button>
+        </div>
         <button onclick="budgetDelSub(${gi},${si})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0;line-height:1;">×</button>
       </div>`;
     });
@@ -3110,6 +3137,65 @@ function renderBudget(dashboardTotals,forceExpand=false){
   });
 
   html+=`<button class="budget-add-group-btn" onclick="budgetAddGroup()">+ ${es?'Agregar grupo':'Add group'}</button>`;
+
+  // PRESTAMOS & DEUDAS SECTION
+  html+=`<div class="budget-divider"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+    <div class="debt-section-title" style="margin:0;">🏦 ${es?'Préstamos & Deudas':'Loans & Debts'}</div>
+    <button onclick="budgetAddDebt()" style="background:var(--mauve);color:#fff;border:none;border-radius:8px;padding:4px 12px;cursor:pointer;font-size:12px;">+ ${es?'Agregar':'Add'}</button>
+  </div>`;
+  if(budgetData.debts.length===0){
+    html+=`<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px;">${es?'Sin préstamos registrados':'No loans registered'}</div>`;
+  } else {
+    budgetData.debts.forEach((debt,di)=>{
+      const intMensual=debt.tasa>0?debt.saldo*(debt.tasa/100):0;
+      const minPago=debt.saldo>0?Math.max(intMensual+debt.saldo*0.015,intMensual*1.1):0;
+      const pagado=debt.totalOriginal>0?Math.min(100,Math.round(((debt.totalOriginal-debt.saldo)/debt.totalOriginal)*100)):0;
+      const diasLabel=debt.fechaPago?`📅 ${debt.fechaPago}`:es?'Sin fecha':'No date';
+      html+=`<div class="debt-card">
+        <div class="debt-card-header">
+          <div>
+            <div class="debt-card-name">${debt.nombre}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px;">${diasLabel}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+            <div class="debt-card-balance">${fmt(debt.saldo)}</div>
+            <div style="display:flex;gap:4px;">
+              <button onclick="budgetEditDebt(${di})" style="background:none;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text3);font-size:11px;padding:2px 7px;">✏️</button>
+              <button onclick="budgetDelDebt(${di})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0 3px;">×</button>
+            </div>
+          </div>
+        </div>
+        <div class="debt-card-grid">
+          <div class="debt-card-item">
+            <div class="debt-card-lbl">${es?'Tasa mensual':'Monthly rate'}</div>
+            <div class="debt-card-val">${debt.tasa}%</div>
+          </div>
+          <div class="debt-card-item">
+            <div class="debt-card-lbl">${es?'Interés del mes':'Month interest'}</div>
+            <div class="debt-card-val" style="color:#c0392b;">${fmt(Math.round(intMensual))}</div>
+          </div>
+          <div class="debt-card-item">
+            <div class="debt-card-lbl">${es?'Pago mínimo est.':'Min. payment est.'}</div>
+            <div class="debt-card-val" style="color:var(--mauve);">${fmt(Math.round(minPago))}</div>
+          </div>
+          <div class="debt-card-item">
+            <div class="debt-card-lbl">${es?'Abonado este mes':'Paid this month'}</div>
+            <div class="debt-card-val" style="color:var(--teal);">${fmt(debt.abono||0)}</div>
+          </div>
+          <div class="debt-card-item">
+            <div class="debt-card-lbl">${es?'Saldo original':'Original balance'}</div>
+            <div class="debt-card-val">${fmt(debt.totalOriginal||debt.saldo)}</div>
+          </div>
+          <div class="debt-card-item">
+            <div class="debt-card-lbl">${es?'% pagado':'% paid'}</div>
+            <div class="debt-card-val" style="color:var(--teal);">${pagado}%</div>
+          </div>
+        </div>
+        <div class="debt-bar-wrap"><div class="debt-bar-fill" style="width:${pagado}%;"></div></div>
+      </div>`;
+    });
+  }
 
   // RESUMEN POR RUBRO
   // Build rubro summary from all subs
@@ -3300,10 +3386,10 @@ async function budgetAddSub(gi){
   loadBudgetData();
 }
 
-async function budgetDelGroup(gi){
+async async function budgetDelGroup(gi){
   if(!confirm(isEn()?'Delete this group and all its subcategories?':'¿Eliminar este grupo y todas sus subcategorías?'))return;
   budgetData.groups.splice(gi,1);
-  await saveBudgetData();
+  saveBudgetConfig();
   const dash=await loadMonthGastos();
   renderBudget(dash);
 }
@@ -3326,7 +3412,127 @@ async function budgetEditGroupName(gi){
   el.replaceWith(inp);inp.focus();inp.select();
 }
 
-async function budgetMoveGroup(gi,dir){
+async // ---- DEBT FUNCTIONS ----
+function budgetAddDebt(){
+  const es=!isEn();
+  const modal=document.createElement('div');
+  modal.id='debt-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  modal.innerHTML=`<div style="background:var(--bg);border-radius:16px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.18);">
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px;">🏦 ${es?'Nueva deuda / préstamo':'New debt / loan'}</div>
+    <div class="debt-add-grid">
+      <div style="grid-column:1/-1;">
+        <div class="debt-card-lbl">${es?'Descripción':'Description'}</div>
+        <input id="d-nombre" class="debt-sinput" placeholder="${es?'Ej: Tarjeta Banamex Oro':'Ex: Chase credit card'}" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Saldo actual':'Current balance'}</div>
+        <input id="d-saldo" class="debt-sinput" type="number" placeholder="0" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Saldo original (total deuda)':'Original balance'}</div>
+        <input id="d-original" class="debt-sinput" type="number" placeholder="0" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Tasa interés mensual (%)':'Monthly interest rate (%)'}</div>
+        <input id="d-tasa" class="debt-sinput" type="number" placeholder="0" step="0.01" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Fecha límite de pago':'Payment due date'}</div>
+        <input id="d-fecha" class="debt-sinput" type="text" placeholder="${es?'Ej: día 15':'Ex: 15th'}" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Abonado este mes':'Paid this month'}</div>
+        <input id="d-abono" class="debt-sinput" type="number" placeholder="0" style="margin-top:3px;"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button onclick="document.getElementById('debt-modal').remove()" style="flex:1;padding:9px;border:0.5px solid var(--border);border-radius:9px;background:none;cursor:pointer;color:var(--text2);font-size:13px;">${es?'Cancelar':'Cancel'}</button>
+      <button onclick="budgetSaveDebt(-1)" style="flex:1;padding:9px;border:none;border-radius:9px;background:var(--mauve);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">${es?'Guardar':'Save'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  setTimeout(()=>document.getElementById('d-nombre').focus(),100);
+}
+
+function budgetEditDebt(di){
+  const debt=budgetData.debts[di];
+  const es=!isEn();
+  const modal=document.createElement('div');
+  modal.id='debt-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  modal.innerHTML=`<div style="background:var(--bg);border-radius:16px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.18);">
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px;">✏️ ${es?'Editar deuda':'Edit debt'}</div>
+    <div class="debt-add-grid">
+      <div style="grid-column:1/-1;">
+        <div class="debt-card-lbl">${es?'Descripción':'Description'}</div>
+        <input id="d-nombre" class="debt-sinput" value="${debt.nombre}" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Saldo actual':'Current balance'}</div>
+        <input id="d-saldo" class="debt-sinput" type="number" value="${debt.saldo}" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Saldo original':'Original balance'}</div>
+        <input id="d-original" class="debt-sinput" type="number" value="${debt.totalOriginal||debt.saldo}" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Tasa mensual (%)':'Monthly rate (%)'}</div>
+        <input id="d-tasa" class="debt-sinput" type="number" value="${debt.tasa}" step="0.01" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Fecha límite':'Due date'}</div>
+        <input id="d-fecha" class="debt-sinput" type="text" value="${debt.fechaPago||''}" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Abonado este mes':'Paid this month'}</div>
+        <input id="d-abono" class="debt-sinput" type="number" value="${debt.abono||0}" style="margin-top:3px;"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button onclick="document.getElementById('debt-modal').remove()" style="flex:1;padding:9px;border:0.5px solid var(--border);border-radius:9px;background:none;cursor:pointer;color:var(--text2);font-size:13px;">${es?'Cancelar':'Cancel'}</button>
+      <button onclick="budgetSaveDebt(${di})" style="flex:1;padding:9px;border:none;border-radius:9px;background:var(--mauve);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">${es?'Guardar':'Save'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+function budgetSaveDebt(di){
+  const nombre=document.getElementById('d-nombre').value.trim();
+  if(!nombre)return;
+  const debt={
+    nombre,
+    saldo:parseFloat(document.getElementById('d-saldo').value)||0,
+    totalOriginal:parseFloat(document.getElementById('d-original').value)||parseFloat(document.getElementById('d-saldo').value)||0,
+    tasa:parseFloat(document.getElementById('d-tasa').value)||0,
+    fechaPago:document.getElementById('d-fecha').value.trim(),
+    abono:parseFloat(document.getElementById('d-abono').value)||0,
+  };
+  if(di===-1)budgetData.debts.push(debt);
+  else budgetData.debts[di]=debt;
+  document.getElementById('debt-modal').remove();
+  saveBudgetConfig();
+  loadMonthGastos().then(d=>renderBudget(d));
+}
+
+function budgetDelDebt(di){
+  if(!confirm(!isEn()?'¿Eliminar esta deuda?':'Delete this debt?'))return;
+  budgetData.debts.splice(di,1);
+  saveBudgetConfig();
+  loadMonthGastos().then(d=>renderBudget(d));
+}
+// ---- END DEBT FUNCTIONS ----
+
+function budgetMoveSub(gi,si,dir){
+  const subs=budgetData.groups[gi].subs;
+  const ni=si+dir;
+  if(ni<0||ni>=subs.length)return;
+  [subs[si],subs[ni]]=[subs[ni],subs[si]];
+  saveBudgetConfig();
+  loadMonthGastos().then(d=>renderBudget(d));
+}
+
+function budgetMoveGroup(gi,dir){
   const newIdx=gi+dir;
   if(newIdx<0||newIdx>=budgetData.groups.length)return;
   const tmp=budgetData.groups[gi];
@@ -3337,7 +3543,118 @@ async function budgetMoveGroup(gi,dir){
   renderBudget(dash);
 }
 
-async function budgetMoveSub(gi,si,dir){
+async // ---- DEBT FUNCTIONS ----
+function budgetAddDebt(){
+  const es=!isEn();
+  const modal=document.createElement('div');
+  modal.id='debt-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  modal.innerHTML=`<div style="background:var(--bg);border-radius:16px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.18);">
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px;">🏦 ${es?'Nueva deuda / préstamo':'New debt / loan'}</div>
+    <div class="debt-add-grid">
+      <div style="grid-column:1/-1;">
+        <div class="debt-card-lbl">${es?'Descripción':'Description'}</div>
+        <input id="d-nombre" class="debt-sinput" placeholder="${es?'Ej: Tarjeta Banamex Oro':'Ex: Chase credit card'}" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Saldo actual':'Current balance'}</div>
+        <input id="d-saldo" class="debt-sinput" type="number" placeholder="0" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Saldo original (total deuda)':'Original balance'}</div>
+        <input id="d-original" class="debt-sinput" type="number" placeholder="0" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Tasa interés mensual (%)':'Monthly interest rate (%)'}</div>
+        <input id="d-tasa" class="debt-sinput" type="number" placeholder="0" step="0.01" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Fecha límite de pago':'Payment due date'}</div>
+        <input id="d-fecha" class="debt-sinput" type="text" placeholder="${es?'Ej: día 15':'Ex: 15th'}" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Abonado este mes':'Paid this month'}</div>
+        <input id="d-abono" class="debt-sinput" type="number" placeholder="0" style="margin-top:3px;"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button onclick="document.getElementById('debt-modal').remove()" style="flex:1;padding:9px;border:0.5px solid var(--border);border-radius:9px;background:none;cursor:pointer;color:var(--text2);font-size:13px;">${es?'Cancelar':'Cancel'}</button>
+      <button onclick="budgetSaveDebt(-1)" style="flex:1;padding:9px;border:none;border-radius:9px;background:var(--mauve);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">${es?'Guardar':'Save'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  setTimeout(()=>document.getElementById('d-nombre').focus(),100);
+}
+
+function budgetEditDebt(di){
+  const debt=budgetData.debts[di];
+  const es=!isEn();
+  const modal=document.createElement('div');
+  modal.id='debt-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  modal.innerHTML=`<div style="background:var(--bg);border-radius:16px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.18);">
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px;">✏️ ${es?'Editar deuda':'Edit debt'}</div>
+    <div class="debt-add-grid">
+      <div style="grid-column:1/-1;">
+        <div class="debt-card-lbl">${es?'Descripción':'Description'}</div>
+        <input id="d-nombre" class="debt-sinput" value="${debt.nombre}" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Saldo actual':'Current balance'}</div>
+        <input id="d-saldo" class="debt-sinput" type="number" value="${debt.saldo}" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Saldo original':'Original balance'}</div>
+        <input id="d-original" class="debt-sinput" type="number" value="${debt.totalOriginal||debt.saldo}" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Tasa mensual (%)':'Monthly rate (%)'}</div>
+        <input id="d-tasa" class="debt-sinput" type="number" value="${debt.tasa}" step="0.01" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Fecha límite':'Due date'}</div>
+        <input id="d-fecha" class="debt-sinput" type="text" value="${debt.fechaPago||''}" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Abonado este mes':'Paid this month'}</div>
+        <input id="d-abono" class="debt-sinput" type="number" value="${debt.abono||0}" style="margin-top:3px;"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button onclick="document.getElementById('debt-modal').remove()" style="flex:1;padding:9px;border:0.5px solid var(--border);border-radius:9px;background:none;cursor:pointer;color:var(--text2);font-size:13px;">${es?'Cancelar':'Cancel'}</button>
+      <button onclick="budgetSaveDebt(${di})" style="flex:1;padding:9px;border:none;border-radius:9px;background:var(--mauve);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">${es?'Guardar':'Save'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+function budgetSaveDebt(di){
+  const nombre=document.getElementById('d-nombre').value.trim();
+  if(!nombre)return;
+  const debt={
+    nombre,
+    saldo:parseFloat(document.getElementById('d-saldo').value)||0,
+    totalOriginal:parseFloat(document.getElementById('d-original').value)||parseFloat(document.getElementById('d-saldo').value)||0,
+    tasa:parseFloat(document.getElementById('d-tasa').value)||0,
+    fechaPago:document.getElementById('d-fecha').value.trim(),
+    abono:parseFloat(document.getElementById('d-abono').value)||0,
+  };
+  if(di===-1)budgetData.debts.push(debt);
+  else budgetData.debts[di]=debt;
+  document.getElementById('debt-modal').remove();
+  saveBudgetConfig();
+  loadMonthGastos().then(d=>renderBudget(d));
+}
+
+function budgetDelDebt(di){
+  if(!confirm(!isEn()?'¿Eliminar esta deuda?':'Delete this debt?'))return;
+  budgetData.debts.splice(di,1);
+  saveBudgetConfig();
+  loadMonthGastos().then(d=>renderBudget(d));
+}
+// ---- END DEBT FUNCTIONS ----
+
+function budgetMoveSub(gi,si,dir){
   const subs=budgetData.groups[gi].subs;
   const newIdx=si+dir;
   if(newIdx<0||newIdx>=subs.length)return;
