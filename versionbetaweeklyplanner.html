@@ -466,16 +466,16 @@ body{padding:.75rem;}
 <div id="settings-btn-wrap" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9990;background:#fff;border-top:1px solid rgba(0,0,0,0.1);padding:6px 24px calc(6px + env(safe-area-inset-bottom)) 24px;">
   <div style="display:flex;flex-direction:row;align-items:center;justify-content:space-around;width:100%;max-width:500px;margin:0 auto;">
     <button onclick="openBudget()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#666;font-size:11px;">
-      <span style="font-size:20px;">💰</span><span style="font-size:11px;">Presupuesto</span>
+      <span style="font-size:20px;">💰</span><span style="font-size:11px;" id="bar-lbl-budget">Presupuesto</span>
     </button>
     <button onclick="openReport()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#666;font-size:11px;">
-      <span style="font-size:20px;">📊</span><span style="font-size:11px;">Reporte</span>
+      <span style="font-size:20px;">📊</span><span style="font-size:11px;" id="bar-lbl-report">Reporte</span>
     </button>
     <button id="settings-btn" onclick="openSettings()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#666;font-size:11px;">
-      <span style="font-size:20px;">⚙️</span><span style="font-size:11px;">Ajustes</span>
+      <span style="font-size:20px;">⚙️</span><span style="font-size:11px;" id="bar-lbl-settings">Ajustes</span>
     </button>
     <button id="logout-btn" onclick="signOut()" style="display:none;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#999;font-size:11px;">
-      <span style="font-size:20px;">↩</span><span style="font-size:11px;">Salir</span>
+      <span style="font-size:20px;">↩</span><span style="font-size:11px;" id="bar-lbl-logout">Salir</span>
     </button>
   </div>
 </div>
@@ -656,7 +656,10 @@ body{padding:.75rem;}
     <button class="budget-close" onclick="closeBudget()">×</button>
     <div class="budget-nav">
       <button class="budget-nav-btn" onclick="budgetPrevMonth()">‹</button>
-      <div class="budget-month" id="budget-month-lbl"></div>
+      <div style="text-align:center;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:2px;" id="budget-modal-title">Presupuesto mensual</div>
+        <div class="budget-month" id="budget-month-lbl"></div>
+      </div>
       <button class="budget-nav-btn" onclick="budgetNextMonth()" id="budget-next-btn">›</button>
     </div>
     <div id="budget-content">
@@ -2056,6 +2059,16 @@ function applyLang(lang){
   updateGastosLang(lang);
   const greet=document.getElementById('user-greeting');
   if(greet&&setupCfg.name){greet.textContent=(lang==='en'?'Hello ':'Hola ')+setupCfg.name+'!';}
+  // Translate bottom bar
+  const en=lang==='en';
+  const lblBudget=document.getElementById('bar-lbl-budget');
+  const lblReport=document.getElementById('bar-lbl-report');
+  const lblSettings=document.getElementById('bar-lbl-settings');
+  const lblLogout=document.getElementById('bar-lbl-logout');
+  if(lblBudget)lblBudget.textContent=en?'Budget':'Presupuesto';
+  if(lblReport)lblReport.textContent=en?'Report':'Reporte';
+  if(lblSettings)lblSettings.textContent=en?'Settings':'Ajustes';
+  if(lblLogout)lblLogout.textContent=en?'Sign out':'Salir';
 }
 
 // ── PALETTES ───────────────────────────────
@@ -2575,6 +2588,10 @@ function budgetNextMonth(){
 async function loadBudgetData(){
   const meses=isEn()?MES_EN_B:MES_ES_B;
   document.getElementById('budget-month-lbl').textContent=meses[budgetMonth]+' '+budgetYear;
+  const modalTitle=document.getElementById('budget-modal-title');
+  if(modalTitle)modalTitle.textContent=isEn()?'Monthly Budget':'Presupuesto mensual';
+  const loadingEl=document.getElementById('budget-loading');
+  if(loadingEl)loadingEl.textContent=isEn()?'Loading...':'Cargando...';
   const nextBtn=document.getElementById('budget-next-btn');
   const now=new Date();
   if(nextBtn)nextBtn.style.opacity=(budgetYear===now.getFullYear()&&budgetMonth>=now.getMonth())?'0.3':'1';
