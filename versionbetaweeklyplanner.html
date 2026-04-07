@@ -678,7 +678,16 @@ body{padding:.75rem;}
         <div style="font-size:11px;color:var(--text3);margin-bottom:2px;" id="budget-modal-title">Presupuesto mensual</div>
         <div class="budget-month" id="budget-month-lbl"></div>
       </div>
-      <button class="budget-nav-btn" onclick="budgetNextMonth()" id="budget-next-btn">›</button>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="budget-nav-btn" onclick="budgetNextMonth()" id="budget-next-btn">›</button>
+        <button onclick="showBudgetExportMenu()" style="background:none;border:0.5px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer;color:var(--text2);display:flex;align-items:center;" title="Exportar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="budget-export-menu" style="display:none;position:absolute;top:56px;right:16px;background:var(--bg);border:0.5px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:10;overflow:hidden;min-width:180px;">
+      <button onclick="budgetExportPDF()" style="display:block;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);">📄 Descargar PDF</button>
+      <button onclick="budgetExportExcel()" style="display:block;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);border-top:0.5px solid var(--border);">📊 Descargar Excel</button>
     </div>
     <div id="budget-content">
       <div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px;">Cargando...</div>
@@ -718,6 +727,8 @@ body{padding:.75rem;}
 
 <div class="sync-badge" id="sync-badge">Guardado ✓</div>
 
+<!-- Report export libs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Report export libs -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -2589,6 +2600,101 @@ function openBudget(){
   document.getElementById('budget-modal').style.display='block';
   document.body.style.overflow='hidden';
   loadBudgetData();
+}
+
+function showBudgetExportMenu(){
+  const menu=document.getElementById('budget-export-menu');
+  menu.style.display=menu.style.display==='none'||!menu.style.display?'block':'none';
+  setTimeout(()=>{
+    if(menu.style.display==='block'){
+      document.addEventListener('click',function close(e){
+        if(!e.target.closest('#budget-export-menu')&&!e.target.closest('[onclick="showBudgetExportMenu()"]')){
+          menu.style.display='none';
+          document.removeEventListener('click',close);
+        }
+      });
+    }
+  },0);
+}
+
+async function budgetExportPDF(){
+  document.getElementById('budget-export-menu').style.display='none';
+  const panel=document.getElementById('budget-panel');
+  const closeBtn=panel.querySelector('.budget-close');
+  const exportBtn=panel.querySelector('[onclick="showBudgetExportMenu()"]');
+  const exportMenu=document.getElementById('budget-export-menu');
+  if(closeBtn)closeBtn.style.display='none';
+  if(exportBtn)exportBtn.style.display='none';
+  if(exportMenu)exportMenu.style.display='none';
+  try{
+    const canvas=await html2canvas(panel,{
+      backgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--bg')||'#ffffff',
+      scale:2,useCORS:true
+    });
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const imgW=190;
+    const imgH=(canvas.height*imgW)/canvas.width;
+    pdf.addImage(canvas.toDataURL('image/png'),'PNG',10,10,imgW,Math.min(imgH,277));
+    const monthLbl=document.getElementById('budget-month-lbl').textContent.replace(' ','_');
+    pdf.save('presupuesto_'+monthLbl+'.pdf');
+  }catch(e){console.error('PDF error:',e);}
+  if(closeBtn)closeBtn.style.display='';
+  if(exportBtn)exportBtn.style.display='';
+}
+
+function budgetExportExcel(){
+  document.getElementById('budget-export-menu').style.display='none';
+  const monthLbl=document.getElementById('budget-month-lbl').textContent;
+  const es=!isEn();
+  const wb=XLSX.utils.book_new();
+
+  // Sheet 1: Ingresos
+  const incData=[[es?'Descripción':'Description',es?'Monto':'Amount']];
+  budgetData.income.forEach(i=>incData.push([i.desc,i.amt]));
+  const totalInc=budgetData.income.reduce((s,i)=>s+i.amt,0);
+  incData.push(['']);
+  incData.push([es?'TOTAL':'TOTAL',totalInc]);
+  const ws1=XLSX.utils.aoa_to_sheet(incData);
+  ws1['!cols']=[{wch:25},{wch:15}];
+  XLSX.utils.book_append_sheet(wb,ws1,es?'Ingresos':'Income');
+
+  // Sheet 2: Presupuesto por grupo
+  const budData=[[es?'Grupo':'Group',es?'Subcategoría':'Subcategory',es?'Presupuesto':'Budget',es?'Actual':'Actual',es?'Rubro':'Category']];
+  budgetData.groups.forEach(g=>{
+    g.subs.forEach(sub=>{
+      budData.push([g.name,sub.name,sub.presup,sub.actual,sub.rubro||'—']);
+    });
+    const gPresup=g.subs.reduce((s,sub)=>s+sub.presup,0);
+    const gActual=g.subs.reduce((s,sub)=>s+sub.actual,0);
+    budData.push(['',es?'Subtotal':'Subtotal',gPresup,gActual,'']);
+    budData.push(['']);
+  });
+  const ws2=XLSX.utils.aoa_to_sheet(budData);
+  ws2['!cols']=[{wch:20},{wch:25},{wch:15},{wch:15},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws2,es?'Presupuesto':'Budget');
+
+  // Sheet 3: Resumen por rubro (from dashboard)
+  const resData=[[es?'Rubro':'Category',es?'Presupuestado':'Budgeted',es?'Actual Manual':'Manual Actual','Dashboard',es?'Diferencia':'Difference',es?'Sin clasificar':'Unclassified']];
+  const rubroMap={};
+  budgetData.groups.forEach(g=>{
+    g.subs.forEach(sub=>{
+      if(!sub.rubro||sub.rubro==='—')return;
+      if(!rubroMap[sub.rubro])rubroMap[sub.rubro]={presup:0,manual:0};
+      rubroMap[sub.rubro].presup+=sub.presup;
+      rubroMap[sub.rubro].manual+=sub.actual;
+    });
+  });
+  // Note: for Excel we use the last known dashboard totals
+  Object.entries(rubroMap).forEach(([rubro,data])=>{
+    resData.push([rubro,data.presup,data.manual,'—',data.presup-data.manual,0]);
+  });
+  const ws3=XLSX.utils.aoa_to_sheet(resData);
+  ws3['!cols']=[{wch:25},{wch:15},{wch:15},{wch:15},{wch:15},{wch:15}];
+  XLSX.utils.book_append_sheet(wb,ws3,es?'Resumen':'Summary');
+
+  const fileName='presupuesto_'+monthLbl.replace(' ','_')+'.xlsx';
+  XLSX.writeFile(wb,fileName);
 }
 
 async function closeBudget(){
