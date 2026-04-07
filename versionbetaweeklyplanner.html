@@ -2746,7 +2746,6 @@ async function budgetExportPDF(){
     y+=3;
   });
 
-  </div>\`;  // close debt-body
   // RESUMEN POR RUBRO
   if(y>220){pdf.addPage();y=10;}
   y+=2;pdf.setDrawColor(220,215,210);pdf.line(10,y,200,y);y+=6;
@@ -3211,6 +3210,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
       </div>`;
     });
   }
+  html+=`</div>`; // close debt-body
 
   // RESUMEN POR RUBRO
   // Build rubro summary from all subs
@@ -3318,8 +3318,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
     <div class="budget-leg-row"><div class="budget-leg-lbl"><span class="budget-tag-sinc">${es?'Sin clasificar':'Unclassified'}</span></div><div class="budget-leg-desc">${es?'Gastos del dashboard que aún no has asignado a ninguna subcategoría de tu presupuesto.':'Dashboard expenses not yet assigned to any budget subcategory.'}</div></div>
   </div>`;
 
-  html+=`</div>`; // close resumen-body (table+cards+legend+mobile cards)
-  html+=`</div>`; // close resumen-body wrapper div
+  html+=`</div>`; // close resumen-body
   document.getElementById('budget-content').innerHTML=html;
   // Populate mobile cards
   const cardsEl=document.getElementById('budget-rubro-cards');
