@@ -3466,6 +3466,84 @@ function budgetEditAmt(el,type,idx){
   el.replaceWith(inp);inp.focus();inp.select();
 }
 
+
+async function budgetAddGroup(){
+  const es=!isEn();
+  const name=prompt(es?'Nombre del grupo:':'Group name:');
+  if(!name||!name.trim())return;
+  budgetData.groups.push({id:'grp_'+Date.now(),name:name.trim(),subs:[]});
+  await saveBudgetData();
+  loadBudgetData();
+}
+
+function budgetChangeRubro(gi,si,val){
+  budgetData.groups[gi].subs[si].rubro=val;
+  saveBudgetConfig();
+}
+
+function budgetMoveSub(gi,si,dir){
+  const subs=budgetData.groups[gi].subs;
+  const ni=si+dir;
+  if(ni<0||ni>=subs.length)return;
+  [subs[si],subs[ni]]=[subs[ni],subs[si]];
+  saveBudgetConfig();
+  loadMonthGastos().then(d=>renderBudget(d));
+}
+
+function budgetMoveGroup(gi,dir){
+  const newIdx=gi+dir;
+  if(newIdx<0||newIdx>=budgetData.groups.length)return;
+  [budgetData.groups[gi],budgetData.groups[newIdx]]=[budgetData.groups[newIdx],budgetData.groups[gi]];
+  saveBudgetConfig();
+  loadMonthGastos().then(d=>renderBudget(d));
+}
+
+async function budgetDelSub(gi,si){
+  budgetData.groups[gi].subs.splice(si,1);
+  await saveBudgetData();
+  loadBudgetData();
+}
+
+async function budgetEditGroupName(gi){
+  const el=document.getElementById('grp-name-'+gi);
+  if(!el)return;
+  const cur=el.textContent;
+  const inp=document.createElement('input');
+  inp.value=cur;
+  inp.style.cssText='font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border:none;border-bottom:1px solid var(--mauve);outline:none;background:transparent;width:120px;';
+  inp.onblur=async()=>{
+    const v=inp.value.trim();
+    if(v&&v!==cur){
+      budgetData.groups[gi].name=v;
+      await saveBudgetData();
+      loadBudgetData();
+    } else {
+      inp.replaceWith(el);
+    }
+  };
+  inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape'){inp.replaceWith(el);}};
+  el.replaceWith(inp);inp.focus();inp.select();
+}
+
+async function budgetEditSubName(gi,si,el){
+  const cur=el.textContent;
+  const inp=document.createElement('input');
+  inp.value=cur;
+  inp.style.cssText='font-size:12px;color:var(--text);border:none;border-bottom:1px solid var(--mauve);outline:none;background:transparent;width:100%;';
+  inp.onblur=async()=>{
+    const v=inp.value.trim();
+    if(v&&v!==cur){
+      budgetData.groups[gi].subs[si].name=v;
+      await saveBudgetData();
+      loadBudgetData();
+    } else {
+      inp.replaceWith(el);
+    }
+  };
+  inp.onkeydown=e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape'){inp.replaceWith(el);}};
+  el.replaceWith(inp);inp.focus();inp.select();
+}
+
 function budgetEditSub(gi,si,field,el){
   const cur=parseFloat(el.textContent.replace(/[$,]/g,''))||0;
   const inp=document.createElement('input');
