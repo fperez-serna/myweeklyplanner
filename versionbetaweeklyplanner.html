@@ -524,6 +524,9 @@ body{padding:.75rem;}
     <button onclick="openReport()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#666;font-size:11px;">
       <span style="font-size:20px;">📊</span><span style="font-size:11px;" id="bar-lbl-report">Reporte</span>
     </button>
+    <button onclick="openBackupsUI()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#666;font-size:11px;">
+      <span style="font-size:20px;">🗄️</span><span style="font-size:11px;" id="bar-lbl-backup">Respaldos</span>
+    </button>
     <button id="settings-btn" onclick="openSettings()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#666;font-size:11px;">
       <span style="font-size:20px;">⚙️</span><span style="font-size:11px;" id="bar-lbl-settings">Ajustes</span>
     </button>
@@ -871,6 +874,8 @@ function initFirebase(){
 
 async function saveDB(){
   if(!db)return;
+  // Safety: don't save if weekData is empty object
+  if(!weekData||Object.keys(weekData).length===0){console.warn('saveDB: skipped empty data');return;}
   try{await userCol().doc(wid()).set(weekData);showSync();}
   catch(e){console.error('Save error:',e);}
 }
@@ -878,6 +883,10 @@ async function saveDB(){
 let _shSaving=false;
 async function saveShoppingDB(){
   if(!db)return;
+  // Safety: don't save if shoppingItems is empty
+  const hasItems=Object.values(shoppingItems||{}).some(arr=>(arr||[]).length>0);
+  const hasKeys=Object.keys(shoppingItems||{}).length>0;
+  if(!hasKeys){console.warn('saveShoppingDB: skipped empty data');_shSaving=false;return;}
   _shSaving=true;
   try{await userCol().doc('shopping').set({cats:shoppingItems});}
   catch(e){console.error('Shopping save:',e);}
@@ -976,6 +985,7 @@ async function loadPendingTasks(){
 
 async function savePendingTasks(){
   if(!db)return;
+  if(!pendingTasks){console.warn('savePendingTasks: skipped null data');return;}
   try{await userCol().doc('pending_tasks').set({tasks:pendingTasks});}
   catch(e){console.error('Pending save:',e);}
 }
@@ -2257,6 +2267,7 @@ function addChip(type){
 
 function saveConfigToFirebase(){
   if(db&&currentUser){
+    if(!setupCfg||Object.keys(setupCfg).length===0){console.warn('saveConfig: skipped empty');return;}
     localStorage.setItem('wp_config',JSON.stringify(setupCfg));
     userCol().doc('config').set({cfg:setupCfg}).catch(e=>console.error('Config sync:',e));
   }
@@ -4194,6 +4205,174 @@ function replaceWithSmartSelect(selectEl, onAddNew){
   selectEl.parentNode.insertBefore(ss, selectEl.nextSibling);
 }
 // ── END SMART SELECT ───────────────────────────────────────────────
+
+// ══════════════════════════════════════════════════════
+// BACKUP SYSTEM
+// ══════════════════════════════════════════════════════
+const BACKUP_DAYS = 7;
+const BACKUP_KEY = 'wp_last_backup_date';
+
+async function autoBackup(){
+  if(!db||!currentUser)return;
+  const today = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+  const lastBackup = localStorage.getItem(BACKUP_KEY+'_'+currentUser.uid);
+  if(lastBackup === today) return; // already backed up today
+  try{
+    // Collect all current data
+    const snapshot = {};
+    
+    // Week data (current week + last 4 weeks)
+    const weekPromises = [];
+    for(let w=0; w<5; w++){
+      const d = new Date(weekDays[0]);
+      d.setDate(d.getDate() - w*7);
+      const key = 'week_' + dk(d);
+      weekPromises.push(
+        userCol().doc(key).get()
+          .then(s => { if(s.exists) snapshot[key] = s.data(); })
+          .catch(()=>{})
+      );
+    }
+    await Promise.all(weekPromises);
+    
+    // Budget config
+    const budgetSnap = await userCol().doc('budget_config').get();
+    if(budgetSnap.exists) snapshot['budget_config'] = budgetSnap.data();
+    
+    // Shopping
+    const shopSnap = await userCol().doc('shopping').get();
+    if(shopSnap.exists) snapshot['shopping'] = shopSnap.data();
+    
+    // Config
+    const cfgSnap = await userCol().doc('config').get();
+    if(cfgSnap.exists) snapshot['config'] = cfgSnap.data();
+    
+    // Pending tasks
+    const pendSnap = await userCol().doc('pending_tasks').get();
+    if(pendSnap.exists) snapshot['pending_tasks'] = pendSnap.data();
+
+    // Save backup
+    if(Object.keys(snapshot).length > 0){
+      await userCol().doc('backups').collection('daily').doc(today).set({
+        date: today,
+        ts: Date.now(),
+        docs: snapshot
+      });
+      localStorage.setItem(BACKUP_KEY+'_'+currentUser.uid, today);
+      console.log('✅ Backup saved for', today, '— docs:', Object.keys(snapshot).length);
+      
+      // Clean up old backups (keep last 7 days)
+      await cleanOldBackups();
+    }
+  }catch(e){
+    console.warn('Backup failed (non-critical):', e);
+  }
+}
+
+async function cleanOldBackups(){
+  try{
+    const snaps = await userCol().doc('backups').collection('daily')
+      .orderBy('ts','desc')
+      .get();
+    const docs = snaps.docs;
+    if(docs.length > BACKUP_DAYS){
+      const toDelete = docs.slice(BACKUP_DAYS);
+      await Promise.all(toDelete.map(d => d.ref.delete()));
+      console.log('🗑 Cleaned', toDelete.length, 'old backups');
+    }
+  }catch(e){ console.warn('Cleanup failed:', e); }
+}
+
+async function getBackupList(){
+  try{
+    const snaps = await userCol().doc('backups').collection('daily')
+      .orderBy('ts','desc')
+      .limit(BACKUP_DAYS)
+      .get();
+    return snaps.docs.map(d => ({id: d.id, date: d.data().date, ts: d.data().ts, docCount: Object.keys(d.data().docs||{}).length}));
+  }catch(e){ return []; }
+}
+
+async function restoreFromBackup(dateStr){
+  if(!db||!currentUser)return;
+  const es = !isEn();
+  if(!confirm(es?`¿Restaurar todos tus datos al ${dateStr}? Esto reemplazará tu información actual.`:`Restore all your data to ${dateStr}? This will replace your current data.`)) return;
+  
+  try{
+    const snap = await userCol().doc('backups').collection('daily').doc(dateStr).get();
+    if(!snap.exists){ alert(es?'Respaldo no encontrado':'Backup not found'); return; }
+    
+    const {docs} = snap.data();
+    showToast(es?'Restaurando...' : 'Restoring...');
+    
+    // Save current state as emergency backup before restoring
+    const emergencyDate = new Date().toISOString().slice(0,16).replace('T','_').replace(':','-');
+    await userCol().doc('backups').collection('daily').doc('pre_restore_'+emergencyDate).set({
+      date: emergencyDate,
+      ts: Date.now(),
+      docs: {} // we'll fill this minimally
+    }).catch(()=>{});
+
+    // Restore each doc
+    const restorePromises = Object.entries(docs).map(([docId, data]) => 
+      userCol().doc(docId).set(data).catch(e => console.warn('Failed to restore', docId, e))
+    );
+    await Promise.all(restorePromises);
+    
+    showToast(es?'✅ Datos restaurados — recargando...' : '✅ Data restored — reloading...');
+    setTimeout(() => window.location.reload(), 1500);
+  }catch(e){
+    console.error('Restore failed:', e);
+    alert(es?'Error al restaurar: '+e.message : 'Restore failed: '+e.message);
+  }
+}
+
+async function openBackupsUI(){
+  const es = !isEn();
+  const modal = document.createElement('div');
+  modal.id = 'backups-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  
+  modal.innerHTML = `<div style="background:var(--bg);border-radius:16px;padding:20px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:16px;font-weight:600;color:var(--text);">🗄️ ${es?'Respaldos':'Backups'}</div>
+      <button onclick="document.getElementById('backups-modal').remove()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);">×</button>
+    </div>
+    <div id="backups-list" style="font-size:13px;color:var(--text3);text-align:center;padding:16px;">${es?'Cargando...':'Loading...'}</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
+      ${es?'Se guarda un respaldo automático una vez al día. Se mantienen los últimos 7 días.':'Auto-backup runs once daily. Last 7 days are kept.'}
+    </div>
+  </div>`;
+  
+  document.body.appendChild(modal);
+  
+  const list = document.getElementById('backups-list');
+  const backups = await getBackupList();
+  
+  if(!backups.length){
+    list.textContent = es?"No hay respaldos aún. Se crearán automáticamente cada día.":"No backups yet. They'll be created automatically each day.";
+    return;
+  }
+  
+  list.innerHTML = backups.map(b => {
+    const d = new Date(b.ts);
+    const label = d.toLocaleDateString(es?'es-MX':'en-US', {weekday:'short',month:'short',day:'numeric'});
+    const time = d.toLocaleTimeString(es?'es-MX':'en-US', {hour:'2-digit',minute:'2-digit'});
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border);">
+      <div>
+        <div style="font-weight:500;color:var(--text);">${label}</div>
+        <div style="font-size:11px;color:var(--text3);">${time} · ${b.docCount} ${es?'docs':'docs'}</div>
+      </div>
+      <button onclick="document.getElementById('backups-modal').remove();restoreFromBackup('${b.id}')" 
+        style="padding:5px 12px;border-radius:8px;border:0.5px solid var(--mauve);background:none;color:var(--mauve);font-size:12px;cursor:pointer;">
+        ${es?'Restaurar':'Restore'}
+      </button>
+    </div>`;
+  }).join('');
+}
+// ══════════════════════════════════════════════════════
+// END BACKUP SYSTEM
+// ══════════════════════════════════════════════════════
 
 // ── AUTH ───────────────────────────────────
 async function signInEmail(){
