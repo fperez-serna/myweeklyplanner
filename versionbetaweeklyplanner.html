@@ -3702,11 +3702,20 @@ async function budgetAddSub(gi){
   const name=document.getElementById(`bsub-name-${gi}`) ? document.getElementById(`bsub-name-${gi}`).value.trim() : '';
   const presup=parseFloat(document.getElementById(`bsub-presup-${gi}`)?.value)||0;
   const actual=parseFloat(document.getElementById(`bsub-actual-${gi}`)?.value)||0;
-  // Read rubro from SmartSelect input (SS replaced the original select)
+  // Read rubro from SmartSelect input (SS creates input with id=wrap_id+'_ss')
   const rubroSS=document.getElementById(`bsub-rubro-${gi}_ss`);
-  const rubro=rubroSS?rubroSS.value:'';
+  const rubro=rubroSS?rubroSS.value.trim():'';
   if(!name)return;
   budgetData.groups[gi].subs.push({name,presup,actual,rubro});
+  // Clear inputs
+  const nameEl=document.getElementById(`bsub-name-${gi}`);
+  const presupEl=document.getElementById(`bsub-presup-${gi}`);
+  const actualEl=document.getElementById(`bsub-actual-${gi}`);
+  const rubroEl=document.getElementById(`bsub-rubro-${gi}_ss`);
+  if(nameEl)nameEl.value='';
+  if(presupEl)presupEl.value='';
+  if(actualEl)actualEl.value='';
+  if(rubroEl)rubroEl.value='';
   await saveBudgetData();
   loadBudgetData();
 }
