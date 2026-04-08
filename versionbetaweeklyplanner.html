@@ -1086,10 +1086,11 @@ function subscribeConfig(){
 function subscribeDB(){
   if(unsub)unsub();
   if(!db)return;
-  unsub=userCol().doc(wid()).onSnapshot(snap=>{
+  unsub=userCol().doc(wid()).onSnapshot(async snap=>{
     if(snap.exists){
       weekData=snap.data();
-
+      // Reload pending tasks to ensure cross-week carry is up to date
+      await loadPendingTasks();
       renderDay();
     }
   });
