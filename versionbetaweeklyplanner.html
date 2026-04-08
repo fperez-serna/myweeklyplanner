@@ -1239,7 +1239,7 @@ function renderTasks(di){
         '<button onclick="moveTask(this.dataset.id,-1)" data-id="'+tid+'" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1.2;opacity:'+(allIdx===0?'.2':'1')+(allIdx===0?'" disabled':'"')+'>▲</button>'+
         '<button onclick="moveTask(this.dataset.id,1)" data-id="'+tid+'" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1.2;opacity:'+(allIdx===allVisible.length-1?'.2':'1')+(allIdx===allVisible.length-1?'" disabled':'"')+'>▼</button>'+
       '</div>';
-    d.innerHTML=arrows+'<div class="cb'+(isDone?' done':'')+'" data-id="'+t.id+'" onclick="toggleTask(this)"><svg class="ck" viewBox="0 0 8 8"><polyline points="1,4 3,6 7,2" fill="none" stroke="white" stroke-width="1.5"/></svg></div><span class="tt'+(isDone?' done':'')+'" contenteditable="true" spellcheck="false" data-id="'+t.id+'" onblur="updateTaskText(this)">'+t.text+'</span>'+(isCar&&!isDone?'<span class="cbadge">↩ anterior</span>':'')+'<button class="dx" data-id="'+t.id+'" onclick="deleteTask(this)">×</button>';
+    d.innerHTML=arrows+'<div class="cb'+(isDone?' done':'')+'" data-id="'+t.id+'" onclick="toggleTask(this)"><svg class="ck" viewBox="0 0 8 8"><polyline points="1,4 3,6 7,2" fill="none" stroke="white" stroke-width="1.5"/></svg></div><span class="tt'+(isDone?' done':'')+'" contenteditable="true" spellcheck="false" data-id="'+t.id+'" onblur="updateTaskText(this)">'+t.text+'</span>'+(isCar&&!isDone?'<span class="cbadge">anterior</span>':'')+'<button class="dx" data-id="'+t.id+'" onclick="deleteTask(this)">×</button>';
     list.appendChild(d);
   });
 }
