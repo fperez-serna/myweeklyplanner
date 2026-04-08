@@ -3327,18 +3327,21 @@ function renderBudget(dashboardTotals,forceExpand=false){
         </div>
         <button onclick="budgetDelSub(${gi},${si})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0;line-height:1;">×</button>
       </div>
-      <!-- Mobile layout: name + bar + nums row -->
+      <!-- Mobile: row 1 = name, row 2 = bar full width, row 3 = presup+actual+rubro+delete -->
       <div class="budget-sub-mobile-row">
-        <div class="budget-sub-name ${cls}" onclick="budgetEditSubName(${gi},${si},this)" style="cursor:pointer;font-size:13px;padding-bottom:3px;width:100%;">${sub.name}</div>
-        <div class="budget-mini-bar" style="width:100%;margin-bottom:5px;"><div class="budget-mini-fill" style="width:${pct}%;background:${diff>=0?'var(--teal)':'#c0392b'};"></div></div>
-        <div style="display:grid;grid-template-columns:auto 58px 8px auto 58px 1fr 20px;align-items:center;width:100%;gap:2px;">
-          <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">Presup.</span>
-          <span class="budget-amt editable" onclick="budgetEditSub(${gi},${si},'presup',this)" style="font-size:12px;text-align:right;">${fmt(sub.presup)}</span>
-          <span style="color:var(--border);font-size:10px;text-align:center;">·</span>
-          <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">Actual</span>
-          <span class="budget-amt ${cls} editable" onclick="budgetEditSub(${gi},${si},'actual',this)" style="font-size:12px;text-align:right;">${fmt(sub.actual)}</span>
-          <div class="ss-budget-rubro-mobile" data-gi="${gi}" data-si="${si}" data-val="${sub.rubro||''}"></div>
-          <button onclick="budgetDelSub(${gi},${si})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0;line-height:1;text-align:right;">×</button>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;width:100%;margin-bottom:3px;">
+          <div class="budget-sub-name ${cls}" onclick="budgetEditSubName(${gi},${si},this)" style="cursor:pointer;font-size:13px;flex:1;">${sub.name}</div>
+        </div>
+        <div class="budget-mini-bar" style="width:100%;margin-bottom:6px;"><div class="budget-mini-fill" style="width:${pct}%;background:${diff>=0?'var(--teal)':'#c0392b'};"></div></div>
+        <div style="display:flex;align-items:center;width:100%;gap:4px;">
+          <span style="font-size:9px;color:var(--text3);text-transform:uppercase;white-space:nowrap;">Presup.</span>
+          <span class="budget-amt editable" onclick="budgetEditSub(${gi},${si},'presup',this)" style="font-size:12px;">${fmt(sub.presup)}</span>
+          <span style="color:var(--border);">·</span>
+          <span style="font-size:9px;color:var(--text3);text-transform:uppercase;white-space:nowrap;">Actual</span>
+          <span class="budget-amt ${cls} editable" onclick="budgetEditSub(${gi},${si},'actual',this)" style="font-size:12px;">${fmt(sub.actual)}</span>
+          <div style="flex:1;"></div>
+          <div class="ss-budget-rubro-mobile" data-gi="${gi}" data-si="${si}" data-val="${sub.rubro||''}" style="width:110px;flex-shrink:0;"></div>
+          <button onclick="budgetDelSub(${gi},${si})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0 0 0 4px;line-height:1;flex-shrink:0;">×</button>
         </div>
       </div>`;
     });
