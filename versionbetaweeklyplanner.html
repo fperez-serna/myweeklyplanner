@@ -324,6 +324,24 @@ body{padding:.75rem;}
 .ss-item.ss-add{color:var(--mauve);font-weight:500;}
 .ss-item.ss-add:hover{background:var(--mauve);color:#fff;}
 .ss-empty{padding:8px 12px;font-size:12px;color:var(--text3);font-style:italic;}
+
+/* ── PRIVACY MODAL ─────────────────────────── */
+#privacy-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999999;align-items:center;justify-content:center;padding:16px;}
+#privacy-modal.show{display:flex;}
+#privacy-panel{background:var(--bg);border-radius:16px;max-width:480px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.25);}
+#privacy-header{padding:20px 20px 0;flex-shrink:0;}
+#privacy-body{padding:0 20px;overflow-y:auto;flex:1;}
+#privacy-footer{padding:16px 20px 20px;flex-shrink:0;border-top:0.5px solid var(--border);}
+.privacy-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.privacy-subtitle{font-size:12px;color:var(--text3);margin-bottom:16px;}
+.privacy-section{margin:14px 0;}
+.privacy-section-title{font-size:12px;font-weight:600;color:var(--mauve);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+.privacy-text{font-size:12px;color:var(--text2);line-height:1.7;}
+.privacy-check-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}
+.privacy-check-row input[type=checkbox]{width:18px;height:18px;flex-shrink:0;margin-top:2px;accent-color:var(--mauve);}
+.privacy-check-label{font-size:12px;color:var(--text2);line-height:1.5;}
+#privacy-accept-btn{width:100%;padding:12px;border-radius:12px;border:none;background:var(--mauve);color:#fff;font-size:14px;font-weight:600;cursor:pointer;opacity:.4;pointer-events:none;transition:opacity .2s;}
+#privacy-accept-btn.ready{opacity:1;pointer-events:auto;}
 </style>
 </head>
 <body>
@@ -512,6 +530,88 @@ body{padding:.75rem;}
     </div>
 
     <button onclick="saveSetup()" style="width:100%;padding:14px;border-radius:12px;background:var(--mauve);color:#fff;border:none;font-size:15px;font-weight:500;cursor:pointer;margin-bottom:2rem;">¡Listo, empezar! 🎉</button>
+  </div>
+</div>
+
+
+<!-- AVISO DE PRIVACIDAD MODAL -->
+<div id="privacy-modal">
+  <div id="privacy-panel">
+    <div id="privacy-header">
+      <div class="privacy-title">🔒 Aviso de Privacidad</div>
+      <div class="privacy-subtitle">Léelo antes de crear tu cuenta — es breve y claro</div>
+    </div>
+    <div id="privacy-body">
+
+      <div class="privacy-section">
+        <div class="privacy-section-title">¿Quién es responsable?</div>
+        <div class="privacy-text">
+          <strong>María Fernanda Pérez Salinas Serna</strong>, con domicilio en Mérida, Yucatán, México, es la responsable del tratamiento de tus datos personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP).
+        </div>
+      </div>
+
+      <div class="privacy-section">
+        <div class="privacy-section-title">¿Qué datos recopilamos?</div>
+        <div class="privacy-text">
+          • <strong>Datos de cuenta:</strong> correo electrónico y contraseña (cifrada).<br>
+          • <strong>Datos que tú ingresas:</strong> tareas, gastos, hábitos, workouts, listas de compras y presupuesto mensual.<br>
+          • <strong>Datos técnicos:</strong> fecha de creación de cuenta y última sesión.
+        </div>
+      </div>
+
+      <div class="privacy-section">
+        <div class="privacy-section-title">¿Para qué los usamos?</div>
+        <div class="privacy-text">
+          Únicamente para prestarte el servicio de Weekly Planner: guardar y sincronizar tu información entre dispositivos. <strong>No vendemos ni compartimos tus datos con terceros.</strong>
+        </div>
+      </div>
+
+      <div class="privacy-section">
+        <div class="privacy-section-title">¿Dónde se almacenan?</div>
+        <div class="privacy-text">
+          Tus datos se almacenan en Google Firebase (servidores de Google LLC), bajo sus estándares de seguridad internacionales. Puedes consultar su política en <em>firebase.google.com</em>.
+        </div>
+      </div>
+
+      <div class="privacy-section">
+        <div class="privacy-section-title">Tus derechos ARCO</div>
+        <div class="privacy-text">
+          Tienes derecho a <strong>Acceder, Rectificar, Cancelar u Oponerte</strong> al tratamiento de tus datos en cualquier momento. Para ejercerlos, escribe a: <strong>contacto@myweeklyplanner.app</strong>. Responderemos en un plazo máximo de 20 días hábiles.
+        </div>
+      </div>
+
+      <div class="privacy-section">
+        <div class="privacy-section-title">Cambios a este aviso</div>
+        <div class="privacy-text">
+          Cualquier modificación se notificará dentro de la app. La versión vigente siempre estará disponible en <em>myweeklyplanner.app/privacidad</em>.
+        </div>
+      </div>
+
+      <div class="privacy-section">
+        <div class="privacy-section-title">Cookies y rastreo</div>
+        <div class="privacy-text">
+          Weekly Planner no utiliza cookies de rastreo publicitario ni comparte tu comportamiento con plataformas de marketing.
+        </div>
+      </div>
+
+      <div style="height:8px;"></div>
+    </div>
+
+    <div id="privacy-footer">
+      <div class="privacy-check-row">
+        <input type="checkbox" id="privacy-check1" onchange="updatePrivacyBtn()">
+        <label class="privacy-check-label" for="privacy-check1">
+          He leído y acepto el <strong>Aviso de Privacidad</strong> de Weekly Planner.
+        </label>
+      </div>
+      <div class="privacy-check-row">
+        <input type="checkbox" id="privacy-check2" onchange="updatePrivacyBtn()">
+        <label class="privacy-check-label" for="privacy-check2">
+          Acepto que mis datos se almacenen en servidores de Google Firebase para el funcionamiento del servicio.
+        </label>
+      </div>
+      <button id="privacy-accept-btn" onclick="acceptPrivacy()">Comenzar a usar Weekly Planner</button>
+    </div>
   </div>
 </div>
 
@@ -3206,6 +3306,8 @@ function renderBudget(dashboardTotals,forceExpand=false){
     group.subs.forEach((sub,si)=>{
       const cls=sub.presup>0?(sub.actual>sub.presup?'over':'ok'):'neutral';
       const catOpts2=cats.map(c=>`<option value="${c}" ${c===sub.rubro?'selected':''}>${c}</option>`).join('');
+      const pct=sub.presup>0?Math.min(100,Math.round((sub.actual/sub.presup)*100)):0;
+      const diff=sub.presup-sub.actual;
       html+=`<div class="budget-sub-row" style="grid-template-columns:20px 1fr 58px 58px 80px 20px 20px;">
         <div></div>
         <div style="min-width:0;overflow:hidden;">
@@ -4430,6 +4532,60 @@ async function openBackupsUI(){
 // ══════════════════════════════════════════════════════
 // END BACKUP SYSTEM
 // ══════════════════════════════════════════════════════
+
+// ── AVISO DE PRIVACIDAD ────────────────────────────────
+function updatePrivacyBtn(){
+  const c1=document.getElementById('privacy-check1');
+  const c2=document.getElementById('privacy-check2');
+  const btn=document.getElementById('privacy-accept-btn');
+  if(c1&&c2&&btn){
+    btn.classList.toggle('ready', c1.checked&&c2.checked);
+  }
+}
+
+async function acceptPrivacy(){
+  const c1=document.getElementById('privacy-check1');
+  const c2=document.getElementById('privacy-check2');
+  if(!c1?.checked||!c2?.checked)return;
+  // Save acceptance to Firebase
+  if(db&&currentUser){
+    try{
+      await userCol().doc('privacy').set({
+        accepted:true,
+        ts:Date.now(),
+        version:'2026-04',
+        email:currentUser.email
+      });
+    }catch(e){console.warn('Privacy save error:',e);}
+  }
+  // Also save locally as fallback
+  localStorage.setItem('wp_privacy_accepted_'+( currentUser?.uid||''), '2026-04');
+  document.getElementById('privacy-modal').classList.remove('show');
+}
+
+async function checkPrivacyAccepted(){
+  if(!currentUser)return true;
+  // Check local first (faster)
+  const local=localStorage.getItem('wp_privacy_accepted_'+currentUser.uid);
+  if(local)return true;
+  // Check Firebase
+  try{
+    const snap=await userCol().doc('privacy').get();
+    if(snap.exists&&snap.data().accepted){
+      localStorage.setItem('wp_privacy_accepted_'+currentUser.uid,'2026-04');
+      return true;
+    }
+  }catch(e){console.warn('Privacy check error:',e);}
+  return false;
+}
+
+async function showPrivacyIfNeeded(){
+  const accepted=await checkPrivacyAccepted();
+  if(!accepted){
+    document.getElementById('privacy-modal').classList.add('show');
+  }
+}
+// ── END AVISO DE PRIVACIDAD ────────────────────────────
 
 // ── AUTH ───────────────────────────────────
 async function signInEmail(){
