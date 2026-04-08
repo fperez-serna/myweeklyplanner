@@ -4035,16 +4035,11 @@ async function loadReportData(){
   if(db){
     const promises=weekStarts.map(ws=>{
       const key='week_'+dk(ws);
-      console.log('Report fetching key:', key);
       return userCol().doc(key).get()
-        .then(snap=>{
-          console.log('Report key', key, '-> exists:', snap.exists, snap.exists?Object.keys(snap.data()):[]);
-          return {key,weekStart:new Date(ws),data:snap.exists?snap.data():null};
-        })
-        .catch(e=>{console.error('Report fetch error:', key, e);return {key,weekStart:new Date(ws),data:null};});
+        .then(snap=>({key,weekStart:new Date(ws),data:snap.exists?snap.data():null}))
+        .catch(()=>({key,weekStart:new Date(ws),data:null}));
     });
     reportData=await Promise.all(promises);
-    console.log('reportData:', reportData.map(r=>({key:r.key,hasData:!!r.data})));
   }
   renderReport();
 }
@@ -4079,7 +4074,7 @@ function renderReport(){
       <div class="report-stat-grid">
         <div class="rstat"><div class="rstat-val">$${monthTotal.toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Month total':'Total del mes'}</div></div>
         <div class="rstat"><div class="rstat-val">$${Math.round(avgWeekly).toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Weekly avg':'Promedio semanal'}</div></div>
-        ${maxDay?`<div class="rstat"><div class="rstat-val">${isEn()?'Day ':'Día '}${maxDay}</div><div class="rstat-lbl">${isEn()?'Most expensive':'Día más caro'} $${maxDayAmt.toLocaleString()}</div></div>`:''}
+        ${maxDay?`<div class="rstat"><div class="rstat-val">${(()=>{const d=new Date(reportYear,reportMonth,maxDay);return(isEn()?['Mon','Tue','Wed','Thu','Fri','Sat','Sun']:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'])[(d.getDay()+6)%7]+' '+maxDay;})()} </div><div class="rstat-lbl">${isEn()?'Most expensive':'Día más caro'} $${maxDayAmt.toLocaleString()}</div></div>`:''}
         ${Object.keys(catTotals).length?`<div class="rstat"><div class="rstat-val">${Object.keys(catTotals).length}</div><div class="rstat-lbl">${isEn()?'Categories':'Categorías'}</div></div>`:''}
       </div>`;
     if(Object.keys(catTotals).length){
@@ -4158,7 +4153,7 @@ function renderReport(){
         <div class="rstat"><div class="rstat-val">${focusPct}%</div><div class="rstat-lbl">${isEn()?'Focus completed':'Enfoques completados'}</div></div>
         <div class="rstat"><div class="rstat-val">${taskPct}%</div><div class="rstat-lbl">${isEn()?'Tasks done':'Pendientes resueltos'}</div></div>
         <div class="rstat"><div class="rstat-val">${focusDone}/${focusTotal}</div><div class="rstat-lbl">${isEn()?'Focus goals':'Metas de enfoque'}</div></div>
-        ${bestDay?`<div class="rstat"><div class="rstat-val">${isEn()?'Day ':'Día '}${bestDay}</div><div class="rstat-lbl">${isEn()?'Best day':'Día más productivo'} ${bestPct}%</div></div>`:''}
+        ${bestDay?`<div class="rstat"><div class="rstat-val">${(()=>{const d=new Date(reportYear,reportMonth,bestDay);return(isEn()?['Mon','Tue','Wed','Thu','Fri','Sat','Sun']:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'])[(d.getDay()+6)%7]+' '+bestDay;})()} </div><div class="rstat-lbl">${isEn()?'Best day':'Día más productivo'} ${bestPct}%</div></div>`:''}
       </div>
       <div style="margin-top:8px;">
         <div class="rbar-row"><div class="rbar-lbl">${isEn()?'Focus':'Enfoque'}</div><div class="rbar-track"><div class="rbar-fill" style="width:${focusPct}%;"></div></div><div class="rbar-amt">${focusPct}%</div></div>
