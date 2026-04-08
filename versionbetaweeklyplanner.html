@@ -3599,8 +3599,9 @@ async function budgetAddGroup(){
 }
 
 function budgetChangeRubro(gi,si,val){
+  if(!budgetData.groups[gi]||!budgetData.groups[gi].subs[si])return;
   budgetData.groups[gi].subs[si].rubro=val;
-  saveBudgetConfig();
+  saveBudgetData(); // use full save to persist rubro
 }
 
 function budgetMoveSub(gi,si,dir){
@@ -4180,19 +4181,25 @@ function initSmartSelects(){
   const es = !isEn();
 
   // Workout selects
-  const woOpts = (setupCfg.workouts||DEFAULT_WORKOUTS).map(w=>emoji(w,WORKOUT_MAP));
+  const woOpts = (setupCfg.workouts||DEFAULT_WORKOUTS); // keys already have emoji+ES name
   ['wo1','wo2'].forEach(id => {
     const sel = document.getElementById(id);
     if(!sel || sel.dataset.ssReplaced) return;
     const opts = woOpts;
     sel.dataset.ssReplaced = '1';
-    const cur = sel.value || '';
+    const cur = sel.value || ''; // value already set by renderWo->setSelectVal
     const ss = createSmartSelect({
       id: id+'_ss',
       options: opts,
       value: cur,
       placeholder: '—',
-      onChange: (v) => { sel.value=v; saveWorkout(); },
+      onChange: (v) => { 
+        sel.value=v; 
+        // Also update any other SS inputs that might exist
+        const ssEl=document.getElementById(id+'_ss');
+        if(ssEl&&ssEl!==document.activeElement)ssEl.value=v;
+        saveWorkout(); 
+      },
       onAddNew: (name) => {
         if(!setupCfg.workouts) setupCfg.workouts=[...DEFAULT_WORKOUTS];
         if(!setupCfg.workouts.includes(name)) setupCfg.workouts.push(name);
@@ -4206,18 +4213,24 @@ function initSmartSelects(){
   });
 
   // Hábito selects
-  const haOpts = (setupCfg.habitos||DEFAULT_HABITOS).map(h=>emoji(h,HABITO_MAP));
+  const haOpts = (setupCfg.habitos||DEFAULT_HABITOS); // keys already have emoji+ES name
   ['ha1','ha2'].forEach(id => {
     const sel = document.getElementById(id);
     if(!sel || sel.dataset.ssReplaced) return;
     sel.dataset.ssReplaced = '1';
-    const cur = sel.value || '';
+    const cur = sel.value || ''; // value already set by renderWo->setSelectVal
     const ss = createSmartSelect({
       id: id+'_ss',
       options: haOpts,
       value: cur,
       placeholder: '—',
-      onChange: (v) => { sel.value=v; saveWorkout(); },
+      onChange: (v) => { 
+        sel.value=v; 
+        // Also update any other SS inputs that might exist
+        const ssEl=document.getElementById(id+'_ss');
+        if(ssEl&&ssEl!==document.activeElement)ssEl.value=v;
+        saveWorkout(); 
+      },
       onAddNew: (name) => {
         if(!setupCfg.habitos) setupCfg.habitos=[...DEFAULT_HABITOS];
         if(!setupCfg.habitos.includes(name)) setupCfg.habitos.push(name);
