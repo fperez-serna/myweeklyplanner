@@ -1229,7 +1229,16 @@ function renderTasks(di){
   [...carried,...own].forEach(t=>{
     const isDone=t.doneOnDay!==undefined;const isCar=t.addedOnDay<di;
     const d=document.createElement('div');d.className='task-item'+(isCar?' carried':'');
-    d.innerHTML='<div class="cb'+(isDone?' done':'')+'" data-id="'+t.id+'" onclick="toggleTask(this)"><svg class="ck" viewBox="0 0 8 8"><polyline points="1,4 3,6 7,2" fill="none" stroke="white" stroke-width="1.5"/></svg></div><span class="tt'+(isDone?' done':'')+'" contenteditable="true" spellcheck="false" data-id="'+t.id+'" onblur="updateTaskText(this)">'+t.text+'</span>'+(isCar&&!isDone?'<span class="cbadge">↩ anterior</span>':'')+'<button class="dx" data-id="'+t.id+'" onclick="deleteTask(this)">×</button>';
+    const ownTasks=tasks.filter(t=>t.addedOnDay===di);
+    const taskIdx=ownTasks.findIndex(tt=>tt.id===t.id);
+    const isOwn=t.addedOnDay===di;
+    const tid=t.id;
+    const arrows=isOwn?
+      '<div style="display:flex;flex-direction:column;gap:0;flex-shrink:0;">'+
+        '<button onclick="moveTask(this.dataset.id,-1)" data-id="'+tid+'" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1.2;opacity:'+(taskIdx===0?'.2':'1')+(taskIdx===0?'" disabled':'"')+'>▲</button>'+
+        '<button onclick="moveTask(this.dataset.id,1)" data-id="'+tid+'" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1.2;opacity:'+(taskIdx===ownTasks.length-1?'.2':'1')+(taskIdx===ownTasks.length-1?'" disabled':'"')+'>▼</button>'+
+      '</div>':'';
+    d.innerHTML=arrows+'<div class="cb'+(isDone?' done':'')+'" data-id="'+t.id+'" onclick="toggleTask(this)"><svg class="ck" viewBox="0 0 8 8"><polyline points="1,4 3,6 7,2" fill="none" stroke="white" stroke-width="1.5"/></svg></div><span class="tt'+(isDone?' done':'')+'" contenteditable="true" spellcheck="false" data-id="'+t.id+'" onblur="updateTaskText(this)">'+t.text+'</span>'+(isCar&&!isDone?'<span class="cbadge">↩ anterior</span>':'')+'<button class="dx" data-id="'+t.id+'" onclick="deleteTask(this)">×</button>';
     list.appendChild(d);
   });
 }
@@ -1275,6 +1284,21 @@ function deleteTask(el){
   resolvePendingTask(id);
   renderTasks(di);updateProg(di);buildNav();buildOv();
 }
+function moveTask(id, dir){
+  dir=parseInt(dir);
+  const di=dayIdx();
+  if(!weekData.tasks)return;
+  const own=weekData.tasks.filter(t=>t.addedOnDay===di);
+  const others=weekData.tasks.filter(t=>t.addedOnDay!==di);
+  const idx=own.findIndex(t=>t.id===id);
+  const ni=idx+dir;
+  if(idx===-1||ni<0||ni>=own.length)return;
+  [own[idx],own[ni]]=[own[ni],own[idx]];
+  weekData.tasks=[...others,...own];
+  saveDB();
+  renderTasks(di);
+}
+
 function addTask(){
   const inp=document.getElementById('task-in');const v=inp.value.trim();if(!v)return;
   const di=dayIdx();if(!weekData.tasks)weekData.tasks=[];
@@ -2724,7 +2748,7 @@ function shareShopping(){
     if(items.length){
       const emoji=SHOP_EMOJI[cat]||'🛍';
       txt+=emoji+' '+cat+':\n';
-      items.forEach(i=>{txt+=(i.done?'✓ ':'• ')+i.text+'\n';});
+      items.forEach(i=>{txt+=(i.done?'✓ ~'+i.text+'~':'• '+i.text)+'\n';});
       txt+='\n';
     }
   });
