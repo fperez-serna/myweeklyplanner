@@ -4034,12 +4034,17 @@ async function loadReportData(){
   reportData=[];
   if(db){
     const promises=weekStarts.map(ws=>{
-      const key=dk(ws);
+      const key='week_'+dk(ws);
+      console.log('Report fetching key:', key);
       return userCol().doc(key).get()
-        .then(snap=>({key,weekStart:new Date(ws),data:snap.exists?snap.data():null}))
-        .catch(()=>({key,weekStart:new Date(ws),data:null}));
+        .then(snap=>{
+          console.log('Report key', key, '-> exists:', snap.exists, snap.exists?Object.keys(snap.data()):[]);
+          return {key,weekStart:new Date(ws),data:snap.exists?snap.data():null};
+        })
+        .catch(e=>{console.error('Report fetch error:', key, e);return {key,weekStart:new Date(ws),data:null};});
     });
     reportData=await Promise.all(promises);
+    console.log('reportData:', reportData.map(r=>({key:r.key,hasData:!!r.data})));
   }
   renderReport();
 }
