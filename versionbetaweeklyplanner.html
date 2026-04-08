@@ -4375,7 +4375,8 @@ function createSmartSelect({id, options, value='', placeholder='—', onChange, 
   wrap.className = 'ss-wrap';
   
   const input = document.createElement('input');
-  input.id = id;
+  input.id = id + '_ss'; // _ss suffix so getElementById(id+'_ss') always works
+  wrap.id = id;
   input.className = 'ss-input';
   if(small) input.style.cssText = 'font-size:10px;padding:2px 22px 2px 6px;height:26px;';
   input.placeholder = placeholder;
