@@ -777,8 +777,9 @@ body{padding:.75rem;}
       </thead>
       <tbody id="gastos-body"></tbody>
     </table>
-    <div class="add-row" style="margin-top:8px;">
-      <input type="text" id="gasto-desc" placeholder="Descripción..." style="flex:2;" onkeydown="if(event.key==='Enter')document.getElementById('gasto-monto').focus()">
+    <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+      <input type="text" id="gasto-desc" placeholder="Descripción..." style="width:100%;padding:6px 10px;border:0.5px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-size:12px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')document.getElementById('gasto-monto').focus()">
+      <div class="add-row" style="margin:0;">
       <select id="gasto-cat" style="flex:2;font-size:12px;padding:5px 8px;border:0.5px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);">
         <option>🍽 Restaurante</option><option>🛒 Supermercado</option><option>🎬 Entretenimiento</option>
         <option>⛽ Gasolina</option><option>🚗 Transporte</option><option>📱 Suscripción</option>
@@ -788,6 +789,7 @@ body{padding:.75rem;}
       </select>
       <input type="number" id="gasto-monto" placeholder="$0" style="width:80px;" onkeydown="if(event.key==='Enter')addGasto()">
       <button id="btn-add-gasto" onclick="addGasto()">+ Agregar</button>
+      </div>
     </div>
     <div style="height:0.5px;background:var(--border);margin:10px 0;"></div>
     <div style="background:var(--bg2);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
