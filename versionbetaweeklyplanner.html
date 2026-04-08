@@ -291,29 +291,17 @@ body{padding:.75rem;}
   .budget-res-table-wrap{display:none;}
   .budget-rubro-cards{display:flex!important;}
   .budget-sub-arrows{display:none!important;}
-  /* Mobile: 2-row card layout */
   .budget-col-hds{display:none!important;}
-  .budget-sub-row{display:flex!important;flex-direction:column!important;padding:8px 10px!important;gap:4px!important;}
-  .budget-sub-row>div:first-child{display:none!important;}
-  .budget-sub-row-nums{display:flex;align-items:center;gap:6px;width:100%;}
-  .budget-amt{font-size:12px!important;}
-}
-@media(max-width:520px){
-  .budget-add-sub{grid-template-columns:0 1fr 58px 58px 80px 0 28px!important;gap:3px!important;}
-  .budget-add-sub>div:first-child,.budget-add-sub>div:nth-child(6){display:none!important;}
-  /* Hide desktop grid row elements on mobile */
-  .budget-sub-row>div:nth-child(3),
-  .budget-sub-row>div:nth-child(4),
-  .budget-sub-row>div:nth-child(5),
-  .budget-sub-row>div:nth-child(6),
-  .budget-sub-row>button{display:none!important;}
-  /* Show mobile row */
+  /* Desktop grid row: hide all grid children, show flex mobile layout */
+  .budget-sub-row{display:block!important;padding:6px 10px!important;border-bottom:0.5px solid var(--border);}
+  .budget-sub-row>*{display:none!important;}
   .budget-sub-mobile-row{display:flex!important;}
+  /* Add-sub row compact on mobile */
+  .budget-add-sub{grid-template-columns:1fr 60px 60px 90px 24px!important;gap:3px!important;}
+  .budget-add-sub>div:first-child{display:none!important;}
 }
 @media(min-width:521px){
   .budget-sub-mobile-row{display:none!important;}
-}
-@media(min-width:521px){
   .budget-rubro-cards{display:none!important;}
 }
 .budget-rubro-cards{display:none;flex-direction:column;gap:8px;}
@@ -3339,16 +3327,22 @@ function renderBudget(dashboardTotals,forceExpand=false){
         </div>
         <button onclick="budgetDelSub(${gi},${si})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0;line-height:1;">×</button>
       </div>
-      <!-- Mobile 2nd row: nums + rubro + delete -->
+      <!-- Mobile layout: name + bar + nums row -->
       <div class="budget-sub-mobile-row">
-        <span class="budget-sub-mobile-lbl">${es?'Presup.':'Budget'}</span>
-        <span class="budget-amt editable" onclick="budgetEditSub(${gi},${si},'presup',this)" style="font-size:12px;">${fmt(sub.presup)}</span>
-        <span style="color:var(--border);">·</span>
-        <span class="budget-sub-mobile-lbl">${es?'Actual':'Actual'}</span>
-        <span class="budget-amt ${cls} editable" onclick="budgetEditSub(${gi},${si},'actual',this)" style="font-size:12px;">${fmt(sub.actual)}</span>
-        <span style="flex:1;"></span>
-        <div class="ss-budget-rubro-mobile" data-gi="${gi}" data-si="${si}" data-val="${sub.rubro||''}" style="max-width:110px;"></div>
-        <button onclick="budgetDelSub(${gi},${si})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0 2px;line-height:1;flex-shrink:0;">×</button>
+        <div style="width:100%;">
+          <div class="budget-sub-name ${cls}" onclick="budgetEditSubName(${gi},${si},this)" style="cursor:pointer;font-size:13px;padding-bottom:2px;">${sub.name}</div>
+          <div class="budget-mini-bar" style="margin-bottom:5px;"><div class="budget-mini-fill" style="width:${pct}%;background:${diff>=0?'var(--teal)':'#c0392b'};"></div></div>
+          <div style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap;">
+            <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;">Presup.</span>
+            <span class="budget-amt editable" onclick="budgetEditSub(${gi},${si},'presup',this)" style="font-size:12px;">${fmt(sub.presup)}</span>
+            <span style="color:var(--border);font-size:10px;">·</span>
+            <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;">Actual</span>
+            <span class="budget-amt ${cls} editable" onclick="budgetEditSub(${gi},${si},'actual',this)" style="font-size:12px;">${fmt(sub.actual)}</span>
+            <span style="flex:1;min-width:4px;"></span>
+            <div class="ss-budget-rubro-mobile" data-gi="${gi}" data-si="${si}" data-val="${sub.rubro||''}" style="max-width:120px;min-width:80px;"></div>
+            <button onclick="budgetDelSub(${gi},${si})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0;line-height:1;flex-shrink:0;">×</button>
+          </div>
+        </div>
       </div>`;
     });
 
