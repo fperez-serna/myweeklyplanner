@@ -3097,6 +3097,10 @@ async function loadBudgetData(){
             else sub.actual=0;
           });
         });
+        // Apply monthly debt abonos (reset each month)
+        (budgetData.debts||[]).forEach((debt,di)=>{
+          debt.abono=monthActuals['debt_'+di+'_abono']!==undefined?monthActuals['debt_'+di+'_abono']:0;
+        });
         // Apply monthly income - fallback to budget_config income if monthly is empty
         if(monthActuals.income&&monthActuals.income.length>0)budgetData.income=monthActuals.income;
         else if(budgetData.income&&budgetData.income.length>0){} // keep from config
@@ -3104,6 +3108,7 @@ async function loadBudgetData(){
       } else {
         // New month - reset actuals to 0, keep income from config if exists
         budgetData.groups.forEach(g=>g.subs.forEach(sub=>sub.actual=0));
+        (budgetData.debts||[]).forEach(debt=>debt.abono=0);
         // Keep income from config doc if it has some (migration from old format)
         if(!budgetData.income||budgetData.income.length===0)budgetData.income=[];
       }
@@ -3219,6 +3224,9 @@ async function saveBudgetData(){
         actuals[gi+'_'+si]=sub.actual||0;
       });
     });
+    (budgetData.debts||[]).forEach((debt,di)=>{
+      actuals['debt_'+di+'_abono']=debt.abono||0;
+    });
     await userCol().doc(monthKey).set(actuals);
   }catch(e){console.error('Budget save:',e);}
 }
@@ -3229,7 +3237,8 @@ function renderBudget(dashboardTotals,forceExpand=false){
   const totalPresup=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.presup,0),0);
   const totalManual=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.actual,0),0);
   const totalDash=Object.values(dashboardTotals).reduce((s,v)=>s+v,0);
-  const disponible=totalIncome-totalDash;
+  const totalAbonos=(budgetData.debts||[]).reduce((s,d)=>s+(d.abono||0),0);
+  const disponible=totalIncome-totalDash-totalAbonos;
   const sinPresup=totalIncome-totalPresup;
 
   const fmt=n=>'$'+(Math.round(n)||0).toLocaleString();
@@ -3437,6 +3446,13 @@ function renderBudget(dashboardTotals,forceExpand=false){
       rubroMap[sub.rubro].manual+=sub.actual;
     });
   });
+  // Add debt abonos as a special rubro entry
+  const totalAbonos2=(budgetData.debts||[]).reduce((s,d)=>s+(d.abono||0),0);
+  if(totalAbonos2>0){
+    const debtLabel=es?'💳 Préstamos & Deudas':'💳 Loans & Debts';
+    if(!rubroMap[debtLabel])rubroMap[debtLabel]={presup:0,manual:0};
+    rubroMap[debtLabel].manual+=totalAbonos2;
+  }
   // Only add dashboard rubros that have actual spending (>0)
   Object.entries(dashboardTotals).forEach(([cat,total])=>{
     if(total>0){
