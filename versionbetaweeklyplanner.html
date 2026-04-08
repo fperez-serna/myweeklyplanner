@@ -1233,11 +1233,12 @@ function renderTasks(di){
     const taskIdx=ownTasks.findIndex(tt=>tt.id===t.id);
     const isOwn=t.addedOnDay===di;
     const tid=t.id;
-    const arrows=isOwn?
-      '<div style="display:flex;flex-direction:column;gap:0;flex-shrink:0;">'+
-        '<button onclick="moveTask(this.dataset.id,-1)" data-id="'+tid+'" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1.2;opacity:'+(taskIdx===0?'.2':'1')+(taskIdx===0?'" disabled':'"')+'>▲</button>'+
-        '<button onclick="moveTask(this.dataset.id,1)" data-id="'+tid+'" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1.2;opacity:'+(taskIdx===ownTasks.length-1?'.2':'1')+(taskIdx===ownTasks.length-1?'" disabled':'"')+'>▼</button>'+
-      '</div>':'';
+    const allVisible=[...carried,...ownTasks];
+    const allIdx=allVisible.findIndex(tt=>tt.id===t.id);
+    const arrows='<div style="display:flex;flex-direction:column;gap:0;flex-shrink:0;">'+
+        '<button onclick="moveTask(this.dataset.id,-1)" data-id="'+tid+'" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1.2;opacity:'+(allIdx===0?'.2':'1')+(allIdx===0?'" disabled':'"')+'>▲</button>'+
+        '<button onclick="moveTask(this.dataset.id,1)" data-id="'+tid+'" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1.2;opacity:'+(allIdx===allVisible.length-1?'.2':'1')+(allIdx===allVisible.length-1?'" disabled':'"')+'>▼</button>'+
+      '</div>';
     d.innerHTML=arrows+'<div class="cb'+(isDone?' done':'')+'" data-id="'+t.id+'" onclick="toggleTask(this)"><svg class="ck" viewBox="0 0 8 8"><polyline points="1,4 3,6 7,2" fill="none" stroke="white" stroke-width="1.5"/></svg></div><span class="tt'+(isDone?' done':'')+'" contenteditable="true" spellcheck="false" data-id="'+t.id+'" onblur="updateTaskText(this)">'+t.text+'</span>'+(isCar&&!isDone?'<span class="cbadge">↩ anterior</span>':'')+'<button class="dx" data-id="'+t.id+'" onclick="deleteTask(this)">×</button>';
     list.appendChild(d);
   });
@@ -1288,13 +1289,17 @@ function moveTask(id, dir){
   dir=parseInt(dir);
   const di=dayIdx();
   if(!weekData.tasks)return;
-  const own=weekData.tasks.filter(t=>t.addedOnDay===di);
-  const others=weekData.tasks.filter(t=>t.addedOnDay!==di);
-  const idx=own.findIndex(t=>t.id===id);
+  // Get all visible tasks for this day in display order
+  const allTasks=weekData.tasks;
+  const visible=tasksForDay(di).filter(t=>t.doneOnDay===undefined||true);
+  const idx=visible.findIndex(t=>t.id===id);
   const ni=idx+dir;
-  if(idx===-1||ni<0||ni>=own.length)return;
-  [own[idx],own[ni]]=[own[ni],own[idx]];
-  weekData.tasks=[...others,...own];
+  if(idx===-1||ni<0||ni>=visible.length)return;
+  // Swap in the main tasks array
+  const idxA=allTasks.findIndex(t=>t.id===visible[idx].id);
+  const idxB=allTasks.findIndex(t=>t.id===visible[ni].id);
+  if(idxA===-1||idxB===-1)return;
+  [allTasks[idxA],allTasks[idxB]]=[allTasks[idxB],allTasks[idxA]];
   saveDB();
   renderTasks(di);
 }
