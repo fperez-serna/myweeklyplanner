@@ -1617,9 +1617,29 @@ async function createGCalEv(title,date,hour,min,ampm){
   const s=new Date(date+'T'+String(h).padStart(2,'0')+':'+min+':00');
   const ev={summary:title,start:{dateTime:s.toISOString(),timeZone:'America/Merida'},end:{dateTime:new Date(s.getTime()+3600000).toISOString(),timeZone:'America/Merida'}};
   try{
-    await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{method:'POST',headers:{Authorization:'Bearer '+gcalToken,'Content-Type':'application/json'},body:JSON.stringify(ev)});
+    const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{
+      method:'POST',
+      headers:{Authorization:'Bearer '+gcalToken,'Content-Type':'application/json'},
+      body:JSON.stringify(ev)
+    });
+    if(r.status===401){
+      // Token expired - refresh and retry once
+      gcalToken=null;
+      localStorage.removeItem('gct');
+      localStorage.removeItem('gct_exp');
+      if(tokenClient){
+        tokenClient.requestAccessToken({prompt:''});
+        showToast(isEn()?'Reconnecting Google Calendar...':'Reconectando Google Calendar...');
+      }
+      return;
+    }
+    if(!r.ok){
+      console.error('GCal create failed:',r.status, await r.text());
+      return;
+    }
+    console.log('✅ Event created in Google Calendar:', title);
     setTimeout(()=>fetchGCal(),1000);
-  }catch(e){console.error(e);}
+  }catch(e){console.error('createGCalEv error:',e);}
 }
 
 // ── WEATHER ────────────────────────────────
