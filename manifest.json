@@ -2,7 +2,7 @@
   "name": "Weekly Planner",
   "short_name": "Planner",
   "description": "Your personal weekly planner",
-  "start_url": "./versionbetaweeklyplanner.html",
+  "start_url": "./index.html",
   "scope": "https://app.myweeklyplanner.app/",
   "display": "standalone",
   "background_color": "#f0ebe6",
