@@ -1443,6 +1443,15 @@ function delManualEv(el){
 async function delGCalEv(el){
   const gid=el.dataset.gid;if(!gcalToken||!gid)return;
   if(!confirm('¿Eliminar este evento de Google Calendar?'))return;
+  // Remove visually immediately
+  const evItem=el.closest('.ev-item');
+  if(evItem)evItem.remove();
+  // Remove from gcalEvts cache so it doesn't reappear
+  const di=dayIdx();
+  const dateKey=dk(weekDays[di]);
+  if(gcalEvts[dateKey]){
+    gcalEvts[dateKey]=gcalEvts[dateKey].filter(e=>e.gcalId!==gid);
+  }
   try{
     const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/'+gid,{
       method:'DELETE',
@@ -1451,7 +1460,6 @@ async function delGCalEv(el){
     if(r.status===401){gcalToken=null;localStorage.removeItem('gct');localStorage.removeItem('gct_exp');return;}
     if(r.ok||r.status===204){
       console.log('✅ GCal event deleted:', gid);
-      setTimeout(()=>fetchGCal(),500);
     } else {
       console.error('GCal delete failed:',r.status);
     }
