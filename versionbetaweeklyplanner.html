@@ -1485,9 +1485,12 @@ function addEv(){
   if(!weekData.events[tdi])weekData.events[tdi]=[];
   weekData.events[tdi].push({time:h+':'+m+' '+ap,title:evTitle});
   saveDB();
+  console.log('🔍 gcalToken at addEv:', gcalToken?'SET ('+gcalToken.slice(0,20)+'...)':'NULL');
   if(gcalToken&&targetDate){
+    console.log('📅 Creating GCal event:', evTitle, targetDate, h, m, ap);
     createGCalEv(evTitle,targetDate,h,m,ap);
-    // Don't remove - keep as manual event too, renderEvts deduplicates by title
+  } else {
+    console.log('⚠️ Skipping GCal — token:', !!gcalToken, 'date:', targetDate);
   }
   const di=dayIdx();renderEvts(di);buildNav();buildOv();titleIn.value='';
   if(tdi!==di){
@@ -1637,6 +1640,8 @@ async function createGCalEv(title,date,hour,min,ampm){
       console.error('GCal create failed:',r.status, await r.text());
       return;
     }
+    const respData = await r.clone().json().catch(()=>({}));
+    console.log('✅ GCal response:', r.status, respData);
     console.log('✅ Event created in Google Calendar:', title);
     setTimeout(()=>fetchGCal(),1000);
   }catch(e){console.error('createGCalEv error:',e);}
