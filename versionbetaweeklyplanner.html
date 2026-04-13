@@ -1444,9 +1444,18 @@ async function delGCalEv(el){
   const gid=el.dataset.gid;if(!gcalToken||!gid)return;
   if(!confirm('¿Eliminar este evento de Google Calendar?'))return;
   try{
-    await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/'+gid,{method:'DELETE',headers:{Authorization:'Bearer '+gcalToken}});
-    setTimeout(()=>fetchGCal(),500);
-  }catch(e){console.error(e);}
+    const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/'+gid,{
+      method:'DELETE',
+      headers:{Authorization:'Bearer '+gcalToken}
+    });
+    if(r.status===401){gcalToken=null;localStorage.removeItem('gct');localStorage.removeItem('gct_exp');return;}
+    if(r.ok||r.status===204){
+      console.log('✅ GCal event deleted:', gid);
+      setTimeout(()=>fetchGCal(),500);
+    } else {
+      console.error('GCal delete failed:',r.status);
+    }
+  }catch(e){console.error('delGCalEv error:',e);}
 }
 
 function addEv(){
@@ -1485,12 +1494,8 @@ function addEv(){
   if(!weekData.events[tdi])weekData.events[tdi]=[];
   weekData.events[tdi].push({time:h+':'+m+' '+ap,title:evTitle});
   saveDB();
-  console.log('🔍 gcalToken at addEv:', gcalToken?'SET ('+gcalToken.slice(0,20)+'...)':'NULL');
   if(gcalToken&&targetDate){
-    console.log('📅 Creating GCal event:', evTitle, targetDate, h, m, ap);
     createGCalEv(evTitle,targetDate,h,m,ap);
-  } else {
-    console.log('⚠️ Skipping GCal — token:', !!gcalToken, 'date:', targetDate);
   }
   const di=dayIdx();renderEvts(di);buildNav();buildOv();titleIn.value='';
   if(tdi!==di){
@@ -1640,9 +1645,7 @@ async function createGCalEv(title,date,hour,min,ampm){
       console.error('GCal create failed:',r.status, await r.text());
       return;
     }
-    const respData = await r.clone().json().catch(()=>({}));
-    console.log('✅ GCal response:', r.status, respData);
-    console.log('✅ Event created in Google Calendar:', title);
+    console.log('✅ GCal event created:', title);
     setTimeout(()=>fetchGCal(),1000);
   }catch(e){console.error('createGCalEv error:',e);}
 }
