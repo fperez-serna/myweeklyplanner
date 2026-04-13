@@ -2878,7 +2878,8 @@ async function budgetExportPDF(){
   const totalManual=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.actual,0),0);
   const dashSnap=await loadMonthGastos();
   const totalDash=Object.values(dashSnap).reduce((s,v)=>s+v,0);
-  const disponible=totalInc-totalDash;
+  const totalAbonosPDF=(budgetData.debts||[]).reduce((s,d)=>s+(d.abono||0),0);
+  const disponible=totalInc-totalDash-totalAbonosPDF;
 
   const stats=[
     [es?'Total ingresos':'Total income',fmt(totalInc)],
@@ -3313,6 +3314,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
     <div class="budget-stat"><div class="budget-stat-val ${sinPresup>=0?'green':'red'}">${fmt(sinPresup)}</div><div class="budget-stat-lbl">${es?'Sin presupuestar':'Unbudgeted'}</div></div>
     <div class="budget-stat"><div class="budget-stat-val">${fmt(totalManual)}</div><div class="budget-stat-lbl">${es?'Actual — ingreso manual':'Actual — manual entry'}</div></div>
     <div class="budget-stat"><div class="budget-stat-val">${fmt(totalDash)}</div><div class="budget-stat-lbl">${es?'Total dashboard':'Total dashboard'}</div></div>
+    ${totalAbonos>0?`<div class="budget-stat"><div class="budget-stat-val red">${fmt(totalAbonos)}</div><div class="budget-stat-lbl">${es?'💳 Abonos deudas':'💳 Debt payments'}</div></div>`:''}
     <div class="budget-stat"><div class="budget-stat-val ${disponible>=0?'green':'red'}">${fmt(disponible)}</div><div class="budget-stat-lbl">${es?'Disponible':'Available'}</div></div>
   </div>
 
