@@ -1,9 +1,7 @@
-const CACHE_NAME = 'weekly-planner-v5';
-
+const CACHE_NAME = 'weekly-planner-v6';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
-
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -12,7 +10,6 @@ self.addEventListener('activate', e => {
   );
   self.clients.claim();
 });
-
 // Network first always - never serve HTML from cache
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
