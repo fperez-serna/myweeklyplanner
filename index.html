@@ -4811,6 +4811,7 @@ function signOut(){
         buildCalendar();
         setTimeout(()=>{showQ(QS[qcur]);fetchWeather();},200);
         subscribeDB();
+        setTimeout(()=>autoBackup(),3000); // run after everything loads
         subscribeShoppingDB();
         subscribeConfig();
       }catch(e){
