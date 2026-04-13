@@ -1446,12 +1446,13 @@ async function delGCalEv(el){
   // Remove visually immediately
   const evItem=el.closest('.ev-item');
   if(evItem)evItem.remove();
-  // Remove from gcalEvts cache so it doesn't reappear
+  // Remove from gcalEvts cache so it doesn't reappear on overview either
   const di=dayIdx();
   const dateKey=dk(weekDays[di]);
   if(gcalEvts[dateKey]){
     gcalEvts[dateKey]=gcalEvts[dateKey].filter(e=>e.gcalId!==gid);
   }
+  buildOv(); // update weekly overview instantly
   try{
     const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/'+gid,{
       method:'DELETE',
