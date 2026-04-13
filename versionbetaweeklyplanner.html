@@ -908,6 +908,7 @@ let activeDate=new Date(today);
 let weekDays=getWeekDays(today);
 let weekData={tasks:[],focus:{},focusDone:{},focusDeleted:{},events:{},workout:{}};
 let gcalEvts={};
+const deletedGCalIds=new Set(); // track locally deleted events so fetchGCal doesn't restore them
 let gcalToken=null;
 let shoppingItems={};
 function initShoppingItems(){
@@ -1446,12 +1447,12 @@ async function delGCalEv(el){
   // Remove visually immediately
   const evItem=el.closest('.ev-item');
   if(evItem)evItem.remove();
-  // Remove from gcalEvts cache so it doesn't reappear on overview either
-  const di=dayIdx();
-  const dateKey=dk(weekDays[di]);
-  if(gcalEvts[dateKey]){
-    gcalEvts[dateKey]=gcalEvts[dateKey].filter(e=>e.gcalId!==gid);
-  }
+  // Track as deleted so fetchGCal won't restore it
+  deletedGCalIds.add(gid);
+  // Remove from ALL days in gcalEvts cache
+  Object.keys(gcalEvts).forEach(k=>{
+    gcalEvts[k]=gcalEvts[k].filter(e=>e.gcalId!==gid);
+  });
   buildOv(); // update weekly overview instantly
   try{
     const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/'+gid,{
@@ -1616,7 +1617,7 @@ async function fetchGCal(){
       const ap=h>=12?'PM':'AM';const h12=h===0?12:h>12?h-12:h;
       const ts=isAll?'Todo el día':h12+':'+mn+' '+ap;
       if(!gcalEvts[key])gcalEvts[key]=[];
-      gcalEvts[key].push({time:ts,title:ev.summary||'(sin título)',gcalId:ev.id,sort:jd.getTime()});
+      if(!deletedGCalIds.has(ev.id)) gcalEvts[key].push({time:ts,title:ev.summary||'(sin título)',gcalId:ev.id,sort:jd.getTime()});
     });
     Object.keys(gcalEvts).forEach(k=>gcalEvts[k].sort((a,b)=>a.sort-b.sort));
     renderEvts(dayIdx());buildOv();buildNav();
@@ -4018,6 +4019,7 @@ let reportYear=new Date().getFullYear();
 let reportMonth=new Date().getMonth();
 let reportSections={gastos:true,workout:true,productivity:true};
 let reportData=[];
+let reportIncome=0;
 
 function openReport(){
   reportYear=new Date().getFullYear();
@@ -4077,6 +4079,12 @@ async function loadReportData(){
         .catch(()=>({key,weekStart:new Date(ws),data:null}));
     });
     reportData=await Promise.all(promises);
+    // Also load income for this month from budget_actual
+    try{
+      const monthKey='budget_actual_'+reportYear+'_'+String(reportMonth+1).padStart(2,'0');
+      const snap=await userCol().doc(monthKey).get();
+      reportIncome=snap.exists?(snap.data().income||[]).reduce((s,i)=>s+(i.amt||0),0):0;
+    }catch(e){reportIncome=0;}
   }
   renderReport();
 }
@@ -4107,7 +4115,12 @@ function renderReport(){
     const weekCount=Math.ceil(daysInMonth/7);
     const avgWeekly=weekCount>0?(monthTotal/weekCount):0;
     html+=`<div class="report-section">
-      <div class="report-sec-title">${isEn()?'💸 Expenses':'💸 Gastos'}</div>
+      <div class="report-sec-title">${isEn()?'💸 Income & Expenses':'💸 Ingresos y Gastos'}</div>
+      ${reportIncome>0?`<div class="report-stat-grid" style="margin-bottom:8px;">
+        <div class="rstat" style="background:#e8f0ef;"><div class="rstat-val" style="color:var(--teal);">$${reportIncome.toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Income':'Ingresos'}</div></div>
+        <div class="rstat"><div class="rstat-val" style="color:#c0392b;">$${monthTotal.toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Expenses':'Gastos'}</div></div>
+        <div class="rstat" style="background:${reportIncome-monthTotal>=0?'#e8f0ef':'#fce4ec'};"><div class="rstat-val" style="color:${reportIncome-monthTotal>=0?'var(--teal)':'#c0392b'};">$${(reportIncome-monthTotal).toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Remaining':'Restante del mes'}</div></div>
+      </div>`:''}
       <div class="report-stat-grid">
         <div class="rstat"><div class="rstat-val">$${monthTotal.toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Month total':'Total del mes'}</div></div>
         <div class="rstat"><div class="rstat-val">$${Math.round(avgWeekly).toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Weekly avg':'Promedio semanal'}</div></div>
