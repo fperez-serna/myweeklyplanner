@@ -4380,7 +4380,7 @@ function ssOpen(inputEl, options, onChange, onAddNew){
     const div = document.createElement('div');
     div.className = 'ss-item' + (isAdd ? ' ss-add' : '');
     div.textContent = text;
-    div.addEventListener('mousedown', (e) => {
+    const _itemHandler = (e) => {
       e.preventDefault();
       if(isAdd){
         const name = inputEl.value.trim() || prompt(isEn()?'New name:':'Nombre nuevo:','');
@@ -4390,7 +4390,9 @@ function ssOpen(inputEl, options, onChange, onAddNew){
         onChange && onChange(val);
       }
       ssClose();
-    });
+    };
+    div.addEventListener('mousedown', _itemHandler);
+    div.addEventListener('touchend', (e) => { e.preventDefault(); _itemHandler(e); });
     drop.appendChild(div);
   };
 
@@ -4410,13 +4412,16 @@ function ssOpen(inputEl, options, onChange, onAddNew){
   _ssOpenId = inputEl.id;
 }
 
-document.addEventListener('mousedown', e => {
+// Close SS on click/touch outside
+function _ssOutsideHandler(e){
   const drop = document.getElementById('ss-dropdown-active');
   if(drop && !drop.contains(e.target)){
     const activeInput = _ssOpenId ? document.getElementById(_ssOpenId) : null;
     if(!activeInput || !activeInput.contains(e.target)) ssClose();
   }
-});
+}
+document.addEventListener('mousedown', _ssOutsideHandler);
+document.addEventListener('touchstart', _ssOutsideHandler, {passive:true});
 
 function createSmartSelect({id, options, value='', placeholder='—', onChange, onAddNew, small=false}){
   const wrap = document.createElement('div');
@@ -4438,8 +4443,9 @@ function createSmartSelect({id, options, value='', placeholder='—', onChange, 
   arrow.addEventListener('mousedown', e => { e.preventDefault(); input.focus(); });
 
   input.addEventListener('focus', () => ssOpen(input, options, onChange, onAddNew));
+  input.addEventListener('touchstart', (e) => { e.stopPropagation(); setTimeout(()=>ssOpen(input, options, onChange, onAddNew),50); }, {passive:true});
   input.addEventListener('input', () => ssOpen(input, options, onChange, onAddNew));
-  input.addEventListener('blur', () => setTimeout(ssClose, 150));
+  input.addEventListener('blur', () => setTimeout(ssClose, 300));
   input.addEventListener('keydown', e => {
     if(e.key === 'Escape'){ ssClose(); input.blur(); return; }
     if(e.key === 'Enter'){
