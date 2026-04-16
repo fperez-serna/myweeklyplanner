@@ -827,6 +827,8 @@ body{padding:.75rem;}
         <button onclick="showBudgetExportMenu()" style="background:none;border:0.5px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer;color:var(--text2);display:flex;align-items:center;" title="Exportar">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </button>
+        <button onclick="generateAnnualReport()" style="background:var(--mauve);border:none;border-radius:8px;padding:4px 10px;cursor:pointer;color:#fff;font-size:11px;font-weight:500;white-space:nowrap;" id="annual-report-btn">📄 <span id="annual-btn-lbl">Reporte anual</span></button>
+        <button onclick="generateAnnualReport()" style="background:var(--mauve);border:none;border-radius:8px;padding:4px 10px;cursor:pointer;color:#fff;font-size:11px;font-weight:500;white-space:nowrap;" id="annual-report-btn">📄 <span id="annual-btn-lbl">Reporte anual</span></button>
       </div>
     </div>
     <div id="budget-export-menu" style="display:none;position:absolute;top:56px;right:16px;background:var(--bg);border:0.5px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:10;overflow:hidden;min-width:180px;">
@@ -4159,6 +4161,176 @@ document.addEventListener('input',e=>{
     if(avg){const v=parseFloat(e.target.value)||0;avg.textContent='$'+Math.round(v/12).toLocaleString()+'/mes';}
   }
 });
+
+// ── ANNUAL REPORT PDF ────────────────────────
+async function generateAnnualReport(){
+  const es=!isEn();
+  const year=budgetYear;
+  showToast(es?'Generando reporte anual...':'Generating annual report...');
+  let totalAnnualIncome=0;
+  let allIncomeSources={};
+  let allRubros={};
+  let totalAnnualGastos=0;
+  const monthNames=es
+    ?['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+    :['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  for(let m=0;m<12;m++){
+    const monthKey='budget_actual_'+year+'_'+String(m+1).padStart(2,'0');
+    try{
+      const snap=await userCol().doc(monthKey).get();
+      if(snap.exists){
+        const data=snap.data();
+        (data.income||[]).forEach(i=>{
+          const key=i.desc||i.name||'Ingreso';
+          if(!allIncomeSources[key])allIncomeSources[key]=0;
+          allIncomeSources[key]+=(i.amt||0);
+          totalAnnualIncome+=(i.amt||0);
+        });
+      }
+    }catch(e){}
+    const firstDay=new Date(year,m,1);
+    const lastDay=new Date(year,m+1,0);
+    const d=new Date(firstDay);
+    const dow=d.getDay();
+    d.setDate(d.getDate()-(dow===0?6:dow-1));
+    const seenWids=new Set();
+    while(d<=lastDay){
+      const wid='week_'+dk(d);
+      if(!seenWids.has(wid)){
+        seenWids.add(wid);
+        try{
+          const snap=await userCol().doc(wid).get();
+          if(snap.exists){
+            const data=snap.data();
+            if(data.gastos){
+              for(let di=0;di<7;di++){
+                const gDate=new Date(d);
+                gDate.setDate(gDate.getDate()+di);
+                if(gDate.getMonth()===m&&gDate.getFullYear()===year){
+                  (data.gastos[di]||[]).forEach(g=>{
+                    if(!allRubros[g.cat])allRubros[g.cat]=0;
+                    allRubros[g.cat]+=(g.monto||0);
+                    totalAnnualGastos+=(g.monto||0);
+                  });
+                }
+              }
+            }
+          }
+        }catch(e){}
+      }
+      d.setDate(d.getDate()+7);
+    }
+  }
+
+  const annualIncItems=annualData.income||[];
+  const annualExpItems=annualData.expenses||[];
+  const annualIncTotal=annualIncItems.reduce((s,i)=>s+(i.amt||0),0);
+  const annualExpTotal=annualExpItems.reduce((s,e)=>s+(e.amt||0),0);
+  const grandTotalInc=totalAnnualIncome+annualIncTotal;
+  const grandTotalExp=totalAnnualGastos+annualExpTotal;
+  const balance=grandTotalInc-grandTotalExp;
+  const fmt=n=>'$'+(Math.round(n)||0).toLocaleString();
+  const today=new Date().toLocaleDateString(es?'es-MX':'en-US',{year:'numeric',month:'long',day:'numeric'});
+
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const pw=pdf.internal.pageSize.getWidth()-20;
+  let y=15;
+
+  pdf.setFillColor(26,26,26);
+  pdf.rect(10,y,pw,13,'F');
+  pdf.setTextColor(255,255,255);
+  pdf.setFontSize(7);pdf.setFont('helvetica','normal');
+  pdf.text('WEEKLY PLANNER',12,y+5);
+  pdf.setFontSize(13);pdf.setFont('helvetica','bold');
+  pdf.text(es?'Reporte Financiero Anual '+year:'Annual Financial Report '+year,12,y+10);
+  pdf.setFontSize(7);pdf.setFont('helvetica','normal');
+  pdf.text((es?'Generado el ':'Generated on ')+today,10+pw,y+5,{align:'right'});
+  y+=19;
+
+  const boxW=(pw-8)/3;
+  [[es?'Ingresos totales':'Total income',fmt(grandTotalInc)],[es?'Gastos totales':'Total expenses',fmt(grandTotalExp)],[es?'Balance neto':'Net balance',fmt(balance)]].forEach((b,i)=>{
+    const bx=10+i*(boxW+4);
+    pdf.setFillColor(248,246,244);pdf.setDrawColor(220,215,210);pdf.setLineWidth(0.3);
+    pdf.roundedRect(bx,y,boxW,14,1.5,1.5,'FD');
+    pdf.setFontSize(7);pdf.setFont('helvetica','normal');pdf.setTextColor(150,150,150);
+    pdf.text(b[0].toUpperCase(),bx+4,y+5);
+    pdf.setFontSize(11);pdf.setFont('helvetica','bold');pdf.setTextColor(26,26,26);
+    pdf.text(b[1],bx+4,y+11);
+  });
+  y+=20;
+
+  function sectionTitle(t){
+    if(y>265){pdf.addPage();y=15;}
+    pdf.setFillColor(240,235,230);pdf.rect(10,y,pw,6,'F');
+    pdf.setFontSize(8);pdf.setFont('helvetica','bold');pdf.setTextColor(26,26,26);
+    pdf.text(t,12,y+4);y+=9;
+  }
+  function tableHeader(cols,widths){
+    pdf.setFontSize(7);pdf.setFont('helvetica','bold');pdf.setTextColor(100,100,100);
+    let x=10;
+    cols.forEach((c,i)=>{pdf.text(c,i>0?x+widths[i]-1:x,y,{align:i>0?'right':'left'});x+=widths[i];});
+    y+=2;pdf.setDrawColor(200,195,190);pdf.setLineWidth(0.3);pdf.line(10,y,10+pw,y);y+=3;
+  }
+  function tableRow(vals,widths,bold,bg){
+    if(y>270){pdf.addPage();y=15;}
+    if(bg){pdf.setFillColor(248,246,244);pdf.rect(10,y-3,pw,7,'F');}
+    pdf.setFontSize(8);pdf.setFont('helvetica',bold?'bold':'normal');pdf.setTextColor(26,26,26);
+    let x=10;
+    vals.forEach((v,i)=>{pdf.text(String(v),i>0?x+widths[i]-1:x,y,{align:i>0?'right':'left'});x+=widths[i];});
+    y+=5;
+  }
+
+  sectionTitle(es?'I. Ingresos mensuales acumulados':'I. Accumulated monthly income');
+  const iW=[pw-80,40,40];
+  tableHeader(es?['Descripcion','Total anual','Promedio mensual']:['Description','Annual total','Monthly avg'],iW);
+  const incEntries=Object.entries(allIncomeSources);
+  incEntries.length?incEntries.forEach(([n,t])=>tableRow([n,fmt(t),fmt(Math.round(t/12))],iW)):tableRow([es?'(Sin ingresos registrados)':'(No income recorded)','--','--'],iW);
+  tableRow([es?'Total':'Total',fmt(totalAnnualIncome),fmt(Math.round(totalAnnualIncome/12))],iW,true,true);
+  y+=3;
+
+  sectionTitle(es?'II. Gastos por rubro':'II. Expenses by category');
+  const eW=[pw-100,35,35,30];
+  tableHeader(es?['Rubro','Total anual','Promedio mensual','% del total']:['Category','Annual total','Monthly avg','% of total'],eW);
+  const sortedR=Object.entries(allRubros).sort((a,b)=>b[1]-a[1]);
+  sortedR.length?sortedR.forEach(([r,t])=>{
+    const clean=r.replace(/\p{Emoji_Presentation}/gu,'').trim();
+    const pct=totalAnnualGastos>0?((t/totalAnnualGastos)*100).toFixed(1)+'%':'0%';
+    tableRow([clean,fmt(t),fmt(Math.round(t/12)),pct],eW);
+  }):tableRow([es?'(Sin gastos)':'(No expenses)','--','--','--'],eW);
+  tableRow([es?'Total':'Total',fmt(totalAnnualGastos),fmt(Math.round(totalAnnualGastos/12)),'100%'],eW,true,true);
+  y+=3;
+
+  if(annualIncItems.length||annualExpItems.length){
+    sectionTitle(es?'III. Partidas anuales':'III. Annual items');
+    pdf.setFontSize(7);pdf.setFont('helvetica','italic');pdf.setTextColor(150,150,150);
+    pdf.text(es?'Ingresos y gastos de ocurrencia anual, no incluidos en el presupuesto mensual.':'Annual income and expenses, not included in monthly budget.',12,y);
+    y+=5;
+    const aW=[pw-90,30,30,30];
+    tableHeader(es?['Concepto','Tipo','Mes','Monto']:['Concept','Type','Month','Amount'],aW);
+    annualIncItems.forEach(item=>tableRow([item.name,es?'Ingreso':'Income',item.month,fmt(item.amt)],aW));
+    annualExpItems.forEach(item=>tableRow([item.name,es?'Gasto':'Expense',item.month,fmt(item.amt)],aW));
+    y+=3;
+  }
+
+  if(y>250){pdf.addPage();y=15;}
+  pdf.setDrawColor(26,26,26);pdf.setLineWidth(0.5);pdf.line(10,y,10+pw,y);y+=4;
+  pdf.setFontSize(9);pdf.setFont('helvetica','bold');pdf.setTextColor(26,26,26);
+  [[es?'Total ingresos (mensuales + anuales)':'Total income (monthly + annual)',fmt(grandTotalInc)],
+   [es?'Total gastos (mensuales + anuales)':'Total expenses (monthly + annual)',fmt(grandTotalExp)]
+  ].forEach(([l,v])=>{pdf.text(l,12,y);pdf.text(v,10+pw,y,{align:'right'});y+=5;});
+  pdf.setLineWidth(0.3);pdf.line(10,y,10+pw,y);y+=4;
+  pdf.setFontSize(11);
+  pdf.text(es?'Balance neto del año':'Net balance for the year',12,y);
+  pdf.text(fmt(balance),10+pw,y,{align:'right'});y+=8;
+  pdf.setFontSize(7);pdf.setFont('helvetica','normal');pdf.setTextColor(180,180,180);
+  pdf.text('Weekly Planner — myweeklyplanner.app',10+pw/2,285,{align:'center'});
+
+  pdf.save('reporte-anual-'+year+'.pdf');
+  showToast(es?'Reporte anual descargado':'Annual report downloaded');
+}
+
 // ── END ANNUAL SECTION ──────────────────────────────────
 
 
