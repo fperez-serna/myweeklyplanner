@@ -283,6 +283,7 @@ body{padding:.75rem;}
 .debt-sinput{font-size:11px;padding:5px 8px;border:0.5px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);outline:none;width:100%;box-sizing:border-box;}
 .debt-sinput:focus{border-color:var(--mauve);}
 .debt-section-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px;}
+.annual-note{font-size:10px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px;}
 @media(max-width:520px){.debt-card-grid{grid-template-columns:1fr 1fr;}}
 @media(max-width:520px){
   .budget-hide-mobile{display:none!important;}
@@ -2834,6 +2835,7 @@ function shareFocus(){
 // ── MONTHLY BUDGET ──────────────────────────
 let budgetYear=new Date().getFullYear();
 let budgetMonth=new Date().getMonth();
+let annualData={income:[],expenses:[]}; // annual income/expenses
 let budgetData={income:[],groups:[]};
 
 const MES_ES_B=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -3619,6 +3621,90 @@ function renderBudget(dashboardTotals,forceExpand=false){
   </div>`;
 
   html+=`</div>`; // close resumen-body
+
+  // ANNUAL SECTION
+  const annualIncTotal=annualData.income.reduce((s,i)=>s+i.amt,0);
+  const annualExpTotal=annualData.expenses.reduce((s,e)=>s+e.amt,0);
+  const annualNet=(annualIncTotal-annualExpTotal)/12;
+  const annualOpen=true;
+  html+=`<div class="budget-divider"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:6px;" onclick="toggleAnnualSection()">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span class="budget-sec-title" style="margin:0;">📅 ${es?'Anual':'Annual'}</span>
+      <span class="annual-note">(${es?'solo se refleja en el reporte anual, no en el mensual':'only reflected in annual report, not monthly'})</span>
+    </div>
+    <span id="annual-arrow" style="font-size:11px;color:var(--text3);">▾</span>
+  </div>
+  <div id="annual-body">
+    <div class="budget-stats" style="margin-bottom:10px;">
+      <div class="budget-stat"><div class="budget-stat-val green">${fmt(annualIncTotal)}</div><div class="budget-stat-lbl">${es?'Ingresos anuales':'Annual income'}</div></div>
+      <div class="budget-stat"><div class="budget-stat-val red">${fmt(annualExpTotal)}</div><div class="budget-stat-lbl">${es?'Gastos anuales':'Annual expenses'}</div></div>
+      <div class="budget-stat"><div class="budget-stat-val ${annualNet>=0?'green':'red'}">${fmt(Math.abs(annualNet))}</div><div class="budget-stat-lbl">${es?'Prom. neto/mes':'Net avg/month'}</div></div>
+    </div>
+
+    <!-- Annual income table -->
+    <div class="budget-group" style="margin-bottom:8px;">
+      <div class="budget-group-header" style="cursor:default;">
+        <span class="budget-group-name">${es?'Ingresos anuales':'Annual income'}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 80px 80px 70px 24px;gap:4px;padding:5px 12px;background:var(--bg2);border-bottom:0.5px solid var(--border);">
+        <span class="budget-col-h" style="text-align:left;">${es?'Concepto':'Concept'}</span>
+        <span class="budget-col-h">${es?'Monto':'Amount'}</span>
+        <span class="budget-col-h">${es?'Prom/mes':'Avg/mo'}</span>
+        <span class="budget-col-h">${es?'Mes':'Month'}</span>
+        <span></span>
+      </div>
+      ${annualData.income.map((item,i)=>`
+      <div style="display:grid;grid-template-columns:1fr 80px 80px 70px 24px;gap:4px;padding:7px 12px;border-bottom:0.5px solid var(--border);align-items:center;">
+        <span style="font-size:12px;color:var(--text);">${item.name}</span>
+        <span style="font-size:12px;text-align:right;color:var(--text);">${fmt(item.amt)}</span>
+        <span style="font-size:12px;text-align:right;color:var(--text3);">${fmt(Math.round(item.amt/12))}</span>
+        <span style="font-size:11px;text-align:right;color:var(--text3);">${item.month}</span>
+        <button onclick="annualDel('income',${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0;">×</button>
+      </div>`).join('')}
+      <div style="display:grid;grid-template-columns:1fr 80px 80px 70px 24px;gap:4px;padding:6px 12px;background:var(--bg2);border-top:0.5px dashed var(--border);align-items:center;">
+        <input id="ann-inc-name" placeholder="${es?'Concepto...':'Concept...'}" class="budget-sinput">
+        <input id="ann-inc-amt" type="number" placeholder="$0" class="budget-sinput" style="text-align:right;">
+        <div id="ann-inc-avg" style="font-size:11px;text-align:right;color:var(--text3);padding:4px 7px;">$0/mes</div>
+        <select id="ann-inc-month" class="budget-sinput" style="padding:4px 6px;">
+          ${(es?['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']:['January','February','March','April','May','June','July','August','September','October','November','December']).map(m=>`<option>${m}</option>`).join('')}
+        </select>
+        <button onclick="annualAdd('income')" class="budget-add-btn-sm">+</button>
+      </div>
+    </div>
+
+    <!-- Annual expenses table -->
+    <div class="budget-group">
+      <div class="budget-group-header" style="cursor:default;">
+        <span class="budget-group-name">${es?'Gastos anuales':'Annual expenses'}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 80px 80px 70px 24px;gap:4px;padding:5px 12px;background:var(--bg2);border-bottom:0.5px solid var(--border);">
+        <span class="budget-col-h" style="text-align:left;">${es?'Concepto':'Concept'}</span>
+        <span class="budget-col-h">${es?'Monto':'Amount'}</span>
+        <span class="budget-col-h">${es?'Prom/mes':'Avg/mo'}</span>
+        <span class="budget-col-h">${es?'Mes':'Month'}</span>
+        <span></span>
+      </div>
+      ${annualData.expenses.map((item,i)=>`
+      <div style="display:grid;grid-template-columns:1fr 80px 80px 70px 24px;gap:4px;padding:7px 12px;border-bottom:0.5px solid var(--border);align-items:center;">
+        <span style="font-size:12px;color:var(--text);">${item.name}</span>
+        <span style="font-size:12px;text-align:right;color:var(--text);">${fmt(item.amt)}</span>
+        <span style="font-size:12px;text-align:right;color:var(--text3);">${fmt(Math.round(item.amt/12))}</span>
+        <span style="font-size:11px;text-align:right;color:var(--text3);">${item.month}</span>
+        <button onclick="annualDel('expenses',${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0;">×</button>
+      </div>`).join('')}
+      <div style="display:grid;grid-template-columns:1fr 80px 80px 70px 24px;gap:4px;padding:6px 12px;background:var(--bg2);border-top:0.5px dashed var(--border);align-items:center;">
+        <input id="ann-exp-name" placeholder="${es?'Concepto...':'Concept...'}" class="budget-sinput">
+        <input id="ann-exp-amt" type="number" placeholder="$0" class="budget-sinput" style="text-align:right;">
+        <div id="ann-exp-avg" style="font-size:11px;text-align:right;color:var(--text3);padding:4px 7px;">$0/mes</div>
+        <select id="ann-exp-month" class="budget-sinput" style="padding:4px 6px;">
+          ${(es?['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']:['January','February','March','April','May','June','July','August','September','October','November','December']).map(m=>`<option>${m}</option>`).join('')}
+        </select>
+        <button onclick="annualAdd('expenses')" class="budget-add-btn-sm">+</button>
+      </div>
+    </div>
+  </div>`;
+
   document.getElementById('budget-content').innerHTML=html;
   // Populate mobile cards
   const cardsEl=document.getElementById('budget-rubro-cards');
@@ -4012,6 +4098,68 @@ function debtEditAbono(di,cardEl){
 }
 
 // ---- END DEBT FUNCTIONS ----
+
+// ── ANNUAL SECTION ─────────────────────────────────────
+function toggleAnnualSection(){
+  const body=document.getElementById('annual-body');
+  const arrow=document.getElementById('annual-arrow');
+  if(!body)return;
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  if(arrow)arrow.style.transform=open?'rotate(-90deg)':'rotate(0deg)';
+}
+
+function annualAdd(type){
+  const nameEl=document.getElementById('ann-'+type.slice(0,3)+'-name');
+  const amtEl=document.getElementById('ann-'+type.slice(0,3)+'-amt');
+  const monthEl=document.getElementById('ann-'+type.slice(0,3)+'-month');
+  const name=nameEl?nameEl.value.trim():'';
+  const amt=parseFloat(amtEl?amtEl.value:0)||0;
+  const month=monthEl?monthEl.value:'';
+  if(!name||!amt)return;
+  annualData[type].push({name,amt,month});
+  saveAnnualData();
+  nameEl.value='';amtEl.value='';
+  loadBudgetData();
+}
+
+function annualDel(type,idx){
+  annualData[type].splice(idx,1);
+  saveAnnualData();
+  loadBudgetData();
+}
+
+async function saveAnnualData(){
+  if(!db||!currentUser)return;
+  try{
+    await userCol().doc('annual_data').set(annualData);
+  }catch(e){console.error('Annual save:',e);}
+}
+
+async function loadAnnualData(){
+  if(!db||!currentUser)return;
+  try{
+    const snap=await userCol().doc('annual_data').get();
+    if(snap.exists){
+      annualData=snap.data();
+      if(!annualData.income)annualData.income=[];
+      if(!annualData.expenses)annualData.expenses=[];
+    }
+  }catch(e){console.error('Annual load:',e);}
+}
+
+// Auto-update avg display when amount changes
+document.addEventListener('input',e=>{
+  if(e.target.id==='ann-inc-amt'){
+    const avg=document.getElementById('ann-inc-avg');
+    if(avg){const v=parseFloat(e.target.value)||0;avg.textContent='$'+Math.round(v/12).toLocaleString()+'/mes';}
+  }
+  if(e.target.id==='ann-exp-amt'){
+    const avg=document.getElementById('ann-exp-avg');
+    if(avg){const v=parseFloat(e.target.value)||0;avg.textContent='$'+Math.round(v/12).toLocaleString()+'/mes';}
+  }
+});
+// ── END ANNUAL SECTION ──────────────────────────────────
 
 
 // ── MONTHLY REPORT ─────────────────────────
@@ -4805,6 +4953,7 @@ function signOut(){
         await loadDB();
         await loadPendingTasks();
         await loadShoppingDB();
+        await loadAnnualData();
         applyConfig(setupCfg);
         applyLang(setupCfg.lang||'es');
         renderDay();
