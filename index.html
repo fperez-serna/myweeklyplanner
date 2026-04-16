@@ -828,7 +828,6 @@ body{padding:.75rem;}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </button>
         <button onclick="generateAnnualReport()" style="background:var(--mauve);border:none;border-radius:8px;padding:4px 10px;cursor:pointer;color:#fff;font-size:11px;font-weight:500;white-space:nowrap;" id="annual-report-btn">📄 <span id="annual-btn-lbl">Reporte anual</span></button>
-        <button onclick="generateAnnualReport()" style="background:var(--mauve);border:none;border-radius:8px;padding:4px 10px;cursor:pointer;color:#fff;font-size:11px;font-weight:500;white-space:nowrap;" id="annual-report-btn">📄 <span id="annual-btn-lbl">Reporte anual</span></button>
       </div>
     </div>
     <div id="budget-export-menu" style="display:none;position:absolute;top:56px;right:16px;background:var(--bg);border:0.5px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:10;overflow:hidden;min-width:180px;">
@@ -4295,7 +4294,7 @@ async function generateAnnualReport(){
   tableHeader(es?['Rubro','Total anual','Promedio mensual','% del total']:['Category','Annual total','Monthly avg','% of total'],eW);
   const sortedR=Object.entries(allRubros).sort((a,b)=>b[1]-a[1]);
   sortedR.length?sortedR.forEach(([r,t])=>{
-    const clean=r.replace(/\p{Emoji_Presentation}/gu,'').trim();
+    const clean=r.replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FEFF}]/gu,'').replace(/\s+/g,' ').trim();
     const pct=totalAnnualGastos>0?((t/totalAnnualGastos)*100).toFixed(1)+'%':'0%';
     tableRow([clean,fmt(t),fmt(Math.round(t/12)),pct],eW);
   }):tableRow([es?'(Sin gastos)':'(No expenses)','--','--','--'],eW);
