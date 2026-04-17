@@ -979,6 +979,10 @@ function initFirebase(){
   firebase.initializeApp(cfg);
   auth=firebase.auth();
   db=firebase.firestore();
+  // Initialize Functions with correct region
+  if(firebase.functions){
+    window.fbFunctions=firebase.app().functions('us-central1');
+  }
 }
 
 async function saveDB(){
@@ -5148,7 +5152,8 @@ function signOut(){
 
       // Check if user has paid access
       try{
-        const checkAccess=firebase.functions().httpsCallable('checkAccess');
+        const checkFn=window.fbFunctions||firebase.app().functions('us-central1');
+        const checkAccess=checkFn.httpsCallable('checkAccess');
         const result=await checkAccess();
         if(!result.data.hasAccess){
           // No access - show payment screen
