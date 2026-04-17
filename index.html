@@ -954,7 +954,7 @@ function tasksForDay(di){
   const dayDate=weekDays[di];
   const carryTasks=pendingTasks
     .filter(p=>!currentWeekIds.has(p.id)&&p.addedDate<=dk(dayDate))
-    .map(p=>({id:p.id,text:p.text,addedOnDay:-1,fromPrevWeek:true}));
+    .map(p=>({id:p.id,text:p.text,addedOnDay:-1,fromPrevWeek:true,doneOnDay:p.done?0:undefined}));
   return [...carryTasks,...weekTasks];
 }
 function focusForDay(di){
@@ -1129,7 +1129,11 @@ function addPendingTask(id, text, dateStr){
 }
 
 function resolvePendingTask(id){
-  pendingTasks=pendingTasks.filter(t=>t.id!==id);
+  const pt=pendingTasks.find(t=>t.id===id);
+  if(pt){
+    pt.done=true;
+    pt.doneDate=dk(activeDate);
+  }
   savePendingTasks();
 }
 
@@ -1275,8 +1279,14 @@ function toggleTask(el){
     }
     saveDB();
   } else if(pt){
-    // Task from a previous week - mark done in pending only
-    resolvePendingTask(id);
+    // Task from a previous week - toggle done in pendingTasks
+    if(pt.done){
+      pt.done=false;
+      delete pt.doneDate;
+      savePendingTasks();
+    } else {
+      resolvePendingTask(id);
+    }
   }
   renderTasks(di);updateProg(di);buildNav();buildOv();
 }
