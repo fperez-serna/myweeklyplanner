@@ -3206,6 +3206,25 @@ async function loadBudgetData(){
         (budgetData.debts||[]).forEach(debt=>debt.abono=0);
         // Keep income from config doc if it has some (migration from old format)
         if(!budgetData.income||budgetData.income.length===0)budgetData.income=[];
+        // Inherit debt balances from previous month
+        const prevMonth=budgetMonth===0?11:budgetMonth-1;
+        const prevYear=budgetMonth===0?budgetYear-1:budgetYear;
+        const prevKey='budget_actual_'+prevYear+'_'+String(prevMonth+1).padStart(2,'0');
+        try{
+          const prevSnap=await userCol().doc(prevKey).get();
+          if(prevSnap.exists){
+            const prevActuals=prevSnap.data();
+            (budgetData.debts||[]).forEach((debt,di)=>{
+              if(debt.tipo==='tarjeta'){
+                // Tarjeta: heredar saldo del mes anterior
+                if(prevActuals['debt_'+di+'_saldo']!==undefined)debt.saldo=prevActuals['debt_'+di+'_saldo'];
+              } else {
+                // Fijo: heredar saldo calculado del mes anterior
+                if(prevActuals['debt_'+di+'_saldo']!==undefined)debt.saldo=prevActuals['debt_'+di+'_saldo'];
+              }
+            });
+          }
+        }catch(e){}
       }
     }catch(e){budgetData={income:[],groups:getDefaultGroups(),debts:[]};}
   }
@@ -3321,6 +3340,7 @@ async function saveBudgetData(){
     });
     (budgetData.debts||[]).forEach((debt,di)=>{
       actuals['debt_'+di+'_abono']=debt.abono||0;
+      actuals['debt_'+di+'_saldo']=debt.saldo||0;
     });
     await userCol().doc(monthKey).set(actuals);
   }catch(e){console.error('Budget save:',e);}
@@ -4126,14 +4146,12 @@ function debtEditAbono(di,cardEl){
   function save(){
     const val=parseFloat(input.value)||0;
     if(isTarjeta){
-      // Para tarjeta: el usuario escribe el saldo actual directamente
       debt.saldo=val;
     } else {
-      // Para préstamo fijo: restamos el abono del saldo
-      const abonoAnterior=debt.abono||0;
-      const diferencia=val-abonoAnterior;
-      debt.saldo=Math.max(0,debt.saldo-diferencia);
+      // Guardar saldo base la primera vez que se edita este mes
+      if(debt.saldoInicialMes===undefined)debt.saldoInicialMes=debt.saldo;
       debt.abono=val;
+      debt.saldo=Math.max(0,debt.saldoInicialMes-val);
     }
     saveBudgetConfig();
     loadMonthGastos().then(d=>renderBudget(d));
@@ -4141,8 +4159,6 @@ function debtEditAbono(di,cardEl){
   input.addEventListener('blur',save);
   input.addEventListener('keydown',e=>{if(e.key==='Enter')input.blur();if(e.key==='Escape'){input.value=cur;input.blur();}});
 }
-
-// ---- END DEBT FUNCTIONS ----
 
 // ── ANNUAL SECTION ─────────────────────────────────────
 function toggleAnnualSection(){
