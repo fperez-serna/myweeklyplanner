@@ -3182,6 +3182,12 @@ async function loadBudgetData(){
       // Load actuals for this specific month (separate doc)
       const monthKey='budget_actual_'+budgetYear+'_'+String(budgetMonth+1).padStart(2,'0');
       const actualSnap=await userCol().doc(monthKey).get();
+      // Always load prev month so saldoInicialMes stays fresh even with retroactive edits
+      const prevMonthIdx=budgetMonth===0?11:budgetMonth-1;
+      const prevYearIdx=budgetMonth===0?budgetYear-1:budgetYear;
+      const prevKey='budget_actual_'+prevYearIdx+'_'+String(prevMonthIdx+1).padStart(2,'0');
+      let prevActuals=null;
+      try{const ps=await userCol().doc(prevKey).get();if(ps.exists)prevActuals=ps.data();}catch(e){}
       if(actualSnap.exists){
         const monthActuals=actualSnap.data();
         // Apply monthly actuals to groups
@@ -3192,44 +3198,39 @@ async function loadBudgetData(){
             else sub.actual=0;
           });
         });
-        // Apply monthly debt abonos (reset each month)
+        // Derive saldoInicialMes from previous month so retroactive abono changes propagate
+        let saldoChanged=false;
         (budgetData.debts||[]).forEach((debt,di)=>{
           debt.abono=monthActuals['debt_'+di+'_abono']!==undefined?monthActuals['debt_'+di+'_abono']:0;
-          debt.saldo=monthActuals['debt_'+di+'_saldo']!==undefined?monthActuals['debt_'+di+'_saldo']:debt.saldo||0;
-          debt.saldoInicialMes=monthActuals['debt_'+di+'_saldoInicial']!==undefined?monthActuals['debt_'+di+'_saldoInicial']:(debt.saldo||0)+(debt.abono||0);
+          const saldoInicial=prevActuals&&prevActuals['debt_'+di+'_saldo']!==undefined
+            ?prevActuals['debt_'+di+'_saldo']
+            :monthActuals['debt_'+di+'_saldoInicial']!==undefined
+              ?monthActuals['debt_'+di+'_saldoInicial']
+              :(monthActuals['debt_'+di+'_saldo']||0)+(debt.abono||0);
+          debt.saldoInicialMes=saldoInicial;
+          const newSaldo=Math.max(0,saldoInicial-debt.abono);
+          if(newSaldo!==(monthActuals['debt_'+di+'_saldo']!==undefined?monthActuals['debt_'+di+'_saldo']:debt.saldo||0))saldoChanged=true;
+          debt.saldo=newSaldo;
         });
         // Apply monthly income - fallback to budget_config income if monthly is empty
         if(monthActuals.income&&monthActuals.income.length>0)budgetData.income=monthActuals.income;
         else if(budgetData.income&&budgetData.income.length>0){} // keep from config
         else budgetData.income=[];
+        // Auto-save updated saldos so the next month in the chain stays consistent
+        if(saldoChanged)saveBudgetData().catch(()=>{});
       } else {
         // New month - reset actuals to 0, keep income from config if exists
         budgetData.groups.forEach(g=>g.subs.forEach(sub=>sub.actual=0));
-        (budgetData.debts||[]).forEach(debt=>debt.abono=0);
-        // Keep income from config doc if it has some (migration from old format)
         if(!budgetData.income||budgetData.income.length===0)budgetData.income=[];
-        // Inherit debt balances from previous month
-        const prevMonth=budgetMonth===0?11:budgetMonth-1;
-        const prevYear=budgetMonth===0?budgetYear-1:budgetYear;
-        const prevKey='budget_actual_'+prevYear+'_'+String(prevMonth+1).padStart(2,'0');
-        try{
-          const prevSnap=await userCol().doc(prevKey).get();
-          if(prevSnap.exists){
-            const prevActuals=prevSnap.data();
-            (budgetData.debts||[]).forEach((debt,di)=>{
-              if(prevActuals['debt_'+di+'_saldo']!==undefined){
-                debt.saldo=prevActuals['debt_'+di+'_saldo'];
-                debt.saldoInicialMes=prevActuals['debt_'+di+'_saldo'];
-              } else {
-                debt.saldoInicialMes=debt.saldo||0;
-              }
-            });
+        (budgetData.debts||[]).forEach((debt,di)=>{
+          debt.abono=0;
+          if(prevActuals&&prevActuals['debt_'+di+'_saldo']!==undefined){
+            debt.saldo=prevActuals['debt_'+di+'_saldo'];
+            debt.saldoInicialMes=prevActuals['debt_'+di+'_saldo'];
           } else {
-            (budgetData.debts||[]).forEach(debt=>{debt.saldoInicialMes=debt.saldo||0;});
+            debt.saldoInicialMes=debt.saldo||0;
           }
-        }catch(e){
-          (budgetData.debts||[]).forEach(debt=>{if(debt.saldoInicialMes===undefined)debt.saldoInicialMes=debt.saldo||0;});
-        }
+        });
       }
     }catch(e){budgetData={income:[],groups:getDefaultGroups(),debts:[]};}
   }
