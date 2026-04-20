@@ -4119,9 +4119,14 @@ function budgetSaveDebt(di){
     fechaPago:document.getElementById('d-fecha').value.trim(),
     abono:0,
   };
-  if(di===-1)budgetData.debts.push(debt);
-  else{
+  if(di===-1){
+    debt.saldoInicialMes=saldo;
+    budgetData.debts.push(debt);
+  } else {
     debt.abono=budgetData.debts[di].abono||0;
+    debt.saldoInicialMes=saldo!==budgetData.debts[di].saldo
+      ?saldo
+      :(budgetData.debts[di].saldoInicialMes||saldo);
     budgetData.debts[di]=debt;
   }
   document.getElementById('debt-modal').remove();
