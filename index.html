@@ -3220,10 +3220,16 @@ async function loadBudgetData(){
               if(prevActuals['debt_'+di+'_saldo']!==undefined){
                 debt.saldo=prevActuals['debt_'+di+'_saldo'];
                 debt.saldoInicialMes=prevActuals['debt_'+di+'_saldo'];
+              } else {
+                debt.saldoInicialMes=debt.saldo||0;
               }
             });
+          } else {
+            (budgetData.debts||[]).forEach(debt=>{debt.saldoInicialMes=debt.saldo||0;});
           }
-        }catch(e){}
+        }catch(e){
+          (budgetData.debts||[]).forEach(debt=>{if(debt.saldoInicialMes===undefined)debt.saldoInicialMes=debt.saldo||0;});
+        }
       }
     }catch(e){budgetData={income:[],groups:getDefaultGroups(),debts:[]};}
   }
@@ -3295,7 +3301,7 @@ async function loadMonthGastos(){
   return totals;
 }
 
-function saveBudgetConfig(){saveBudgetData();}
+function saveBudgetConfig(){return saveBudgetData();}
 async function saveBudgetData(){
   if(!db||!currentUser)return;
   // SAFETY: only skip if budgetData itself is null/undefined (truly corrupt)
@@ -4143,18 +4149,18 @@ function debtEditAbono(di,cardEl){
   input.style.cssText='width:80px;font-size:13px;font-weight:500;color:var(--teal);background:transparent;border:none;border-bottom:1.5px solid var(--teal);outline:none;padding:0;';
   valEl.replaceWith(input);
   input.focus();input.select();
-  function save(){
+  async function save(){
     const val=parseFloat(input.value)||0;
     if(isTarjeta){
       debt.saldo=val;
     } else {
-      // Guardar saldo base la primera vez que se edita este mes
       if(debt.saldoInicialMes===undefined)debt.saldoInicialMes=debt.saldo;
       debt.abono=val;
       debt.saldo=Math.max(0,debt.saldoInicialMes-val);
     }
-    saveBudgetConfig();
-    loadMonthGastos().then(d=>renderBudget(d));
+    await saveBudgetConfig();
+    const d=await loadMonthGastos();
+    renderBudget(d);
   }
   input.addEventListener('blur',save);
   input.addEventListener('keydown',e=>{if(e.key==='Enter')input.blur();if(e.key==='Escape'){input.value=cur;input.blur();}});
