@@ -3333,7 +3333,10 @@ async function saveBudgetData(){
         id:g.id,name:g.name,
         subs:g.subs.map(sub=>({name:sub.name,presup:sub.presup,rubro:sub.rubro}))
       })),
-      debts:budgetData.debts||[]
+      debts:(budgetData.debts||[]).map(d=>({
+        nombre:d.nombre,tipo:d.tipo,saldo:d.saldo,
+        totalOriginal:d.totalOriginal,tasa:d.tasa,fechaPago:d.fechaPago
+      }))
     };
     await userCol().doc('budget_config').set(config);
     // Save actuals for this month separately
