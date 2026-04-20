@@ -3196,7 +3196,7 @@ async function loadBudgetData(){
         (budgetData.debts||[]).forEach((debt,di)=>{
           debt.abono=monthActuals['debt_'+di+'_abono']!==undefined?monthActuals['debt_'+di+'_abono']:0;
           debt.saldo=monthActuals['debt_'+di+'_saldo']!==undefined?monthActuals['debt_'+di+'_saldo']:debt.saldo||0;
-          debt.saldoInicialMes=monthActuals['debt_'+di+'_saldoInicial']!==undefined?monthActuals['debt_'+di+'_saldoInicial']:debt.saldo||0;
+          debt.saldoInicialMes=monthActuals['debt_'+di+'_saldoInicial']!==undefined?monthActuals['debt_'+di+'_saldoInicial']:(debt.saldo||0)+(debt.abono||0);
         });
         // Apply monthly income - fallback to budget_config income if monthly is empty
         if(monthActuals.income&&monthActuals.income.length>0)budgetData.income=monthActuals.income;
