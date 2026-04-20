@@ -3206,7 +3206,7 @@ async function loadBudgetData(){
         (budgetData.debts||[]).forEach(debt=>debt.abono=0);
         // Keep income from config doc if it has some (migration from old format)
         if(!budgetData.income||budgetData.income.length===0)budgetData.income=[];
-        // Inherit debt balances from previous month
+       // Inherit debt balances from previous month
         const prevMonth=budgetMonth===0?11:budgetMonth-1;
         const prevYear=budgetMonth===0?budgetYear-1:budgetYear;
         const prevKey='budget_actual_'+prevYear+'_'+String(prevMonth+1).padStart(2,'0');
@@ -3215,13 +3215,11 @@ async function loadBudgetData(){
           if(prevSnap.exists){
             const prevActuals=prevSnap.data();
             (budgetData.debts||[]).forEach((debt,di)=>{
-              if(debt.tipo==='tarjeta'){
-                // Tarjeta: heredar saldo del mes anterior
-                if(prevActuals['debt_'+di+'_saldo']!==undefined)debt.saldo=prevActuals['debt_'+di+'_saldo'];
-              } else {
-                // Fijo: heredar saldo calculado del mes anterior
-                if(prevActuals['debt_'+di+'_saldo']!==undefined)debt.saldo=prevActuals['debt_'+di+'_saldo'];
+              if(prevActuals['debt_'+di+'_saldo']!==undefined){
+                debt.saldo=prevActuals['debt_'+di+'_saldo'];
               }
+              // Reset saldoInicialMes para que el nuevo mes parta limpio
+              delete debt.saldoInicialMes;
             });
           }
         }catch(e){}
