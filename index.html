@@ -3963,7 +3963,6 @@ function budgetToggleAll(){
   const resOpen=resEl&&resEl.style.display!=='none';
   const anyGroupOpen=allGroups.some((_,gi)=>!budgetCollapsedGroups.has(gi));
   const anyOpen=anyGroupOpen||debtOpen||resOpen;
-
   allGroups.forEach((_,gi)=>{
     const el=document.getElementById('grp-'+gi);
     if(anyOpen){
@@ -3974,10 +3973,8 @@ function budgetToggleAll(){
       if(el)el.style.display='block';
     }
   });
-  // Also toggle debt and resumen sections
   if(debtEl){debtEl.style.display=anyOpen?'none':'block';budgetDebtOpen=!anyOpen;}
   if(resEl){resEl.style.display=anyOpen?'none':'block';budgetResumenOpen=!anyOpen;}
-
   const btn=document.getElementById('budget-toggle-all-btn');
   if(btn)btn.textContent=anyOpen?'⊕':'⊖';
 }
@@ -3991,6 +3988,7 @@ function toggleDebtSection(){
     if(arrow)arrow.style.transform=budgetDebtOpen?'rotate(0deg)':'rotate(-90deg)';
   }
 }
+
 function budgetAddDebt(){
   const es=!isEn();
   const modal=document.createElement('div');
@@ -4002,6 +4000,13 @@ function budgetAddDebt(){
       <div style="grid-column:1/-1;">
         <div class="debt-card-lbl">${es?'Descripción':'Description'}</div>
         <input id="d-nombre" class="debt-sinput" placeholder="${es?'Ej: Tarjeta Banamex Oro':'Ex: Chase credit card'}" style="margin-top:3px;"/>
+      </div>
+      <div style="grid-column:1/-1;">
+        <div class="debt-card-lbl">${es?'Tipo de deuda':'Debt type'}</div>
+        <select id="d-tipo" class="debt-sinput" style="margin-top:3px;">
+          <option value="fijo">${es?'Préstamo fijo (auto, personal)':'Fixed loan (car, personal)'}</option>
+          <option value="tarjeta">${es?'Tarjeta de crédito (saldo variable)':'Credit card (variable balance)'}</option>
+        </select>
       </div>
       <div>
         <div class="debt-card-lbl">${es?'Saldo actual':'Current balance'}</div>
@@ -4018,10 +4023,6 @@ function budgetAddDebt(){
       <div>
         <div class="debt-card-lbl">${es?'Fecha límite de pago':'Payment due date'}</div>
         <input id="d-fecha" class="debt-sinput" type="text" placeholder="${es?'Ej: día 15':'Ex: 15th'}" style="margin-top:3px;"/>
-      </div>
-      <div>
-        <div class="debt-card-lbl">${es?'Abonado este mes':'Paid this month'}</div>
-        <input id="d-abono" class="debt-sinput" type="number" placeholder="0" style="margin-top:3px;"/>
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:14px;">
@@ -4046,6 +4047,13 @@ function budgetEditDebt(di){
         <div class="debt-card-lbl">${es?'Descripción':'Description'}</div>
         <input id="d-nombre" class="debt-sinput" value="${debt.nombre}" style="margin-top:3px;"/>
       </div>
+      <div style="grid-column:1/-1;">
+        <div class="debt-card-lbl">${es?'Tipo de deuda':'Debt type'}</div>
+        <select id="d-tipo" class="debt-sinput" style="margin-top:3px;">
+          <option value="fijo" ${(debt.tipo||'fijo')==='fijo'?'selected':''}>${es?'Préstamo fijo (auto, personal)':'Fixed loan (car, personal)'}</option>
+          <option value="tarjeta" ${debt.tipo==='tarjeta'?'selected':''}>${es?'Tarjeta de crédito (saldo variable)':'Credit card (variable balance)'}</option>
+        </select>
+      </div>
       <div>
         <div class="debt-card-lbl">${es?'Saldo actual':'Current balance'}</div>
         <input id="d-saldo" class="debt-sinput" type="number" value="${debt.saldo}" style="margin-top:3px;"/>
@@ -4062,10 +4070,6 @@ function budgetEditDebt(di){
         <div class="debt-card-lbl">${es?'Fecha límite':'Due date'}</div>
         <input id="d-fecha" class="debt-sinput" type="text" value="${debt.fechaPago||''}" style="margin-top:3px;"/>
       </div>
-      <div>
-        <div class="debt-card-lbl">${es?'Abonado este mes':'Paid this month'}</div>
-        <input id="d-abono" class="debt-sinput" type="number" value="${debt.abono||0}" style="margin-top:3px;"/>
-      </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button onclick="document.getElementById('debt-modal').remove()" style="flex:1;padding:9px;border:0.5px solid var(--border);border-radius:9px;background:none;cursor:pointer;color:var(--text2);font-size:13px;">${es?'Cancelar':'Cancel'}</button>
@@ -4078,16 +4082,22 @@ function budgetEditDebt(di){
 function budgetSaveDebt(di){
   const nombre=document.getElementById('d-nombre').value.trim();
   if(!nombre)return;
+  const tipo=document.getElementById('d-tipo').value||'fijo';
+  const saldo=parseFloat(document.getElementById('d-saldo').value)||0;
   const debt={
     nombre,
-    saldo:parseFloat(document.getElementById('d-saldo').value)||0,
-    totalOriginal:parseFloat(document.getElementById('d-original').value)||parseFloat(document.getElementById('d-saldo').value)||0,
+    tipo,
+    saldo,
+    totalOriginal:parseFloat(document.getElementById('d-original').value)||saldo,
     tasa:parseFloat(document.getElementById('d-tasa').value)||0,
     fechaPago:document.getElementById('d-fecha').value.trim(),
-    abono:parseFloat(document.getElementById('d-abono').value)||0,
+    abono:0,
   };
   if(di===-1)budgetData.debts.push(debt);
-  else budgetData.debts[di]=debt;
+  else{
+    debt.abono=budgetData.debts[di].abono||0;
+    budgetData.debts[di]=debt;
+  }
   document.getElementById('debt-modal').remove();
   saveBudgetConfig();
   loadMonthGastos().then(d=>renderBudget(d));
@@ -4099,12 +4109,14 @@ function budgetDelDebt(di){
   saveBudgetConfig();
   loadMonthGastos().then(d=>renderBudget(d));
 }
+
 function debtEditAbono(di,cardEl){
   const debt=budgetData.debts[di];
   const es=!isEn();
+  const isTarjeta=debt.tipo==='tarjeta';
   const valEl=document.getElementById('debt-abono-'+di);
   if(!valEl)return;
-  const cur=debt.abono||0;
+  const cur=isTarjeta?(debt.saldo||0):(debt.abono||0);
   const input=document.createElement('input');
   input.type='number';
   input.value=cur;
@@ -4113,7 +4125,16 @@ function debtEditAbono(di,cardEl){
   input.focus();input.select();
   function save(){
     const val=parseFloat(input.value)||0;
-    debt.abono=val;
+    if(isTarjeta){
+      // Para tarjeta: el usuario escribe el saldo actual directamente
+      debt.saldo=val;
+    } else {
+      // Para préstamo fijo: restamos el abono del saldo
+      const abonoAnterior=debt.abono||0;
+      const diferencia=val-abonoAnterior;
+      debt.saldo=Math.max(0,debt.saldo-diferencia);
+      debt.abono=val;
+    }
     saveBudgetConfig();
     loadMonthGastos().then(d=>renderBudget(d));
   }
