@@ -957,7 +957,7 @@ function tasksForDay(di){
   const currentWeekIds=new Set((weekData.tasks||[]).map(t=>t.id));
   const dayDate=weekDays[di];
   const carryTasks=pendingTasks
-    .filter(p=>!currentWeekIds.has(p.id)&&p.addedDate<=dk(dayDate))
+    .filter(p=>!currentWeekIds.has(p.id)&&p.addedDate<=dk(dayDate)&&!p.deleted)
     .map(p=>({id:p.id,text:p.text,addedOnDay:-1,fromPrevWeek:true,doneOnDay:p.done?0:undefined}));
   return [...carryTasks,...weekTasks];
 }
@@ -1132,11 +1132,15 @@ function addPendingTask(id, text, dateStr){
   savePendingTasks();
 }
 
-function resolvePendingTask(id){
+function resolvePendingTask(id, deleted=false){
   const pt=pendingTasks.find(t=>t.id===id);
   if(pt){
-    pt.done=true;
-    pt.doneDate=dk(activeDate);
+    if(deleted){
+      pt.deleted=true;
+    } else {
+      pt.done=true;
+      pt.doneDate=dk(activeDate);
+    }
   }
   savePendingTasks();
 }
@@ -1303,7 +1307,7 @@ function deleteTask(el){
   const id=el.dataset.id;const di=dayIdx();
   const t=(weekData.tasks||[]).find(t=>t.id===id);
   if(t){t.deletedOnDay=di;saveDB();}
-  resolvePendingTask(id);
+  resolvePendingTask(id, true);
   renderTasks(di);updateProg(di);buildNav();buildOv();
 }
 function moveTask(id, dir){
