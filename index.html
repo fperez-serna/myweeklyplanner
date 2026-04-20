@@ -4320,7 +4320,7 @@ async function generateAnnualReport(){
   pdf.setFontSize(13);pdf.setFont('helvetica','bold');
   pdf.text(es?'Reporte Financiero Anual '+year:'Annual Financial Report '+year,12,y+10);
   pdf.setFontSize(7);pdf.setFont('helvetica','normal');
-  pdf.text((es?'Generado el ':'Generated on ')+today,10+pw,y+5,{align:'right'});
+  pdf.text((es?'Generado el ':'Generated on ')+today,10+pw,y+8,{align:'right'});
   y+=19;
 
   const boxW=(pw-8)/3;
@@ -4369,7 +4369,7 @@ async function generateAnnualReport(){
   tableHeader(es?['Rubro','Total anual','Promedio mensual','% del total']:['Category','Annual total','Monthly avg','% of total'],eW);
   const sortedR=Object.entries(allRubros).sort((a,b)=>b[1]-a[1]);
   sortedR.length?sortedR.forEach(([r,t])=>{
-    const clean=r.replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FEFF}]/gu,'').replace(/\s+/g,' ').trim();
+    const clean=r.replace(/[^\p{L}\p{N}\s]/gu,'').replace(/\s+/g,' ').trim();
     const pct=totalAnnualGastos>0?((t/totalAnnualGastos)*100).toFixed(1)+'%':'0%';
     tableRow([clean,fmt(t),fmt(Math.round(t/12)),pct],eW);
   }):tableRow([es?'(Sin gastos)':'(No expenses)','--','--','--'],eW);
