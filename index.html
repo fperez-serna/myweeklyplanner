@@ -932,7 +932,6 @@ let auth=null;
 let currentUser=null;
 function userCol(){if(!db||!currentUser)throw new Error('Not authenticated');return db.collection('users').doc(currentUser.uid).collection('data');}
 let unsub=null;
-let fdone={1:false,2:false,3:false};
 
 // ── HELPERS ────────────────────────────────
 function dk(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -1324,12 +1323,7 @@ function addTask(){
 }
 
 function renderFocus(di){
-  const f=focusForDay(di);
-  [1,2,3].forEach(n=>{
-    const doneKey=di+'_'+n;
-    fdone[n]=!!(weekData.focusDone&&weekData.focusDone[doneKey]!==undefined);
-    const s=document.getElementById('fs'+n);if(s)s.querySelector('input').value='';
-  });
+  [1,2,3].forEach(n=>{const s=document.getElementById('fs'+n);if(s)s.querySelector('input').value='';});
   renderBubbles(di);
 }
 
@@ -1380,12 +1374,13 @@ function renderBubbles(di){
   [1,2,3].forEach(n=>{
     if(f[n]){
       const b=document.createElement('div');
-      b.className='fbub'+(fdone[n]?' tachado':'');
+      const isDone=!!(weekData.focusDone&&weekData.focusDone[di+'_'+n]!==undefined);
+      b.className='fbub'+(isDone?' tachado':'');
       b.setAttribute('data-n',n);
       b.setAttribute('data-di',di);
       b.title=isEn()?'Click to edit, tap ✓ to complete':'Click para editar, toca ✓ para completar';
       b.innerHTML=
-        '<span onclick="event.stopPropagation();toggleFdone('+n+','+di+')" style="margin-right:5px;opacity:0.5;font-size:11px;">'+(fdone[n]?'↩':'✓')+'</span>'+
+        '<span onclick="event.stopPropagation();toggleFdone('+n+','+di+')" style="margin-right:5px;opacity:0.5;font-size:11px;">'+(isDone?'↩':'✓')+'</span>'+
         '<span onclick="editBubble('+n+','+di+')" style="flex:1;cursor:text;">'+f[n]+'</span>'+
         '<span style="font-size:11px;margin-left:4px;opacity:0.5;" onclick="event.stopPropagation();delFocus(this)" data-n="'+n+'">✕</span>';
       b.style.cssText='display:flex;align-items:center;gap:2px;';
@@ -1400,8 +1395,8 @@ function renderBubbles(di){
 function toggleFdone(num,di){
   if(!weekData.focusDone)weekData.focusDone={};
   const k=di+'_'+num;
-  if(weekData.focusDone[k]!==undefined){delete weekData.focusDone[k];fdone[num]=false;}
-  else{weekData.focusDone[k]=di;fdone[num]=true;}
+  if(weekData.focusDone[k]!==undefined){delete weekData.focusDone[k];}
+  else{weekData.focusDone[k]=di;}
   saveDB();renderBubbles(di);
 }
 
@@ -1411,7 +1406,6 @@ function delFocus(el){
   if(!weekData.focus)weekData.focus={};
   if(!weekData.focus[di])weekData.focus[di]={};
   weekData.focus[di][num]='';
-  fdone[num]=false;
   saveDB();renderBubbles(di);buildNav();
 }
 
@@ -2831,7 +2825,7 @@ function shareFocus(){
   let txt=(isEn()?'🎯 Focus — ':'🎯 Enfoque — ')+dateStr+'\n\n';
   const lines=[1,2,3].filter(n=>f[n]);
   if(lines.length){
-    lines.forEach(n=>{txt+=(fdone[n]?'✓ ':'• ')+f[n]+'\n';});
+    lines.forEach(n=>{const done=!!(weekData.focusDone&&weekData.focusDone[di+'_'+n]!==undefined);txt+=(done?'✓ ':'• ')+f[n]+'\n';});
   } else {
     txt+=(isEn()?'No focus set':'Sin enfoques aún');
   }
