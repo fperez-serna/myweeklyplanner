@@ -5096,7 +5096,7 @@ async function openBackupsUI(){
 
 // ── PAYMENT WALL ──────────────────────────────────────
 function showPaymentWall(expired=false){
-  const es=!isEn();
+  const es=loginLang!=='en';
   const existing=document.getElementById('payment-wall');
   if(existing)existing.remove();
   const wall=document.createElement('div');
