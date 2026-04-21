@@ -4320,7 +4320,7 @@ async function generateAnnualReport(){
   pdf.setFontSize(13);pdf.setFont('helvetica','bold');
   pdf.text(es?'Reporte Financiero Anual '+year:'Annual Financial Report '+year,12,y+10);
   pdf.setFontSize(7);pdf.setFont('helvetica','normal');
-  pdf.text((es?'Generado el ':'Generated on ')+today,10+pw,y+8,{align:'right'});
+  pdf.text((es?'Generado el ':'Generated on ')+today,8+pw,y+8,{align:'right'});
   y+=19;
 
   const boxW=(pw-8)/3;
