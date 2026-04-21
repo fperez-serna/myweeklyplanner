@@ -1498,8 +1498,8 @@ function addEv(){
         if(!data.events)data.events={};
         if(!data.events[targetTdi])data.events[targetTdi]=[];
         data.events[targetTdi].push({time:h+':'+m+' '+ap,title:evTitle});
-        userCol().doc(targetWid).set(data);
-      });
+        return userCol().doc(targetWid).set(data);
+      }).catch(e=>{console.error('Error saving event to other week:',e);showToast(isEn()?'⚠️ Could not save event, try again':'⚠️ No se pudo guardar el evento, intenta de nuevo');});
     }
     if(gcalToken)createGCalEv(evTitle,targetDate,h,m,ap);
     titleIn.value='';
@@ -2103,6 +2103,7 @@ async function calGoTo(y,m,d){
     if(db){
       const snap=await userCol().doc(wid()).get();
       if(snap.exists)weekData=snap.data();
+      await loadPendingTasks();
     }
   }catch(e){}
   renderDay();
@@ -3817,7 +3818,7 @@ function budgetMoveSub(gi,si,dir){
   if(ni<0||ni>=subs.length)return;
   [subs[si],subs[ni]]=[subs[ni],subs[si]];
   saveBudgetConfig();
-  loadMonthGastos().then(d=>renderBudget(d));
+  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'⚠️ Could not load budget data':'⚠️ No se pudo cargar el presupuesto');});
 }
 
 function budgetMoveGroup(gi,dir){
@@ -3825,7 +3826,7 @@ function budgetMoveGroup(gi,dir){
   if(newIdx<0||newIdx>=budgetData.groups.length)return;
   [budgetData.groups[gi],budgetData.groups[newIdx]]=[budgetData.groups[newIdx],budgetData.groups[gi]];
   saveBudgetConfig();
-  loadMonthGastos().then(d=>renderBudget(d));
+  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'⚠️ Could not load budget data':'⚠️ No se pudo cargar el presupuesto');});
 }
 
 async function budgetDelSub(gi,si){
@@ -4116,14 +4117,14 @@ function budgetSaveDebt(di){
   }
   document.getElementById('debt-modal').remove();
   saveBudgetConfig();
-  loadMonthGastos().then(d=>renderBudget(d));
+  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'⚠️ Could not load budget data':'⚠️ No se pudo cargar el presupuesto');});
 }
 
 function budgetDelDebt(di){
   if(!confirm(!isEn()?'¿Eliminar esta deuda?':'Delete this debt?'))return;
   budgetData.debts.splice(di,1);
   saveBudgetConfig();
-  loadMonthGastos().then(d=>renderBudget(d));
+  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'⚠️ Could not load budget data':'⚠️ No se pudo cargar el presupuesto');});
 }
 
 function debtEditAbono(di,cardEl){
