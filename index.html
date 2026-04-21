@@ -1295,14 +1295,16 @@ function deleteTask(el){
 function moveTask(id, dir){
   dir=parseInt(dir);
   const di=dayIdx();
-  if(!weekData.tasks)return;
-  // Get all visible tasks for this day in display order
+  if(!weekData.tasks)weekData.tasks=[];
   const allTasks=weekData.tasks;
   const visible=tasksForDay(di).filter(t=>t.doneOnDay===undefined);
   const idx=visible.findIndex(t=>t.id===id);
   const ni=idx+dir;
   if(idx===-1||ni<0||ni>=visible.length)return;
-  // Swap in the main tasks array
+  // Import prev-week tasks into weekData.tasks preserving their order
+  const toImport=visible.filter(t=>t.fromPrevWeek&&!allTasks.find(wt=>wt.id===t.id));
+  [...toImport].reverse().forEach(t=>allTasks.unshift({id:t.id,text:t.text,addedOnDay:-1}));
+  // Swap
   const idxA=allTasks.findIndex(t=>t.id===visible[idx].id);
   const idxB=allTasks.findIndex(t=>t.id===visible[ni].id);
   if(idxA===-1||idxB===-1)return;
