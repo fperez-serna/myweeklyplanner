@@ -1228,8 +1228,7 @@ function renderTasks(di){
   const ch=document.getElementById('ch');
   if(undoneCarried.length){ch.style.display='block';ch.textContent=undoneCarried.length+' pendiente'+(undoneCarried.length>1?'s':'')+' sin completar del día anterior';}
   else ch.style.display='none';
-  const own=tasks.filter(t=>t.addedOnDay===di);
-  const displayTasks=[...carried,...own].sort((a,b)=>(a.doneOnDay!==undefined?1:0)-(b.doneOnDay!==undefined?1:0));
+  const displayTasks=[...tasks].sort((a,b)=>(a.doneOnDay!==undefined?1:0)-(b.doneOnDay!==undefined?1:0));
   const undoneDisplay=displayTasks.filter(t=>t.doneOnDay===undefined);
   displayTasks.forEach(t=>{
     const isDone=t.doneOnDay!==undefined;const isCar=t.addedOnDay<di;
