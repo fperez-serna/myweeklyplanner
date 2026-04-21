@@ -932,7 +932,6 @@ let auth=null;
 let currentUser=null;
 function userCol(){if(!db||!currentUser)throw new Error('Not authenticated');return db.collection('users').doc(currentUser.uid).collection('data');}
 let unsub=null;
-let unsubBudget=null;
 let fdone={1:false,2:false,3:false};
 
 // ── HELPERS ────────────────────────────────
@@ -1059,23 +1058,6 @@ function subscribeShoppingDB(){
 }
 
 let unsubConfig=null;
-function subscribeBudget(){
-  if(unsubBudget)unsubBudget();
-  if(!db)return;
-  unsubBudget=userCol().doc('budget_config').onSnapshot(snap=>{
-    if(snap.exists){
-      const remote=snap.data();
-      // Only update if modal is closed (don't interrupt editing)
-      const modalOpen=document.getElementById('budget-modal')?.style.display==='block';
-      if(!modalOpen&&remote){
-        budgetData={...remote};
-        if(!budgetData.debts)budgetData.debts=[];
-        if(!budgetData.groups)budgetData.groups=[];
-        if(!budgetData.income)budgetData.income=[];
-      }
-    }
-  });
-}
 
 function subscribeConfig(){
   if(unsubConfig)unsubConfig();
@@ -1098,12 +1080,13 @@ function subscribeDB(){
   if(unsub)unsub();
   if(!db)return;
   unsub=userCol().doc(wid()).onSnapshot(async snap=>{
-    if(snap.exists){
-      weekData=snap.data();
-      // Reload pending tasks to ensure cross-week carry is up to date
-      await loadPendingTasks();
-      renderDay();
-    }
+    try{
+      if(snap.exists){
+        weekData=snap.data();
+        await loadPendingTasks();
+        renderDay();
+      }
+    }catch(e){console.error('onSnapshot week handler error:',e);}
   });
 }
 
@@ -1317,7 +1300,7 @@ function moveTask(id, dir){
   if(!weekData.tasks)return;
   // Get all visible tasks for this day in display order
   const allTasks=weekData.tasks;
-  const visible=tasksForDay(di).filter(t=>t.doneOnDay===undefined||true);
+  const visible=tasksForDay(di).filter(t=>t.doneOnDay===undefined);
   const idx=visible.findIndex(t=>t.id===id);
   const ni=idx+dir;
   if(idx===-1||ni<0||ni>=visible.length)return;
@@ -2845,12 +2828,9 @@ function shareFocus(){
   const f=focusForDay(di);
   const dateStr=DIAS[activeDate.getDay()]+', '+activeDate.getDate()+' de '+MES[activeDate.getMonth()];
   let txt=(isEn()?'🎯 Focus — ':'🎯 Enfoque — ')+dateStr+'\n\n';
-  [1,2,3].forEach(n=>{
-    if(f[n])txt+(fdone[n]?'✓ ':'• ')+f[n]+'\n';
-  });
-  const lines=[f[1],f[2],f[3]].filter(Boolean);
+  const lines=[1,2,3].filter(n=>f[n]);
   if(lines.length){
-    lines.forEach((l,i)=>{txt+=(i+1)+'. '+l+'\n';});
+    lines.forEach(n=>{txt+=(fdone[n]?'✓ ':'• ')+f[n]+'\n';});
   } else {
     txt+=(isEn()?'No focus set':'Sin enfoques aún');
   }
@@ -5256,8 +5236,15 @@ function signOut(){
           return;
         }
       }catch(e){
-        // If check fails, allow access (don't block users on function errors)
-        console.warn('Access check failed, allowing:', e);
+        // Block on explicit permission errors; allow on network/availability issues
+        const blocked=['permission-denied','unauthenticated','not-found'];
+        if(e.code&&blocked.includes(e.code)){
+          document.getElementById('login-screen').style.display='none';
+          document.querySelector('.db').style.display='none';
+          showPaymentWall(false);
+          return;
+        }
+        console.warn('Access check failed (network/functions issue), allowing:', e);
       }
 
       document.getElementById('login-screen').style.display='none';
