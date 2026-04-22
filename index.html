@@ -907,7 +907,7 @@ let MES=MES_ES;
 const ICAL_URL='https://calendar.google.com/calendar/ical/f.perezserna%40gmail.com/private-00450f29f66ba6d8112c19e9435f65b5/basic.ics';
 const WE={Tennis:'🎾','E. Club':'🏇',Swimming:'🏊‍♀️',Pilates:'🤸',Gym:'🏋️',Yoga:'🧘',Box:'🥊','Free Diving':'🤿',Climbing:'🧗',Rest:'😴',Otro:'✨'};
 const HE={Meditar:'🧘',Leer:'📖',Stretching:'🤸',Escribir:'✍️',Otro:'✨'};
-const DW={0:{wo1:'',wo2:'',ha1:'',ha2:''},1:{wo1:'',wo2:'',ha1:'',ha2:''},2:{wo1:'Tennis',wo2:'E. Club',ha1:'',ha2:''},3:{wo1:'Swimming',wo2:'',ha1:'',ha2:''},4:{wo1:'Tennis',wo2:'E. Club',ha1:'',ha2:''},5:{wo1:'Swimming',wo2:'',ha1:'',ha2:''},6:{wo1:'',wo2:'',ha1:'',ha2:''}};
+const DW={0:{wo1:'',wo2:'',ha1:'',ha2:''},1:{wo1:'',wo2:'',ha1:'',ha2:''},2:{wo1:'',wo2:'',ha1:'',ha2:''},3:{wo1:'',wo2:'',ha1:'',ha2:''},4:{wo1:'',wo2:'',ha1:'',ha2:''},5:{wo1:'',wo2:'',ha1:'',ha2:''},6:{wo1:'',wo2:'',ha1:'',ha2:''}};
 const GCAL_ID='768734489364-vtacuutjbop0h19kj85qgoeodgd4dseq.apps.googleusercontent.com';
 
 // ── STATE ──────────────────────────────────
@@ -2491,7 +2491,7 @@ function renderChips(type,arr){
     });
     const hint=document.createElement('div');
     hint.style.cssText='font-size:10px;color:var(--text3);margin-top:4px;font-style:italic;';
-    hint.textContent=isEn()?'Examples — add your own above':'Ejemplos — agrega los tuyos arriba';
+    hint.textContent=isEn()?'TIP: Adding emojis helps you find them faster 👆':'TIP: Ponerles emojis los hace más fáciles de encontrar 👆';
     wrap.appendChild(hint);
     return;
   }
