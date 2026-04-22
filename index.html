@@ -1674,6 +1674,18 @@ async function createGCalEv(title,date,hour,min,ampm){
 }
 
 // ── WEATHER ────────────────────────────────
+let _lastWeather=null;
+function renderWeatherDesc(code,temp,pre){
+  const en=isEn();
+  const ds=en
+    ?{0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Cloudy',45:'Foggy',51:'Drizzle',61:'Light rain',63:'Moderate rain',65:'Heavy rain',80:'Showers',95:'Thunderstorm'}
+    :{0:'Despejado',1:'Mayormente despejado',2:'Parcialmente nublado',3:'Nublado',45:'Neblina',51:'Llovizna',61:'Lluvia ligera',63:'Lluvia moderada',65:'Lluvia fuerte',80:'Chubascos',95:'Tormenta'};
+  const wdesc=document.getElementById('wdesc');
+  if(wdesc)wdesc.textContent=(ds[code]||'Variable')+(en?' — feels like ':' — se siente ')+(temp+4)+'°C';
+  const rain=pre>40||[51,53,55,61,63,65,80,81,95].includes(code);
+  const rainEl=document.getElementById('rain');
+  if(rainEl)rainEl.textContent=rain?(en?'Rain likely ('+pre+'%)':'Lluvia probable ('+pre+'%)'):(en?'No rain today':'Sin lluvia hoy');
+}
 async function fetchWeatherCoords(lat,lon){
   try{
     const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -1682,13 +1694,9 @@ async function fetchWeatherCoords(lat,lon){
     const temp=Math.round(d.current.temperature_2m);
     const pre=d.current.precipitation_probability;
     const code=d.current.weathercode;
+    _lastWeather={code,temp,pre};
     document.getElementById('temp').textContent=temp+'°C';
-    
-    const ds=isEn()
-      ?{0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Cloudy',45:'Foggy',51:'Drizzle',61:'Light rain',63:'Moderate rain',65:'Heavy rain',80:'Showers',95:'Thunderstorm'}
-      :{0:'Despejado',1:'Mayormente despejado',2:'Parcialmente nublado',3:'Nublado',45:'Neblina',51:'Llovizna',61:'Lluvia ligera',63:'Lluvia moderada',65:'Lluvia fuerte',80:'Chubascos',95:'Tormenta'};
-    document.getElementById('wdesc').textContent=(ds[code]||'Variable')+(isEn()?' — feels like ':' — se siente ')+(temp+4)+'°C';
-    // Get city name
+    renderWeatherDesc(code,temp,pre);
     fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json')
       .then(r=>r.json())
       .then(geo=>{
@@ -1696,11 +1704,10 @@ async function fetchWeatherCoords(lat,lon){
         const state=geo.address.state||'';
         if(city)document.getElementById('location-lbl').textContent=city+(state?', '+state:'');
       }).catch(()=>{});
-    const rain=pre>40||[51,53,55,61,63,65,80,81,95].includes(code);
-    document.getElementById('rain').textContent=rain?(isEn()?'Rain likely ('+pre+'%)':'Lluvia probable ('+pre+'%)'):(isEn()?'No rain today':'Sin lluvia hoy');
   }catch(e){
+    const en=isEn();
     document.getElementById('temp').textContent='--°C';
-    document.getElementById('wdesc').textContent='No se pudo cargar el clima';
+    document.getElementById('wdesc').textContent=en?'Could not load weather':'No se pudo cargar el clima';
     document.getElementById('rain').textContent='';
   }
 }
@@ -2294,6 +2301,17 @@ function updateGastosLang(lang){
   if(gcalNote)gcalNote.textContent=isEn
     ?'*For security, your calendar cannot stay connected. Connect whenever you want your events to appear here and when you want your events saved to Google Calendar.'
     :'*Por seguridad, tu calendario no puede permanecer conectado. Conéctate cuando quieras que tus eventos se reflejen aquí y cuando quieras que tus eventos de aquí se guarden en tu Google Calendar.';
+  // Re-render weather descriptions in new language
+  if(_lastWeather)renderWeatherDesc(_lastWeather.code,_lastWeather.temp,_lastWeather.pre);
+  // Annual report button
+  const annBtn=document.getElementById('annual-btn-lbl');if(annBtn)annBtn.textContent=isEn?'Annual report':'Reporte anual';
+  // Sync SmartSelect inputs after rebuilding workout/habit options
+  const di=typeof dayIdx==='function'?dayIdx():0;
+  ['wo1','wo2','ha1','ha2'].forEach(id=>{
+    const sel=document.getElementById(id);
+    const ss=document.getElementById(id+'_ss');
+    if(sel&&ss)ss.value=sel.value;
+  });
 }
 
 function applyLang(lang){
@@ -4080,10 +4098,14 @@ function debtCalcHTML(rateType,rateVal,meses,saldo,tipo){
     <input type="hidden" id="d-tasa-tipo" value="${rateType||''}"/>
     <input type="hidden" id="d-tasa-anual" value="${rateVal||0}"/>
     <div style="margin-top:12px;background:var(--bg2);border-radius:10px;padding:10px 12px;font-size:10px;color:var(--text3);line-height:1.8;">
-      🇲🇽 <b>Tasa anual:</b> solo el interés puro, sin comisiones ni seguros. El costo real de tu deuda es mayor.<br>
+      ${es?`🇲🇽 <b>Tasa anual:</b> solo el interés puro, sin comisiones ni seguros. El costo real de tu deuda es mayor.<br>
       🇲🇽 <b>CAT</b> (Costo Anual Total): el costo real completo — incluye tasa + comisiones + seguros obligatorios.<br>
       🇺🇸 <b>APR</b> (Annual Percentage Rate): el equivalente americano del CAT. Incluye interés + fees del préstamo.<br>
-      🇲🇽🇺🇸 <b>Tasa mensual / Monthly rate:</b> el porcentaje directo que pagas cada mes, sin conversión.
+      🇲🇽🇺🇸 <b>Tasa mensual / Monthly rate:</b> el porcentaje directo que pagas cada mes, sin conversión.`
+      :`🇲🇽 <b>Tasa anual:</b> pure interest only, no fees or insurance. Your real cost of debt is higher.<br>
+      🇲🇽 <b>CAT</b> (Costo Anual Total): the full real cost — includes rate + fees + mandatory insurance.<br>
+      🇺🇸 <b>APR</b> (Annual Percentage Rate): the US equivalent of CAT. Includes interest + loan fees.<br>
+      🇲🇽🇺🇸 <b>Monthly rate / Tasa mensual:</b> the direct percentage you pay each month, no conversion needed.`}
     </div>
   </div>`;
 }
