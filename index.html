@@ -2491,7 +2491,7 @@ function renderChips(type,arr){
     });
     const hint=document.createElement('div');
     hint.style.cssText='font-size:10px;color:var(--text3);margin-top:4px;font-style:italic;';
-    hint.textContent=isEn()?'TIP: Adding emojis helps you find them faster 👆':'TIP: Ponerles emojis los hace más fáciles de encontrar 👆';
+    hint.textContent=isEn()?'TIP: Adding emojis helps you find them faster':'TIP: Ponerles emojis los hace más fáciles de encontrar';
     wrap.appendChild(hint);
     return;
   }
@@ -2555,10 +2555,14 @@ function selectLang(el){
     :(setupCfg.shopCats||DEFAULT_SHOP_ES).map(c=>c);
   renderChips('shop', shopChips);
   // Gasto chips
-  const gaArr=langIsEn
-    ?['🍽 Restaurant','🛒 Grocery','🎬 Entertainment','⛽ Gas','🚗 Transport','📱 Subscription','💪 Exercise','📚 School','🔧 Service payment','💼 Business','🏠 Home','💳 Loan','✈️ Travel','💸 Other']
-    :['🍽 Restaurante','🛒 Supermercado','🎬 Entretenimiento','⛽ Gasolina','🚗 Transporte','📱 Suscripción','💪 Ejercicio','📚 Escuela','🔧 Pago a servicio','💼 Negocio','🏠 Casa','💳 Préstamo','✈️ Viaje','💸 Otro'];
-  renderChips('gasto', gaArr);
+  if(!setupCfg.gastoCats||setupCfg.gastoCats.length===0){
+    renderChips('gasto',[]);
+  }else{
+    const gaArr=langIsEn
+      ?['🍽 Restaurant','🛒 Grocery','🎬 Entertainment','⛽ Gas','🚗 Transport','📱 Subscription','💪 Exercise','📚 School','🔧 Service payment','💼 Business','🏠 Home','💳 Loan','✈️ Travel','💸 Other']
+      :['🍽 Restaurante','🛒 Supermercado','🎬 Entretenimiento','⛽ Gasolina','🚗 Transporte','📱 Suscripción','💪 Ejercicio','📚 Escuela','🔧 Pago a servicio','💼 Negocio','🏠 Casa','💳 Préstamo','✈️ Viaje','💸 Otro'];
+    renderChips('gasto',gaArr);
+  }
 }
 
 const SETUP_T={
