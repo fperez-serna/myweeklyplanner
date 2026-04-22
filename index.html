@@ -3339,11 +3339,13 @@ async function saveBudgetData(){
     const config={
       groups:budgetData.groups.map(g=>({
         id:g.id,name:g.name,
-        subs:g.subs.map(sub=>({name:sub.name,presup:sub.presup,rubro:sub.rubro}))
+        subs:g.subs.map(sub=>({id:sub.id,name:sub.name,presup:sub.presup,rubro:sub.rubro}))
       })),
       debts:(budgetData.debts||[]).map(d=>({
-        nombre:d.nombre,tipo:d.tipo,saldo:d.saldo,
-        totalOriginal:d.totalOriginal,tasa:d.tasa,fechaPago:d.fechaPago
+        id:d.id,nombre:d.nombre,tipo:d.tipo,saldo:d.saldo,
+        totalOriginal:d.totalOriginal,tasa:d.tasa,
+        tasaTipo:d.tasaTipo||'',tasaAnual:d.tasaAnual||0,meses:d.meses||0,
+        fechaPago:d.fechaPago
       }))
     };
     await userCol().doc('budget_config').set(config);
@@ -3524,6 +3526,8 @@ function renderBudget(dashboardTotals,forceExpand=false){
       const minPago=debt.saldo>0?Math.max(intMensual+debt.saldo*0.015,intMensual*1.1):0;
       const pagado=debt.totalOriginal>0?Math.min(100,Math.round(((debt.totalOriginal-debt.saldo)/debt.totalOriginal)*100)):0;
       const diasLabel=debt.fechaPago?`📅 ${debt.fechaPago}`:es?'Sin fecha':'No date';
+      const rateLbl=debt.tasaTipo==='cat'?'CAT':debt.tasaTipo==='apr'?'APR':debt.tasaTipo==='anual'?(es?'Tasa anual':'Ann. rate'):(es?'Tasa mensual':'Monthly rate');
+      const rateDisplay=debt.tasaTipo&&debt.tasaTipo!=='mensual'&&debt.tasaAnual?`${debt.tasaAnual}% ${rateLbl}`:`${debt.tasa}% ${rateLbl}`;
       html+=`<div class="debt-card">
         <div class="debt-card-header">
           <div>
@@ -3540,8 +3544,8 @@ function renderBudget(dashboardTotals,forceExpand=false){
         </div>
         <div class="debt-card-grid">
           <div class="debt-card-item">
-            <div class="debt-card-lbl">${es?'Tasa mensual':'Monthly rate'}</div>
-            <div class="debt-card-val">${debt.tasa}%</div>
+            <div class="debt-card-lbl">${rateLbl}</div>
+            <div class="debt-card-val">${rateDisplay}</div>
           </div>
           <div class="debt-card-item">
             <div class="debt-card-lbl">${es?'Interés del mes':'Month interest'}</div>
@@ -4018,6 +4022,131 @@ function budgetToggleAll(){
   if(btn)btn.textContent=anyOpen?'⊕':'⊖';
 }
 
+function debtCalcHTML(rateType,rateVal,meses,saldo){
+  const es=!isEn();
+  const pills=[
+    {id:'anual',label:'🇲🇽 Tasa anual'},
+    {id:'cat',label:'🇲🇽 CAT'},
+    {id:'apr',label:'🇺🇸 APR'},
+    {id:'mensual',label:'🇲🇽🇺🇸 '+(es?'Tasa mensual':'Monthly rate')},
+  ];
+  const pillsHTML=pills.map(p=>`<button type="button" id="rate-pill-${p.id}" onclick="debtRatePill('${p.id}')" style="padding:5px 10px;border-radius:20px;border:0.5px solid ${rateType===p.id?'var(--mauve)':'var(--border)'};background:${rateType===p.id?'var(--mauve)':'var(--bg2)'};color:${rateType===p.id?'#fff':'var(--text2)'};font-size:11px;cursor:pointer;white-space:nowrap;">${p.label}</button>`).join('');
+  const monthlyRate=rateType==='mensual'?rateVal:(rateVal/12||0);
+  return `<div style="margin-top:16px;border-top:0.5px solid var(--border);padding-top:14px;">
+    <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em;">${es?'Tipo de interés':'Interest type'}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${pillsHTML}</div>
+    <div id="rate-calc-body" style="display:${rateType?'block':'none'};">
+      <div>
+        <div class="debt-card-lbl" style="margin-bottom:3px;">${es?'Tu tasa (%)':'Your rate (%)'}</div>
+        <input id="d-tasa-input" class="debt-sinput" type="number" value="${rateVal||''}" step="0.01" placeholder="0.00" oninput="debtCalcUpdate()" style="margin-bottom:4px;"/>
+        <div style="font-size:10px;color:var(--text3);line-height:1.5;margin-bottom:10px;">${es?'Puedes encontrar este dato en tu estado de cuenta mensual. Conocerlo es el primer paso para entender tu dinero y tu futuro financiero. 💪':'You can find this on your monthly statement. Knowing it is the first step to understanding your money and your financial future. 💪'}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div>
+          <div class="debt-card-lbl" style="margin-bottom:3px;">${es?'Monto':'Amount'}</div>
+          <input id="d-calc-monto" class="debt-sinput" type="number" value="${saldo||''}" placeholder="0" oninput="this.dataset.manual='1';debtCalcUpdate()"/>
+        </div>
+        <div>
+          <div class="debt-card-lbl" style="margin-bottom:3px;">${es?'Plazo (meses)':'Term (months)'}</div>
+          <input id="d-meses" class="debt-sinput" type="number" value="${meses||''}" min="1" placeholder="12" oninput="debtCalcUpdate()"/>
+        </div>
+      </div>
+      <div id="calc-results"></div>
+    </div>
+    <input type="hidden" id="d-tasa" value="${monthlyRate}"/>
+    <input type="hidden" id="d-tasa-tipo" value="${rateType||''}"/>
+    <input type="hidden" id="d-tasa-anual" value="${rateVal||0}"/>
+    <div style="margin-top:12px;background:var(--bg2);border-radius:10px;padding:10px 12px;font-size:10px;color:var(--text3);line-height:1.8;">
+      🇲🇽 <b>Tasa anual:</b> solo el interés puro, sin comisiones ni seguros. El costo real de tu deuda es mayor.<br>
+      🇲🇽 <b>CAT</b> (Costo Anual Total): el costo real completo — incluye tasa + comisiones + seguros obligatorios.<br>
+      🇺🇸 <b>APR</b> (Annual Percentage Rate): el equivalente americano del CAT. Incluye interés + fees del préstamo.<br>
+      🇲🇽🇺🇸 <b>Tasa mensual / Monthly rate:</b> el porcentaje directo que pagas cada mes, sin conversión.
+    </div>
+  </div>`;
+}
+
+function debtRatePill(type){
+  ['anual','cat','apr','mensual'].forEach(t=>{
+    const btn=document.getElementById('rate-pill-'+t);
+    if(!btn)return;
+    const active=t===type;
+    btn.style.background=active?'var(--mauve)':'var(--bg2)';
+    btn.style.color=active?'#fff':'var(--text2)';
+    btn.style.borderColor=active?'var(--mauve)':'var(--border)';
+  });
+  const tipoEl=document.getElementById('d-tasa-tipo');
+  if(tipoEl)tipoEl.value=type;
+  const body=document.getElementById('rate-calc-body');
+  if(body)body.style.display='block';
+  debtCalcUpdate();
+}
+
+function debtCalcUpdate(){
+  const tipo=(document.getElementById('d-tasa-tipo')||{}).value||'';
+  const rateAnual=parseFloat((document.getElementById('d-tasa-input')||{}).value)||0;
+  const P=parseFloat((document.getElementById('d-calc-monto')||{}).value)||0;
+  const n=parseInt((document.getElementById('d-meses')||{}).value)||0;
+  const es=!isEn();
+  const r=tipo==='mensual'?rateAnual/100:rateAnual/1200;
+  const tasaEl=document.getElementById('d-tasa');
+  const anualEl=document.getElementById('d-tasa-anual');
+  if(tasaEl)tasaEl.value=tipo==='mensual'?rateAnual:(rateAnual/12);
+  if(anualEl)anualEl.value=rateAnual;
+  const resultsEl=document.getElementById('calc-results');
+  if(!resultsEl)return;
+  if(!P||!r||!n){resultsEl.innerHTML='';return;}
+  const fmt=v=>'$'+(Math.round(v)||0).toLocaleString();
+  // Amortización
+  const M=r>0&&n>0?P*(r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1):0;
+  const totalPaid=M*n;const totalInt=totalPaid-P;
+  let amorRows='';let bal=P;
+  for(let i=1;i<=Math.min(n,60);i++){
+    const intP=bal*r;const capP=M-intP;bal=Math.max(0,bal-capP);
+    amorRows+=`<tr style="font-size:10px;"><td style="padding:3px 5px;color:var(--text3);">${i}</td><td style="padding:3px 5px;">${fmt(M)}</td><td style="padding:3px 5px;color:#c0392b;">${fmt(intP)}</td><td style="padding:3px 5px;color:var(--teal);">${fmt(capP)}</td><td style="padding:3px 5px;">${fmt(bal)}</td></tr>`;
+  }
+  if(n>60)amorRows+=`<tr><td colspan="5" style="font-size:10px;color:var(--text3);padding:3px 5px;">${es?`... y ${n-60} meses más`:`... and ${n-60} more months`}</td></tr>`;
+  // Interés simple
+  const intSimpleMes=P*r;const intSimpleTotal=intSimpleMes*n;
+  resultsEl.innerHTML=`
+  <div style="border:0.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:8px;">
+    <div onclick="const b=this.nextElementSibling;b.style.display=b.style.display==='none'?'block':'none';this.querySelector('span').style.transform=b.style.display==='none'?'rotate(-90deg)':'rotate(0deg)'" style="padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:var(--bg2);">
+      <span style="font-size:12px;font-weight:600;color:var(--text);">${es?'Amortización (pagos fijos)':'Amortization (fixed payments)'}</span>
+      <span style="font-size:11px;color:var(--text3);transition:transform .2s;">▾</span>
+    </div>
+    <div style="padding:10px 12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
+        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Pago mensual':'Monthly payment'}</div><div class="debt-card-val" style="color:var(--mauve);">${fmt(M)}</div></div>
+        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Total pagado':'Total paid'}</div><div class="debt-card-val">${fmt(totalPaid)}</div></div>
+        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Total intereses':'Total interest'}</div><div class="debt-card-val" style="color:#c0392b;">${fmt(totalInt)}</div></div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="background:var(--bg2);font-size:10px;color:var(--text3);">
+            <th style="padding:3px 5px;text-align:left;">${es?'Mes':'Mo.'}</th>
+            <th style="padding:3px 5px;text-align:left;">${es?'Pago':'Pmt'}</th>
+            <th style="padding:3px 5px;text-align:left;">${es?'Interés':'Int.'}</th>
+            <th style="padding:3px 5px;text-align:left;">${es?'Capital':'Cap.'}</th>
+            <th style="padding:3px 5px;text-align:left;">${es?'Saldo':'Bal.'}</th>
+          </tr></thead>
+          <tbody>${amorRows}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div style="border:0.5px solid var(--border);border-radius:10px;overflow:hidden;">
+    <div onclick="const b=this.nextElementSibling;b.style.display=b.style.display==='none'?'block':'none';this.querySelector('span').style.transform=b.style.display==='none'?'rotate(-90deg)':'rotate(0deg)'" style="padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:var(--bg2);">
+      <span style="font-size:12px;font-weight:600;color:var(--text);">${es?'Interés simple sobre saldo':'Simple interest on balance'}</span>
+      <span style="font-size:11px;color:var(--text3);transition:transform .2s;">▾</span>
+    </div>
+    <div style="padding:10px 12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Interés mensual':'Monthly interest'}</div><div class="debt-card-val" style="color:#c0392b;">${fmt(intSimpleMes)}</div></div>
+        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Total intereses ('+n+' meses)':'Total interest ('+n+' mo.)'}</div><div class="debt-card-val" style="color:#c0392b;">${fmt(intSimpleTotal)}</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function toggleDebtSection(){
   budgetDebtOpen=!budgetDebtOpen;
   const el=document.getElementById('debt-body');
@@ -4032,8 +4161,8 @@ function budgetAddDebt(){
   const es=!isEn();
   const modal=document.createElement('div');
   modal.id='debt-modal';
-  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
-  modal.innerHTML=`<div style="background:var(--bg);border-radius:16px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.18);">
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;';
+  modal.innerHTML=`<div style="background:var(--bg);border-radius:16px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.18);margin:auto;">
     <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px;">🏦 ${es?'Nueva deuda / préstamo':'New debt / loan'}</div>
     <div class="debt-add-grid">
       <div style="grid-column:1/-1;">
@@ -4049,21 +4178,18 @@ function budgetAddDebt(){
       </div>
       <div>
         <div class="debt-card-lbl">${es?'Saldo actual':'Current balance'}</div>
-        <input id="d-saldo" class="debt-sinput" type="number" placeholder="0" style="margin-top:3px;"/>
+        <input id="d-saldo" class="debt-sinput" type="number" placeholder="0" style="margin-top:3px;" oninput="const m=document.getElementById('d-calc-monto');if(m&&!m.dataset.manual)m.value=this.value;debtCalcUpdate();"/>
       </div>
       <div>
         <div class="debt-card-lbl">${es?'Saldo original (total deuda)':'Original balance'}</div>
         <input id="d-original" class="debt-sinput" type="number" placeholder="0" style="margin-top:3px;"/>
       </div>
-      <div>
-        <div class="debt-card-lbl">${es?'Tasa interés mensual (%)':'Monthly interest rate (%)'}</div>
-        <input id="d-tasa" class="debt-sinput" type="number" placeholder="0" step="0.01" style="margin-top:3px;"/>
-      </div>
-      <div>
+      <div style="grid-column:1/-1;">
         <div class="debt-card-lbl">${es?'Fecha límite de pago':'Payment due date'}</div>
         <input id="d-fecha" class="debt-sinput" type="text" placeholder="${es?'Ej: día 15':'Ex: 15th'}" style="margin-top:3px;"/>
       </div>
     </div>
+    ${debtCalcHTML('','',0,0)}
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button onclick="document.getElementById('debt-modal').remove()" style="flex:1;padding:9px;border:0.5px solid var(--border);border-radius:9px;background:none;cursor:pointer;color:var(--text2);font-size:13px;">${es?'Cancelar':'Cancel'}</button>
       <button onclick="budgetSaveDebt(-1)" style="flex:1;padding:9px;border:none;border-radius:9px;background:var(--mauve);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">${es?'Guardar':'Save'}</button>
@@ -4078,8 +4204,8 @@ function budgetEditDebt(di){
   const es=!isEn();
   const modal=document.createElement('div');
   modal.id='debt-modal';
-  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
-  modal.innerHTML=`<div style="background:var(--bg);border-radius:16px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.18);">
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;';
+  modal.innerHTML=`<div style="background:var(--bg);border-radius:16px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.18);margin:auto;">
     <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px;">✏️ ${es?'Editar deuda':'Edit debt'}</div>
     <div class="debt-add-grid">
       <div style="grid-column:1/-1;">
@@ -4095,27 +4221,25 @@ function budgetEditDebt(di){
       </div>
       <div>
         <div class="debt-card-lbl">${es?'Saldo actual':'Current balance'}</div>
-        <input id="d-saldo" class="debt-sinput" type="number" value="${debt.saldo}" style="margin-top:3px;"/>
+        <input id="d-saldo" class="debt-sinput" type="number" value="${debt.saldo}" style="margin-top:3px;" oninput="const m=document.getElementById('d-calc-monto');if(m&&!m.dataset.manual)m.value=this.value;debtCalcUpdate();"/>
       </div>
       <div>
         <div class="debt-card-lbl">${es?'Saldo original':'Original balance'}</div>
         <input id="d-original" class="debt-sinput" type="number" value="${debt.totalOriginal||debt.saldo}" style="margin-top:3px;"/>
       </div>
-      <div>
-        <div class="debt-card-lbl">${es?'Tasa mensual (%)':'Monthly rate (%)'}</div>
-        <input id="d-tasa" class="debt-sinput" type="number" value="${debt.tasa}" step="0.01" style="margin-top:3px;"/>
-      </div>
-      <div>
+      <div style="grid-column:1/-1;">
         <div class="debt-card-lbl">${es?'Fecha límite':'Due date'}</div>
         <input id="d-fecha" class="debt-sinput" type="text" value="${debt.fechaPago||''}" style="margin-top:3px;"/>
       </div>
     </div>
+    ${debtCalcHTML(debt.tasaTipo||'',debt.tasaAnual||debt.tasa||0,debt.meses||0,debt.saldo||0)}
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button onclick="document.getElementById('debt-modal').remove()" style="flex:1;padding:9px;border:0.5px solid var(--border);border-radius:9px;background:none;cursor:pointer;color:var(--text2);font-size:13px;">${es?'Cancelar':'Cancel'}</button>
       <button onclick="budgetSaveDebt(${di})" style="flex:1;padding:9px;border:none;border-radius:9px;background:var(--mauve);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">${es?'Guardar':'Save'}</button>
     </div>
   </div>`;
   document.body.appendChild(modal);
+  if(debt.tasaTipo)setTimeout(debtCalcUpdate,50);
 }
 
 function budgetSaveDebt(di){
@@ -4123,12 +4247,16 @@ function budgetSaveDebt(di){
   if(!nombre)return;
   const tipo=document.getElementById('d-tipo').value||'fijo';
   const saldo=parseFloat(document.getElementById('d-saldo').value)||0;
+  const tasaTipo=(document.getElementById('d-tasa-tipo')||{}).value||'';
+  const tasaAnual=parseFloat((document.getElementById('d-tasa-anual')||{}).value)||0;
+  const meses=parseInt((document.getElementById('d-meses')||{}).value)||0;
   const debt={
     nombre,
     tipo,
     saldo,
     totalOriginal:parseFloat(document.getElementById('d-original').value)||saldo,
-    tasa:parseFloat(document.getElementById('d-tasa').value)||0,
+    tasa:parseFloat((document.getElementById('d-tasa')||{}).value)||0,
+    tasaTipo,tasaAnual,meses,
     fechaPago:document.getElementById('d-fecha').value.trim(),
     abono:0,
   };
