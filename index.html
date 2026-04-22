@@ -1044,15 +1044,17 @@ async function loadShoppingDB(){
 function subscribeShoppingDB(){
   if(!db)return;
   userCol().doc('shopping').onSnapshot(snap=>{
-    if(_shSaving)return;
-    if(snap.exists){
-      const data=snap.data();
-      const oldMap={super:'cat0',casa:'cat1',pers:'cat2',mama:'cat3',neg:'cat4',supermercado:'cat0'};
-      Object.keys(data.cats||{}).forEach(k=>{
-        shoppingItems[oldMap[k]||k]=data.cats[k]||[];
-      });
-      renderSh();
-    }
+    try{
+      if(_shSaving)return;
+      if(snap.exists){
+        const data=snap.data();
+        const oldMap={super:'cat0',casa:'cat1',pers:'cat2',mama:'cat3',neg:'cat4',supermercado:'cat0'};
+        Object.keys(data.cats||{}).forEach(k=>{
+          shoppingItems[oldMap[k]||k]=data.cats[k]||[];
+        });
+        renderSh();
+      }
+    }catch(e){console.error('subscribeShoppingDB handler error:',e);}
   });
 }
 
@@ -1062,16 +1064,16 @@ function subscribeConfig(){
   if(unsubConfig)unsubConfig();
   if(!db)return;
   unsubConfig=userCol().doc('config').onSnapshot(snap=>{
-    if(snap.exists){
-      const remoteCfg=snap.data().cfg;
-      if(remoteCfg){
-        const currentCfg=JSON.parse(localStorage.getItem('wp_config')||'{}');
-        // Only update if remote is newer (has more categories etc)
-        setupCfg={...setupCfg,...remoteCfg};
-        localStorage.setItem('wp_config',JSON.stringify(setupCfg));
-        applyConfig(setupCfg);
+    try{
+      if(snap.exists){
+        const remoteCfg=snap.data().cfg;
+        if(remoteCfg){
+          setupCfg={...setupCfg,...remoteCfg};
+          localStorage.setItem('wp_config',JSON.stringify(setupCfg));
+          applyConfig(setupCfg);
+        }
       }
-    }
+    }catch(e){console.error('subscribeConfig handler error:',e);}
   });
 }
 
@@ -3364,12 +3366,15 @@ async function saveBudgetData(){
       actuals[did+'_saldoInicial']=debt.saldoInicialMes!==undefined?debt.saldoInicialMes:debt.saldo||0;
     });
     await userCol().doc(monthKey).set(actuals);
-  }catch(e){console.error('Budget save:',e);}
+  }catch(e){
+    console.error('Budget save:',e);
+    showToast(isEn()?'⚠️ Could not save budget data. Check your connection.':'⚠️ No se pudo guardar el presupuesto. Verifica tu conexión.');
+  }
 }
 
 function renderBudget(dashboardTotals,forceExpand=false){
   const cats=setupCfg.gastoCats||DEFAULT_GASTOS;
-  const totalIncome=budgetData.income.reduce((s,i)=>s+i.amt,0);
+  const totalIncome=(budgetData.income||[]).reduce((s,i)=>s+(i.amt||0),0);
   const totalPresup=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.presup,0),0);
   const totalManual=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.actual,0),0);
   const totalDash=Object.values(dashboardTotals).reduce((s,v)=>s+v,0);
