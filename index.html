@@ -4260,8 +4260,25 @@ function budgetEditDebt(di){
 }
 
 function budgetSaveDebt(di){
-  const nombre=document.getElementById('d-nombre').value.trim();
-  if(!nombre)return;
+  const nombreEl=document.getElementById('d-nombre');
+  const saldoEl=document.getElementById('d-saldo');
+  const nombre=nombreEl.value.trim();
+  const saldoVal=saldoEl.value.trim();
+  let invalid=false;
+  [nombreEl,saldoEl].forEach(el=>{el.style.borderColor='';el.style.background='';});
+  if(!nombre){
+    nombreEl.style.borderColor='#c0392b';
+    nombreEl.style.background='rgba(192,57,43,0.06)';
+    nombreEl.placeholder='⚠ Requerido';
+    nombreEl.focus();
+    invalid=true;
+  }
+  if(!saldoVal||parseFloat(saldoVal)===0){
+    saldoEl.style.borderColor='#c0392b';
+    saldoEl.style.background='rgba(192,57,43,0.06)';
+    invalid=true;
+  }
+  if(invalid)return;
   const tipo=document.getElementById('d-tipo').value||'fijo';
   const saldo=parseFloat(document.getElementById('d-saldo').value)||0;
   const tasaTipo=(document.getElementById('d-tasa-tipo')||{}).value||'';
