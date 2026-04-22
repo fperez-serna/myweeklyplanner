@@ -2453,10 +2453,10 @@ const DEFAULT_GASTOS=['🍽 Restaurante','🛒 Supermercado','🎬 Entretenimien
 let setupCfg={
   name:'',lang:'es',currency:'MXN',palette:'forest',
   features:{quotes:true,gcal:true,weather:true,gastos:true},
-  workouts:[...DEFAULT_WORKOUTS],
-  habitos:[...DEFAULT_HABITOS],
-  shopCats:[...DEFAULT_SHOP],
-  gastoCats:[...DEFAULT_GASTOS]
+  workouts:[],
+  habitos:[],
+  shopCats:[],
+  gastoCats:[]
 };
 
 let selectedPal='forest';
@@ -2470,10 +2470,31 @@ function initSetupChips(){
   renderChips('gasto',setupCfg.gastoCats);
 }
 
+const CHIP_GHOST_EXAMPLES={
+  workout:['🎾 Tenis / Tennis','🏃 Correr / Running'],
+  habito:['✍️ Diario / Journal','🙏 Gratitud / Gratitude'],
+  shop:['🛒 Súper / Grocery','🏠 Casa / Home'],
+  gasto:['🍽 Restaurante / Restaurant','🛒 Súper / Grocery']
+};
 function renderChips(type,arr){
   const wrap=document.getElementById(type+'-chips');
   if(!wrap)return;
   wrap.innerHTML='';
+  if(!arr||arr.length===0){
+    const examples=CHIP_GHOST_EXAMPLES[type]||[];
+    examples.forEach(item=>{
+      const el=document.createElement('div');
+      el.className='chip-item';
+      el.style.cssText='opacity:0.38;border-style:dashed;cursor:default;pointer-events:none;';
+      el.textContent=item;
+      wrap.appendChild(el);
+    });
+    const hint=document.createElement('div');
+    hint.style.cssText='font-size:10px;color:var(--text3);margin-top:4px;font-style:italic;';
+    hint.textContent=isEn()?'Examples — add your own above':'Ejemplos — agrega los tuyos arriba';
+    wrap.appendChild(hint);
+    return;
+  }
   arr.forEach((item,i)=>{
     const el=document.createElement('div');
     el.className='chip-item';
