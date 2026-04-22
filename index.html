@@ -4204,7 +4204,7 @@ function budgetAddDebt(){
         <input id="d-fecha" class="debt-sinput" type="text" placeholder="${es?'Ej: día 15':'Ex: 15th'}" style="margin-top:3px;"/>
       </div>
     </div>
-    ${debtCalcHTML('','',0,0)}
+    ${debtCalcHTML('','',0,0,'fijo')}
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button onclick="document.getElementById('debt-modal').remove()" style="flex:1;padding:9px;border:0.5px solid var(--border);border-radius:9px;background:none;cursor:pointer;color:var(--text2);font-size:13px;">${es?'Cancelar':'Cancel'}</button>
       <button onclick="budgetSaveDebt(-1)" style="flex:1;padding:9px;border:none;border-radius:9px;background:var(--mauve);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">${es?'Guardar':'Save'}</button>
@@ -4247,7 +4247,7 @@ function budgetEditDebt(di){
         <input id="d-fecha" class="debt-sinput" type="text" value="${debt.fechaPago||''}" style="margin-top:3px;"/>
       </div>
     </div>
-    ${debtCalcHTML(debt.tasaTipo||'',debt.tasaAnual||debt.tasa||0,debt.meses||0,debt.saldo||0)}
+    ${debtCalcHTML(debt.tasaTipo||'',debt.tasaAnual||debt.tasa||0,debt.meses||0,debt.saldo||0,debt.tipo||'fijo')}
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button onclick="document.getElementById('debt-modal').remove()" style="flex:1;padding:9px;border:0.5px solid var(--border);border-radius:9px;background:none;cursor:pointer;color:var(--text2);font-size:13px;">${es?'Cancelar':'Cancel'}</button>
       <button onclick="budgetSaveDebt(${di})" style="flex:1;padding:9px;border:none;border-radius:9px;background:var(--mauve);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">${es?'Guardar':'Save'}</button>
