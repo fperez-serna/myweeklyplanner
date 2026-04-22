@@ -2546,14 +2546,15 @@ function selectLang(el){
   // Translate chips
   const langIsEn=selectedLang==='en';
   const translateArr=(arr,map)=>arr.map(v=>langIsEn?(map[v]||v):v);
-  renderChips('workout', translateArr(setupCfg.workouts||DEFAULT_WORKOUTS, WORKOUT_MAP));
-  renderChips('habito', translateArr(setupCfg.habitos||DEFAULT_HABITOS, HABITO_MAP));
+  const wo=setupCfg.workouts;
+  renderChips('workout',wo&&wo.length?translateArr(wo,WORKOUT_MAP):[]);
+  const ha=setupCfg.habitos;
+  renderChips('habito',ha&&ha.length?translateArr(ha,HABITO_MAP):[]);
   // Shop chips
   const shopMap2={'Supermercado':'Supermarket','Casa':'Home','Personal':'Personal','Oficina':'Office','Mamá':'Mom','Negocio':'Business','Supermarket':'Supermercado','Home':'Casa','Office':'Oficina','Mom':'Mamá'};
-  const shopChips=langIsEn
-    ?(setupCfg.shopCats||DEFAULT_SHOP_ES).map(c=>shopMap2[c]||c)
-    :(setupCfg.shopCats||DEFAULT_SHOP_ES).map(c=>c);
-  renderChips('shop', shopChips);
+  const sc=setupCfg.shopCats;
+  const shopChips=sc&&sc.length?(langIsEn?sc.map(c=>shopMap2[c]||c):sc):[];
+  renderChips('shop',shopChips);
   // Gasto chips
   if(!setupCfg.gastoCats||setupCfg.gastoCats.length===0){
     renderChips('gasto',[]);
