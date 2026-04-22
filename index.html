@@ -3553,12 +3553,12 @@ function renderBudget(dashboardTotals,forceExpand=false){
             <div class="debt-card-val">${rateDisplay}</div>
           </div>
           <div class="debt-card-item">
-            <div class="debt-card-lbl">${es?'Interés del mes':'Month interest'}</div>
-            <div class="debt-card-val" style="color:#c0392b;">${fmt(Math.round(intMensual))}</div>
+            <div class="debt-card-lbl">${es?'Interés del mes est.':'Est. month interest'}</div>
+            <div class="debt-card-val" style="color:#c0392b;">~${fmt(Math.round(intMensual))}</div>
           </div>
           <div class="debt-card-item">
             <div class="debt-card-lbl">${es?'Pago mínimo est.':'Min. payment est.'}</div>
-            <div class="debt-card-val" style="color:var(--mauve);">${fmt(Math.round(minPago))}</div>
+            <div class="debt-card-val" style="color:var(--mauve);">~${fmt(Math.round(minPago))}</div>
           </div>
           <div class="debt-card-item" onclick="debtEditAbono(${di},this)" style="cursor:pointer;" title="${es?'Clic para editar':'Click to edit'}">
             <div class="debt-card-lbl">${es?'Abonado este mes ✏️':'Paid this month ✏️'}</div>
@@ -4107,11 +4107,12 @@ function debtCalcUpdate(){
   const anualEl=document.getElementById('d-tasa-anual');
   if(tasaEl)tasaEl.value=tipo==='mensual'?rateAnual:(rateAnual/12);
   if(anualEl)anualEl.value=rateAnual;
+  const debtTipo=(document.getElementById('d-tipo')||{}).value||'fijo';
   const resultsEl=document.getElementById('calc-results');
   if(!resultsEl)return;
   if(!P||!r||!n){resultsEl.innerHTML='';return;}
   const fmt=v=>'$'+(Math.round(v)||0).toLocaleString();
-  // Amortización
+  // Amortización (solo préstamos fijos)
   const M=r>0&&n>0?P*(r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1):0;
   const totalPaid=M*n;const totalInt=totalPaid-P;
   let amorRows='';let bal=P;
@@ -4122,7 +4123,7 @@ function debtCalcUpdate(){
   if(n>60)amorRows+=`<tr><td colspan="5" style="font-size:10px;color:var(--text3);padding:3px 5px;">${es?`... y ${n-60} meses más`:`... and ${n-60} more months`}</td></tr>`;
   // Interés simple
   const intSimpleMes=P*r;const intSimpleTotal=intSimpleMes*n;
-  resultsEl.innerHTML=`
+  const amorHTML=debtTipo!=='tarjeta'?`
   <div style="border:0.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:8px;">
     <div onclick="const b=this.nextElementSibling;b.style.display=b.style.display==='none'?'block':'none';this.querySelector('span').style.transform=b.style.display==='none'?'rotate(-90deg)':'rotate(0deg)'" style="padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:var(--bg2);">
       <span style="font-size:12px;font-weight:600;color:var(--text);">${es?'Amortización (pagos fijos)':'Amortization (fixed payments)'}</span>
@@ -4130,9 +4131,9 @@ function debtCalcUpdate(){
     </div>
     <div style="padding:10px 12px;">
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
-        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Pago mensual':'Monthly payment'}</div><div class="debt-card-val" style="color:var(--mauve);">${fmt(M)}</div></div>
-        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Total pagado':'Total paid'}</div><div class="debt-card-val">${fmt(totalPaid)}</div></div>
-        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Total intereses':'Total interest'}</div><div class="debt-card-val" style="color:#c0392b;">${fmt(totalInt)}</div></div>
+        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Pago mensual est.':'Est. monthly payment'}</div><div class="debt-card-val" style="color:var(--mauve);">~${fmt(M)}</div></div>
+        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Total pagado est.':'Est. total paid'}</div><div class="debt-card-val">~${fmt(totalPaid)}</div></div>
+        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Total intereses est.':'Est. total interest'}</div><div class="debt-card-val" style="color:#c0392b;">~${fmt(totalInt)}</div></div>
       </div>
       <div style="overflow-x:auto;">
         <table style="width:100%;border-collapse:collapse;">
@@ -4147,7 +4148,8 @@ function debtCalcUpdate(){
         </table>
       </div>
     </div>
-  </div>
+  </div>`:'';
+  resultsEl.innerHTML=amorHTML+`
   <div style="border:0.5px solid var(--border);border-radius:10px;overflow:hidden;">
     <div onclick="const b=this.nextElementSibling;b.style.display=b.style.display==='none'?'block':'none';this.querySelector('span').style.transform=b.style.display==='none'?'rotate(-90deg)':'rotate(0deg)'" style="padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:var(--bg2);">
       <span style="font-size:12px;font-weight:600;color:var(--text);">${es?'Interés simple sobre saldo':'Simple interest on balance'}</span>
@@ -4155,8 +4157,8 @@ function debtCalcUpdate(){
     </div>
     <div style="padding:10px 12px;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Interés mensual':'Monthly interest'}</div><div class="debt-card-val" style="color:#c0392b;">${fmt(intSimpleMes)}</div></div>
-        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Total intereses ('+n+' meses)':'Total interest ('+n+' mo.)'}</div><div class="debt-card-val" style="color:#c0392b;">${fmt(intSimpleTotal)}</div></div>
+        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Interés mensual est.':'Est. monthly interest'}</div><div class="debt-card-val" style="color:#c0392b;">~${fmt(intSimpleMes)}</div></div>
+        <div class="debt-card-item"><div class="debt-card-lbl">${es?'Total intereses est. ('+n+' meses)':'Est. total interest ('+n+' mo.)'}</div><div class="debt-card-val" style="color:#c0392b;">~${fmt(intSimpleTotal)}</div></div>
       </div>
     </div>
   </div>`;
@@ -4314,7 +4316,9 @@ function debtEditAbono(di,cardEl){
   async function save(){
     const val=parseFloat(input.value)||0;
     if(isTarjeta){
+      if(debt.saldoInicialMes===undefined)debt.saldoInicialMes=debt.saldo||val;
       debt.saldo=val;
+      debt.abono=Math.max(0,(debt.saldoInicialMes||0)-val);
     } else {
       if(debt.saldoInicialMes===undefined)debt.saldoInicialMes=debt.saldo;
       debt.abono=val;
