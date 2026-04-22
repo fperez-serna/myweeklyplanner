@@ -4946,6 +4946,20 @@ async function autoBackup(){
     const pendSnap = await userCol().doc('pending_tasks').get();
     if(pendSnap.exists) snapshot['pending_tasks'] = pendSnap.data();
 
+    // Budget monthly actuals (last 13 months)
+    const budgetMonthPromises = [];
+    const now = new Date();
+    for(let i=0; i<13; i++){
+      const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+      const key = 'budget_actual_'+d.getFullYear()+'_'+String(d.getMonth()+1).padStart(2,'0');
+      budgetMonthPromises.push(
+        userCol().doc(key).get()
+          .then(s=>{ if(s.exists) snapshot[key]=s.data(); })
+          .catch(()=>{})
+      );
+    }
+    await Promise.all(budgetMonthPromises);
+
     // Save backup
     if(Object.keys(snapshot).length > 0){
       await userCol().doc('backups').collection('daily').doc(today).set({
@@ -5034,7 +5048,10 @@ async function openBackupsUI(){
       <button onclick="document.getElementById('backups-modal').remove()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);">×</button>
     </div>
     <div id="backups-list" style="font-size:13px;color:var(--text3);text-align:center;padding:16px;">${es?'Cargando...':'Loading...'}</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
+    <button onclick="forceBackupNow()" id="force-backup-btn" style="width:100%;margin-top:12px;padding:10px;border-radius:10px;border:none;background:var(--mauve);color:#fff;font-size:13px;font-weight:500;cursor:pointer;">
+      ${es?'💾 Hacer respaldo ahora':'💾 Backup now'}
+    </button>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);">
       ${es?'Se guarda un respaldo automático una vez al día. Se mantienen los últimos 7 días.':'Auto-backup runs once daily. Last 7 days are kept.'}
     </div>
   </div>`;
@@ -5065,6 +5082,21 @@ async function openBackupsUI(){
     </div>`;
   }).join('');
 }
+async function forceBackupNow(){
+  const es=!isEn();
+  const btn=document.getElementById('force-backup-btn');
+  if(btn){btn.disabled=true;btn.textContent=es?'Guardando...':'Saving...';}
+  try{
+    localStorage.removeItem(BACKUP_KEY+'_'+currentUser.uid);
+    await autoBackup();
+    if(btn){btn.textContent=es?'✅ Respaldo guardado':'✅ Backup saved';}
+    setTimeout(()=>document.getElementById('backups-modal')?.remove(),1200);
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent=es?'💾 Hacer respaldo ahora':'💾 Backup now';}
+    showToast(es?'⚠️ Error al hacer respaldo':'⚠️ Backup failed');
+  }
+}
+
 // ══════════════════════════════════════════════════════
 // END BACKUP SYSTEM
 // ══════════════════════════════════════════════════════
