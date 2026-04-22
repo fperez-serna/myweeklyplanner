@@ -3155,6 +3155,7 @@ async function loadBudgetData(){
       } else {
         budgetData={income:[],groups:getDefaultGroups(),debts:[]};
       }
+      await ensureIds();
       // Load actuals for this specific month (separate doc)
       const monthKey='budget_actual_'+budgetYear+'_'+String(budgetMonth+1).padStart(2,'0');
       const actualSnap=await userCol().doc(monthKey).get();
@@ -3169,23 +3170,26 @@ async function loadBudgetData(){
         // Apply monthly actuals to groups
         budgetData.groups.forEach((g,gi)=>{
           g.subs.forEach((sub,si)=>{
-            const key=gi+'_'+si;
-            if(monthActuals[key]!==undefined)sub.actual=monthActuals[key];
+            const newKey=g.id+'_'+sub.id;
+            const oldKey=gi+'_'+si;
+            if(monthActuals[newKey]!==undefined)sub.actual=monthActuals[newKey];
+            else if(monthActuals[oldKey]!==undefined)sub.actual=monthActuals[oldKey];
             else sub.actual=0;
           });
         });
         // Derive saldoInicialMes from previous month so retroactive abono changes propagate
         let saldoChanged=false;
         (budgetData.debts||[]).forEach((debt,di)=>{
-          debt.abono=monthActuals['debt_'+di+'_abono']!==undefined?monthActuals['debt_'+di+'_abono']:0;
-          const saldoInicial=prevActuals&&prevActuals['debt_'+di+'_saldo']!==undefined
-            ?prevActuals['debt_'+di+'_saldo']
-            :monthActuals['debt_'+di+'_saldoInicial']!==undefined
-              ?monthActuals['debt_'+di+'_saldoInicial']
-              :(monthActuals['debt_'+di+'_saldo']||0)+(debt.abono||0);
+          const did=debt.id;const op='debt_'+di;
+          const abono=monthActuals[did+'_abono']!==undefined?monthActuals[did+'_abono']:monthActuals[op+'_abono']!==undefined?monthActuals[op+'_abono']:0;
+          debt.abono=abono;
+          const prevSaldo=prevActuals?(prevActuals[did+'_saldo']!==undefined?prevActuals[did+'_saldo']:prevActuals[op+'_saldo']):undefined;
+          const curSaldoInicial=monthActuals[did+'_saldoInicial']!==undefined?monthActuals[did+'_saldoInicial']:monthActuals[op+'_saldoInicial'];
+          const curSaldo=monthActuals[did+'_saldo']!==undefined?monthActuals[did+'_saldo']:monthActuals[op+'_saldo'];
+          const saldoInicial=prevSaldo!==undefined?prevSaldo:curSaldoInicial!==undefined?curSaldoInicial:(curSaldo||0)+(abono||0);
           debt.saldoInicialMes=saldoInicial;
-          const newSaldo=Math.max(0,saldoInicial-debt.abono);
-          if(newSaldo!==(monthActuals['debt_'+di+'_saldo']!==undefined?monthActuals['debt_'+di+'_saldo']:debt.saldo||0))saldoChanged=true;
+          const newSaldo=Math.max(0,saldoInicial-abono);
+          if(newSaldo!==(curSaldo!==undefined?curSaldo:debt.saldo||0))saldoChanged=true;
           debt.saldo=newSaldo;
         });
         // Apply monthly income - fallback to budget_config income if monthly is empty
@@ -3200,9 +3204,11 @@ async function loadBudgetData(){
         if(!budgetData.income||budgetData.income.length===0)budgetData.income=[];
         (budgetData.debts||[]).forEach((debt,di)=>{
           debt.abono=0;
-          if(prevActuals&&prevActuals['debt_'+di+'_saldo']!==undefined){
-            debt.saldo=prevActuals['debt_'+di+'_saldo'];
-            debt.saldoInicialMes=prevActuals['debt_'+di+'_saldo'];
+          const did=debt.id;const op='debt_'+di;
+          const prevSaldo=prevActuals?(prevActuals[did+'_saldo']!==undefined?prevActuals[did+'_saldo']:prevActuals[op+'_saldo']):undefined;
+          if(prevSaldo!==undefined){
+            debt.saldo=prevSaldo;
+            debt.saldoInicialMes=prevSaldo;
           } else {
             debt.saldoInicialMes=debt.saldo||0;
           }
@@ -3222,26 +3228,52 @@ async function loadBudgetData(){
   }
 }
 
+async function ensureIds(){
+  let changed=false;let t=Date.now();
+  (budgetData.groups||[]).forEach(g=>{
+    if(!g.id){g.id='grp_'+(t++);changed=true;}
+    (g.subs||[]).forEach(sub=>{
+      if(!sub.id){sub.id='sub_'+(t++);changed=true;}
+    });
+  });
+  (budgetData.debts||[]).forEach(debt=>{
+    if(!debt.id){debt.id='d_'+(t++);changed=true;}
+  });
+  if(changed){
+    const config={
+      groups:budgetData.groups.map(g=>({
+        id:g.id,name:g.name,
+        subs:g.subs.map(s=>({id:s.id,name:s.name,presup:s.presup,rubro:s.rubro}))
+      })),
+      debts:(budgetData.debts||[]).map(d=>({
+        id:d.id,nombre:d.nombre,tipo:d.tipo,saldo:d.saldo,
+        totalOriginal:d.totalOriginal,tasa:d.tasa,fechaPago:d.fechaPago
+      }))
+    };
+    await userCol().doc('budget_config').set(config);
+  }
+}
+
 function getDefaultGroups(){
   const es=!isEn();
   return [
     {id:'hogar',name:es?'Hogar':'Home',subs:[
-      {name:es?'Renta/Hipoteca':'Rent/Mortgage',presup:0,actual:0,rubro:''},
-      {name:es?'Electricidad':'Electricity',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
-      {name:es?'Internet':'Internet',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
-      {name:es?'Gas/Agua':'Gas/Water',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
+      {id:'hogar_renta',name:es?'Renta/Hipoteca':'Rent/Mortgage',presup:0,actual:0,rubro:''},
+      {id:'hogar_elec',name:es?'Electricidad':'Electricity',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
+      {id:'hogar_internet',name:es?'Internet':'Internet',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
+      {id:'hogar_gas',name:es?'Gas/Agua':'Gas/Water',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
     ]},
     {id:'transporte',name:es?'Transporte':'Transport',subs:[
-      {name:es?'Gasolina':'Gas',presup:0,actual:0,rubro:es?'⛽ Gasolina':'⛽ Gas'},
-      {name:es?'Seguro auto':'Car insurance',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
+      {id:'trans_gas',name:es?'Gasolina':'Gas',presup:0,actual:0,rubro:es?'⛽ Gasolina':'⛽ Gas'},
+      {id:'trans_seguro',name:es?'Seguro auto':'Car insurance',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
     ]},
     {id:'salud',name:es?'Salud':'Health',subs:[
-      {name:es?'Ejercicio/Gym':'Exercise/Gym',presup:0,actual:0,rubro:es?'💪 Ejercicio':'💪 Exercise'},
-      {name:es?'Seguro médico':'Health insurance',presup:0,actual:0,rubro:''},
+      {id:'salud_gym',name:es?'Ejercicio/Gym':'Exercise/Gym',presup:0,actual:0,rubro:es?'💪 Ejercicio':'💪 Exercise'},
+      {id:'salud_seguro',name:es?'Seguro médico':'Health insurance',presup:0,actual:0,rubro:''},
     ]},
     {id:'ahorros',name:es?'Ahorros':'Savings',subs:[
-      {name:es?'Fondo emergencia':'Emergency fund',presup:0,actual:0,rubro:''},
-      {name:es?'Inversiones':'Investments',presup:0,actual:0,rubro:''},
+      {id:'ahorros_emerg',name:es?'Fondo emergencia':'Emergency fund',presup:0,actual:0,rubro:''},
+      {id:'ahorros_inv',name:es?'Inversiones':'Investments',presup:0,actual:0,rubro:''},
     ]},
   ];
 }
@@ -3318,15 +3350,16 @@ async function saveBudgetData(){
     // Save actuals for this month separately
     const monthKey='budget_actual_'+budgetYear+'_'+String(budgetMonth+1).padStart(2,'0');
     const actuals={income:budgetData.income};
-    budgetData.groups.forEach((g,gi)=>{
-      g.subs.forEach((sub,si)=>{
-        actuals[gi+'_'+si]=sub.actual||0;
+    budgetData.groups.forEach((g)=>{
+      g.subs.forEach((sub)=>{
+        actuals[g.id+'_'+sub.id]=sub.actual||0;
       });
     });
-    (budgetData.debts||[]).forEach((debt,di)=>{
-      actuals['debt_'+di+'_abono']=debt.abono||0;
-      actuals['debt_'+di+'_saldo']=debt.saldo||0;
-      actuals['debt_'+di+'_saldoInicial']=debt.saldoInicialMes!==undefined?debt.saldoInicialMes:debt.saldo||0;
+    (budgetData.debts||[]).forEach((debt)=>{
+      const did=debt.id;
+      actuals[did+'_abono']=debt.abono||0;
+      actuals[did+'_saldo']=debt.saldo||0;
+      actuals[did+'_saldoInicial']=debt.saldoInicialMes!==undefined?debt.saldoInicialMes:debt.saldo||0;
     });
     await userCol().doc(monthKey).set(actuals);
   }catch(e){console.error('Budget save:',e);}
@@ -3908,7 +3941,7 @@ async function budgetAddSub(gi){
   const rubroSS=document.getElementById(`bsub-rubro-${gi}_ss`);
   const rubro=rubroSS?rubroSS.value.trim():'';
   if(!name)return;
-  budgetData.groups[gi].subs.push({name,presup,actual,rubro});
+  budgetData.groups[gi].subs.push({id:'sub_'+Date.now(),name,presup,actual,rubro});
   // Clear inputs
   const nameEl=document.getElementById(`bsub-name-${gi}`);
   const presupEl=document.getElementById(`bsub-presup-${gi}`);
@@ -4100,13 +4133,14 @@ function budgetSaveDebt(di){
     abono:0,
   };
   if(di===-1){
+    debt.id='d_'+Date.now();
     debt.saldoInicialMes=saldo;
     budgetData.debts.push(debt);
   } else {
-    debt.abono=budgetData.debts[di].abono||0;
-    debt.saldoInicialMes=saldo!==budgetData.debts[di].saldo
-      ?saldo
-      :(budgetData.debts[di].saldoInicialMes||saldo);
+    const existing=budgetData.debts[di];
+    debt.id=existing.id;
+    debt.abono=existing.abono||0;
+    debt.saldoInicialMes=saldo!==existing.saldo?saldo:(existing.saldoInicialMes||saldo);
     budgetData.debts[di]=debt;
   }
   document.getElementById('debt-modal').remove();
