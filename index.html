@@ -1314,8 +1314,16 @@ function moveTask(id, dir){
   renderTasks(di);
 }
 
+function flashInvalid(el){
+  if(!el)return;
+  el.style.borderColor='#c0392b';
+  el.style.background='rgba(192,57,43,0.06)';
+  el.focus();
+  setTimeout(()=>{el.style.borderColor='';el.style.background='';},2000);
+}
+
 function addTask(){
-  const inp=document.getElementById('task-in');const v=inp.value.trim();if(!v)return;
+  const inp=document.getElementById('task-in');const v=inp.value.trim();if(!v){flashInvalid(inp);return;}
   const di=dayIdx();if(!weekData.tasks)weekData.tasks=[];
   const id='t'+Date.now();
   weekData.tasks.push({id,text:v,addedOnDay:di});
@@ -1331,7 +1339,7 @@ function renderFocus(di){
 
 function makeBubble(inp,num){
   const v=inp.value.trim();
-  if(!v)return;
+  if(!v){flashInvalid(inp);return;}
   const di=dayIdx();
   if(!weekData.focus)weekData.focus={};
   if(!weekData.focus[di])weekData.focus[di]={};
@@ -1480,7 +1488,7 @@ function addEv(){
   const ap=document.getElementById('ev-ap').value;
   const titleIn=document.getElementById('ev-title');
   const evTitle=titleIn.value.trim();
-  if(!evTitle)return;
+  if(!evTitle){flashInvalid(titleIn);return;}
   const targetDate=dateIn.value||dk(activeDate);
   const tdi=weekDays.findIndex(d=>dk(d)===targetDate);
   if(tdi<0){
@@ -1869,7 +1877,7 @@ function delShCat(cat,i){
 }
 function addShCat(cat){
   const inp=document.getElementById('sh-'+cat+'-in');
-  const v=inp.value.trim();if(!v)return;
+  const v=inp.value.trim();if(!v){flashInvalid(inp);return;}
   if(!shoppingItems[cat])shoppingItems[cat]=[];
   shoppingItems[cat].push({text:v,done:false});
   saveShoppingDB();
@@ -1971,7 +1979,13 @@ function addGasto(){
   const desc=document.getElementById('gasto-desc').value.trim();
   const cat=document.getElementById('gasto-cat').value;
   const monto=parseFloat(document.getElementById('gasto-monto').value);
-  if(!desc||!monto||monto<=0)return;
+  if(!desc||!monto||monto<=0){
+    const descEl=document.getElementById('gasto-desc');
+    const montoEl=document.getElementById('gasto-monto');
+    if(!desc)flashInvalid(descEl);
+    if(!monto||monto<=0)flashInvalid(montoEl);
+    return;
+  }
   const di=dayIdx();
   if(!weekData.gastos)weekData.gastos={};
   if(!weekData.gastos[di])weekData.gastos[di]=[];
@@ -3936,7 +3950,11 @@ async function budgetDelIncome(i){
 async function budgetAddIncome(){
   const desc=document.getElementById('budget-inc-desc').value.trim();
   const amt=parseFloat(document.getElementById('budget-inc-amt').value)||0;
-  if(!desc||!amt)return;
+  if(!desc||!amt){
+    if(!desc)flashInvalid(document.getElementById('budget-inc-desc'));
+    if(!amt)flashInvalid(document.getElementById('budget-inc-amt'));
+    return;
+  }
   budgetData.income.push({desc,amt});
   await saveBudgetData();
   loadBudgetData();
@@ -3949,7 +3967,7 @@ async function budgetAddSub(gi){
   // Read rubro from SmartSelect input (SS creates input with id=wrap_id+'_ss')
   const rubroSS=document.getElementById(`bsub-rubro-${gi}_ss`);
   const rubro=rubroSS?rubroSS.value.trim():'';
-  if(!name)return;
+  if(!name){flashInvalid(document.getElementById(`bsub-name-${gi}`));return;}
   budgetData.groups[gi].subs.push({id:'sub_'+Date.now(),name,presup,actual,rubro});
   // Clear inputs
   const nameEl=document.getElementById(`bsub-name-${gi}`);
@@ -4366,7 +4384,11 @@ function annualAdd(type){
   const name=nameEl?nameEl.value.trim():'';
   const amt=parseFloat(amtEl?amtEl.value:0)||0;
   const month=monthEl?monthEl.value:'';
-  if(!name||!amt)return;
+  if(!name||!amt){
+    if(!name)flashInvalid(nameEl);
+    if(!amt)flashInvalid(amtEl);
+    return;
+  }
   annualData[type].push({name,amt,month});
   saveAnnualData();
   nameEl.value='';amtEl.value='';
@@ -5407,7 +5429,12 @@ async function signInEmail(){
   const email=document.getElementById('login-email').value.trim();
   const pass=document.getElementById('login-pass').value;
   const err=document.getElementById('login-error');
-  if(!email||!pass){if(err){err.style.display='block';err.textContent=isEn()?'Enter email and password':'Ingresa email y contraseña';}return;}
+  if(!email||!pass){
+    if(!email)flashInvalid(document.getElementById('login-email'));
+    if(!pass)flashInvalid(document.getElementById('login-pass'));
+    if(err){err.style.display='block';err.textContent=isEn()?'Enter email and password':'Ingresa email y contraseña';}
+    return;
+  }
   try{
     await auth.signInWithEmailAndPassword(email,pass);
     if(err)err.style.display='none';
