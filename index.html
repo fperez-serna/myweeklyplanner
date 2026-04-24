@@ -3668,7 +3668,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
       const intMensual=debt.tasa>0?debt.saldo*(debt.tasa/100):0;
       const minPago=debt.saldo>0?Math.max(intMensual+debt.saldo*0.015,intMensual*1.1):0;
       const pagado=debt.totalOriginal>0?Math.min(100,Math.round(((debt.totalOriginal-debt.saldo)/debt.totalOriginal)*100)):0;
-      const diasLabel=debt.fechaPago?`📅 ${debt.fechaPago}`:es?'Sin fecha':'No date';
+      const diasLabel=debt.fechaPago?`📅 ${es?'Pago: ':'Due: '}${debt.fechaPago}`:es?'Sin fecha de pago':'No due date';
       const rateLbl=debt.tasaTipo==='cat'?'CAT':debt.tasaTipo==='apr'?'APR':debt.tasaTipo==='anual'?(es?'Tasa anual':'Ann. rate'):(es?'Tasa mensual':'Monthly rate');
       const rateDisplay=debt.tasaTipo&&debt.tasaTipo!=='mensual'&&debt.tasaAnual?`${debt.tasaAnual}% ${rateLbl}`:`${debt.tasa}% ${rateLbl}`;
       const corteInfo=(()=>{
@@ -4369,10 +4369,12 @@ function budgetAddDebt(){
       <div>
         <div class="debt-card-lbl">${es?'Fecha límite de pago':'Payment due date'}</div>
         <input id="d-fecha" class="debt-sinput" type="text" placeholder="${es?'Ej: día 15':'Ex: 15th'}" style="margin-top:3px;"/>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;font-style:italic;">${es?'Este es el último día para pagar sin intereses.':'This is the last day to pay without interest.'}</div>
       </div>
       <div>
         <div class="debt-card-lbl">${es?'Fecha de corte (día)':'Billing cut date (day)'}</div>
         <input id="d-corte" class="debt-sinput" type="number" min="1" max="31" placeholder="${es?'Ej: 26':'Ex: 26'}" style="margin-top:3px;"/>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;font-style:italic;">${es?'Las compras después de esta fecha no entran en el pago del mes siguiente.':'Purchases after this date are not included in next month\'s payment.'}</div>
       </div>
     </div>
     ${debtCalcHTML('','',0,0,'fijo')}
@@ -4414,12 +4416,14 @@ function budgetEditDebt(di){
         <input id="d-original" class="debt-sinput" type="number" value="${debt.totalOriginal||debt.saldo}" style="margin-top:3px;"/>
       </div>
       <div>
-        <div class="debt-card-lbl">${es?'Fecha límite':'Due date'}</div>
+        <div class="debt-card-lbl">${es?'Fecha límite de pago':'Payment due date'}</div>
         <input id="d-fecha" class="debt-sinput" type="text" value="${debt.fechaPago||''}" style="margin-top:3px;"/>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;font-style:italic;">${es?'Este es el último día para pagar sin intereses.':'This is the last day to pay without interest.'}</div>
       </div>
       <div>
         <div class="debt-card-lbl">${es?'Fecha de corte (día)':'Billing cut date (day)'}</div>
         <input id="d-corte" class="debt-sinput" type="number" min="1" max="31" value="${debt.fechaCorte||''}" placeholder="${es?'Ej: 26':'Ex: 26'}" style="margin-top:3px;"/>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;font-style:italic;">${es?'Las compras después de esta fecha no entran en el pago del mes siguiente.':'Purchases after this date are not included in next month\'s payment.'}</div>
       </div>
     </div>
     ${debtCalcHTML(debt.tasaTipo||'',debt.tasaAnual||debt.tasa||0,debt.meses||0,debt.saldo||0,debt.tipo||'fijo')}
