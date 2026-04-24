@@ -3667,7 +3667,9 @@ function renderBudget(dashboardTotals,forceExpand=false){
     budgetData.debts.forEach((debt,di)=>{
       const intMensual=debt.tasa>0?debt.saldo*(debt.tasa/100):0;
       const minPago=debt.saldo>0?Math.max(intMensual+debt.saldo*0.015,intMensual*1.1):0;
-      const pagado=debt.totalOriginal>0?Math.min(100,Math.round(((debt.totalOriginal-debt.saldo)/debt.totalOriginal)*100)):0;
+      const isTarjeta=debt.tipo==='tarjeta';
+      const pagado=debt.totalOriginal>0?Math.min(100,Math.round(isTarjeta?(debt.saldo/debt.totalOriginal)*100:((debt.totalOriginal-debt.saldo)/debt.totalOriginal)*100)):0;
+      const barColor=isTarjeta?(pagado<=40?'#27ae60':pagado<=70?'#f39c12':'#c0392b'):'var(--mauve)';
       const diasLabel=debt.fechaPago?`📅 ${es?'Pago: ':'Due: '}${debt.fechaPago}`:es?'Sin fecha de pago':'No due date';
       const rateLbl=debt.tasaTipo==='cat'?'CAT':debt.tasaTipo==='apr'?'APR':debt.tasaTipo==='anual'?(es?'Tasa anual':'Ann. rate'):(es?'Tasa mensual':'Monthly rate');
       const rateDisplay=debt.tasaTipo&&debt.tasaTipo!=='mensual'&&debt.tasaAnual?`${debt.tasaAnual}% ${rateLbl}`:`${debt.tasa}% ${rateLbl}`;
@@ -3719,15 +3721,15 @@ function renderBudget(dashboardTotals,forceExpand=false){
             <div class="debt-card-val">${fmt(debt.totalOriginal||debt.saldo)}</div>
           </div>
           <div class="debt-card-item">
-            <div class="debt-card-lbl">${es?'% pagado':'% paid'}</div>
-            <div class="debt-card-val" style="color:var(--teal);">${pagado}%</div>
+            <div class="debt-card-lbl">${isTarjeta?(es?'% de uso':'% used'):(es?'% pagado':'% paid')}</div>
+            <div class="debt-card-val" style="color:${barColor};">${pagado}%</div>
           </div>
           ${debt.tipo==='tarjeta'?`<div class="debt-card-item" style="grid-column:1/-1;background:var(--bg);border-radius:7px;padding:6px 10px;">
             <div class="debt-card-lbl">💳 ${es?'Gastado con esta tarjeta esta semana':'Spent with this card this week'}</div>
             <div class="debt-card-val" style="color:#c0392b;">${fmt(tarjetaGastos)}</div>
           </div>`:''}
         </div>
-        <div class="debt-bar-wrap"><div class="debt-bar-fill" style="width:${pagado}%;"></div></div>
+        <div class="debt-bar-wrap"><div class="debt-bar-fill" style="width:${pagado}%;background:${barColor};"></div></div>
       </div>`;
     });
   }
