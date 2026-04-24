@@ -2953,6 +2953,7 @@ let budgetYear=new Date().getFullYear();
 let budgetMonth=new Date().getMonth();
 let annualData={income:[],expenses:[]}; // annual income/expenses
 let budgetData={income:[],groups:[]};
+let cardPeriodSums={};
 
 const MES_ES_B=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MES_EN_B=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -3395,28 +3396,39 @@ function getDefaultGroups(){
 }
 
 async function loadMonthGastos(){
-  // Sum all gastos for this month from Firebase by category
   const totals={};
+  cardPeriodSums={};
+  const now=new Date();now.setHours(0,0,0,0);
+  // Build per-card last cut dates
+  const cardCutDates={};
+  (budgetData.debts||[]).filter(d=>d.tipo==='tarjeta'&&d.fechaCorte).forEach(d=>{
+    const thisMonthCut=new Date(now.getFullYear(),now.getMonth(),d.fechaCorte);
+    cardCutDates[d.nombre]=thisMonthCut<=now?thisMonthCut:new Date(now.getFullYear(),now.getMonth()-1,d.fechaCorte);
+  });
   const firstDay=new Date(budgetYear,budgetMonth,1);
   const lastDay=new Date(budgetYear,budgetMonth+1,0);
-  // Get week starts that overlap
   const d=new Date(firstDay);
   const dow=d.getDay();
   d.setDate(d.getDate()-(dow===0?6:dow-1));
   const promises=[];
   while(d<=lastDay){
-    const key='week_'+dk(new Date(d));
+    const weekStart=new Date(d);
+    const key='week_'+dk(weekStart);
     promises.push(userCol().doc(key).get().then(snap=>{
       if(!snap.exists)return;
       const data=snap.data();
       if(!data.gastos)return;
       Object.entries(data.gastos).forEach(([di,items])=>{
         if(!Array.isArray(items))return;
-        const dayDate=new Date(d);
-        dayDate.setDate(d.getDate()); // approximate - just use week data
+        const dayDate=new Date(weekStart);
+        dayDate.setDate(weekStart.getDate()+parseInt(di));
+        dayDate.setHours(0,0,0,0);
         items.forEach(g=>{
           if(!g.cat||!g.monto)return;
           totals[g.cat]=(totals[g.cat]||0)+g.monto;
+          if(g.pagoCon&&cardCutDates[g.pagoCon]&&dayDate>=cardCutDates[g.pagoCon]){
+            cardPeriodSums[g.pagoCon]=(cardPeriodSums[g.pagoCon]||0)+g.monto;
+          }
         });
       });
     }).catch(()=>{}));
