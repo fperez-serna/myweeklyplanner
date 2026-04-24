@@ -743,6 +743,17 @@ body{padding:.75rem;}
           <select class="t-sel" id="ev-h"><option>12</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option></select>
           <select class="t-sel" id="ev-m"><option>00</option><option>15</option><option>30</option><option>45</option></select>
           <select class="t-sel" id="ev-ap"><option>AM</option><option>PM</option></select>
+          <select class="t-sel" id="ev-dur" onchange="document.getElementById('ev-dur-custom').style.display=this.value==='custom'?'':'none'">
+            <option value="15">15m</option>
+            <option value="30">30m</option>
+            <option value="60" selected>1h</option>
+            <option value="120">2h</option>
+            <option value="180">3h</option>
+            <option value="240">4h</option>
+            <option value="480">8h</option>
+            <option value="custom">Custom</option>
+          </select>
+          <input type="text" id="ev-dur-custom" placeholder="ej. 1:30" style="display:none;width:52px;font-size:12px;padding:5px 6px;border:0.5px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);outline:none;">
           <input type="text" id="ev-title" placeholder="Evento..." onkeydown="if(event.key==='Enter')addEv()">
           <button onclick="addEv()">+</button>
         </div>
@@ -1486,11 +1497,23 @@ async function delGCalEv(el){
   }catch(e){console.error('delGCalEv error:',e);}
 }
 
+function getEvDurMins(){
+  const sel=document.getElementById('ev-dur');
+  if(!sel)return 60;
+  if(sel.value==='custom'){
+    const raw=document.getElementById('ev-dur-custom').value.trim();
+    if(raw.includes(':')){const[hh,mm]=raw.split(':');return parseInt(hh||0)*60+parseInt(mm||0);}
+    return parseInt(raw)||60;
+  }
+  return parseInt(sel.value)||60;
+}
+
 function addEv(){
   const dateIn=document.getElementById('ev-date');
   const h=document.getElementById('ev-h').value;
   const m=document.getElementById('ev-m').value;
   const ap=document.getElementById('ev-ap').value;
+  const durMins=getEvDurMins();
   const titleIn=document.getElementById('ev-title');
   const evTitle=titleIn.value.trim();
   if(!evTitle){flashInvalid(titleIn);return;}
@@ -1506,11 +1529,11 @@ function addEv(){
         const targetTdi=targetWeekDays.findIndex(d=>dk(d)===targetDate);
         if(!data.events)data.events={};
         if(!data.events[targetTdi])data.events[targetTdi]=[];
-        data.events[targetTdi].push({time:h+':'+m+' '+ap,title:evTitle});
+        data.events[targetTdi].push({time:h+':'+m+' '+ap,title:evTitle,dur:durMins>0?durMins+'m':''});
         return userCol().doc(targetWid).set(data);
       }).catch(e=>{console.error('Error saving event to other week:',e);showToast(isEn()?'⚠️ Could not save event, try again':'⚠️ No se pudo guardar el evento, intenta de nuevo');});
     }
-    if(gcalToken)createGCalEv(evTitle,targetDate,h,m,ap);
+    if(gcalToken)createGCalEv(evTitle,targetDate,h,m,ap,durMins);
     titleIn.value='';
     const evLng=isEn();
     const td=new Date(targetDate+'T12:00:00');
@@ -1520,10 +1543,11 @@ function addEv(){
   }
   if(!weekData.events)weekData.events={};
   if(!weekData.events[tdi])weekData.events[tdi]=[];
-  weekData.events[tdi].push({time:h+':'+m+' '+ap,title:evTitle});
+  const durLabel=durMins>=60?(durMins%60===0?(durMins/60)+'h':(Math.floor(durMins/60))+'h '+(durMins%60)+'m'):durMins+'m';
+  weekData.events[tdi].push({time:h+':'+m+' '+ap,title:evTitle,dur:durLabel});
   saveDB();
   if(gcalToken&&targetDate){
-    createGCalEv(evTitle,targetDate,h,m,ap);
+    createGCalEv(evTitle,targetDate,h,m,ap,durMins);
   }
   const di=dayIdx();renderEvts(di);buildNav();buildOv();titleIn.value='';
   if(tdi!==di){
@@ -1668,12 +1692,12 @@ async function fetchGCal(){
   }
 }
 
-async function createGCalEv(title,date,hour,min,ampm){
+async function createGCalEv(title,date,hour,min,ampm,durMins=60){
   if(!gcalToken)return;
   let h=parseInt(hour);
   if(ampm==='PM'&&h!==12)h+=12;if(ampm==='AM'&&h===12)h=0;
   const s=new Date(date+'T'+String(h).padStart(2,'0')+':'+min+':00');
-  const ev={summary:title,start:{dateTime:s.toISOString(),timeZone:'America/Merida'},end:{dateTime:new Date(s.getTime()+3600000).toISOString(),timeZone:'America/Merida'}};
+  const ev={summary:title,start:{dateTime:s.toISOString(),timeZone:'America/Merida'},end:{dateTime:new Date(s.getTime()+durMins*60000).toISOString(),timeZone:'America/Merida'}};
   try{
     const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{
       method:'POST',
