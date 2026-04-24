@@ -803,6 +803,10 @@ body{padding:.75rem;}
         <option>💼 Negocio</option><option>🏠 Casa</option><option>💳 Préstamo</option>
         <option>✈️ Viaje</option><option>💸 Otro</option>
       </select>
+      <select id="gasto-pago" style="flex:1.5;font-size:12px;padding:5px 8px;border:0.5px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);">
+        <option value="Efectivo">💵 Efectivo</option>
+        <option value="Débito">💳 Débito</option>
+      </select>
       <input type="number" id="gasto-monto" placeholder="$0" style="width:80px;" onkeydown="if(event.key==='Enter')addGasto()">
       <button id="btn-add-gasto" onclick="addGasto()">+ Agregar</button>
       </div>
@@ -1987,7 +1991,7 @@ function renderGastos(di){
     const c=GASTO_COLORS[g.cat]||GASTO_COLORS['Otro'];
     const tr=document.createElement('tr');
     tr.innerHTML=
-      '<td style="padding:6px;border-bottom:0.5px solid var(--border);"><span contenteditable="true" spellcheck="false" data-idx="'+i+'" onblur="updateGastoDesc(this)" style="color:var(--text);outline:none;">'+g.desc+'</span></td>'+
+      '<td style="padding:6px;border-bottom:0.5px solid var(--border);"><span contenteditable="true" spellcheck="false" data-idx="'+i+'" onblur="updateGastoDesc(this)" style="color:var(--text);outline:none;">'+g.desc+'</span>'+(g.pagoCon?'<br><span style="font-size:9px;color:var(--text3);">'+g.pagoCon+'</span>':'')+'</td>'+
       '<td style="padding:6px;border-bottom:0.5px solid var(--border);"><span style="font-size:10px;padding:2px 7px;border-radius:99px;background:'+c.bg+';color:'+c.color+';cursor:pointer;" onclick="editGastoCat(this,'+i+')" title="'+(isEn()?'Click to edit':'Click para editar')+'">'+g.cat+'</span></td>'+
       '<td style="padding:6px;border-bottom:0.5px solid var(--border);text-align:right;"><span contenteditable="true" spellcheck="false" data-idx="'+i+'" onblur="updateGastoMonto(this)" style="color:var(--text);outline:none;">$'+g.monto.toLocaleString()+'</span></td>'+
       '<td style="padding:6px;border-bottom:0.5px solid var(--border);"><button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;" onclick="delGasto('+i+')">×</button></td>';
@@ -2036,6 +2040,7 @@ function renderGastosTotals(di){
 function addGasto(){
   const desc=document.getElementById('gasto-desc').value.trim();
   const cat=document.getElementById('gasto-cat').value;
+  const pagoCon=document.getElementById('gasto-pago')?.value||'Efectivo';
   const monto=parseFloat(document.getElementById('gasto-monto').value);
   if(!desc||!monto||monto<=0){
     const descEl=document.getElementById('gasto-desc');
@@ -2047,7 +2052,7 @@ function addGasto(){
   const di=dayIdx();
   if(!weekData.gastos)weekData.gastos={};
   if(!weekData.gastos[di])weekData.gastos[di]=[];
-  weekData.gastos[di].push({desc,cat,monto});
+  weekData.gastos[di].push({desc,cat,monto,pagoCon});
   saveDB();renderGastos(di);
   document.getElementById('gasto-desc').value='';
   document.getElementById('gasto-monto').value='';
@@ -3481,7 +3486,22 @@ async function saveBudgetData(){
   }
 }
 
+function buildPagoSelect(){
+  const sel=document.getElementById('gasto-pago');
+  if(!sel)return;
+  const es=!isEn();
+  const prev=sel.value;
+  sel.innerHTML=`<option value="Efectivo">💵 ${es?'Efectivo':'Cash'}</option><option value="Débito">🏦 ${es?'Débito':'Debit'}</option>`;
+  (budgetData.debts||[]).filter(d=>d.tipo==='tarjeta').forEach(d=>{
+    const opt=document.createElement('option');
+    opt.value=d.nombre;opt.textContent='💳 '+d.nombre;
+    sel.appendChild(opt);
+  });
+  if(prev&&Array.from(sel.options).some(o=>o.value===prev))sel.value=prev;
+}
+
 function renderBudget(dashboardTotals,forceExpand=false){
+  buildPagoSelect();
   const cats=setupCfg.gastoCats||DEFAULT_GASTOS;
   const totalIncome=(budgetData.income||[]).reduce((s,i)=>s+(i.amt||0),0);
   const totalPresup=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.presup,0),0);
@@ -3642,6 +3662,9 @@ function renderBudget(dashboardTotals,forceExpand=false){
       const diasLabel=debt.fechaPago?`📅 ${debt.fechaPago}`:es?'Sin fecha':'No date';
       const rateLbl=debt.tasaTipo==='cat'?'CAT':debt.tasaTipo==='apr'?'APR':debt.tasaTipo==='anual'?(es?'Tasa anual':'Ann. rate'):(es?'Tasa mensual':'Monthly rate');
       const rateDisplay=debt.tasaTipo&&debt.tasaTipo!=='mensual'&&debt.tasaAnual?`${debt.tasaAnual}% ${rateLbl}`:`${debt.tasa}% ${rateLbl}`;
+      const tarjetaGastos=debt.tipo==='tarjeta'?[...Array(7).keys()].reduce((s,d)=>{
+        return s+(gastosForDay(d)||[]).filter(g=>g.pagoCon===debt.nombre).reduce((ss,g)=>ss+(g.monto||0),0);
+      },0):0;
       html+=`<div class="debt-card">
         <div class="debt-card-header">
           <div>
@@ -3681,6 +3704,10 @@ function renderBudget(dashboardTotals,forceExpand=false){
             <div class="debt-card-lbl">${es?'% pagado':'% paid'}</div>
             <div class="debt-card-val" style="color:var(--teal);">${pagado}%</div>
           </div>
+          ${debt.tipo==='tarjeta'?`<div class="debt-card-item" style="grid-column:1/-1;background:var(--bg);border-radius:7px;padding:6px 10px;">
+            <div class="debt-card-lbl">💳 ${es?'Gastado con esta tarjeta esta semana':'Spent with this card this week'}</div>
+            <div class="debt-card-val" style="color:#c0392b;">${fmt(tarjetaGastos)}</div>
+          </div>`:''}
         </div>
         <div class="debt-bar-wrap"><div class="debt-bar-fill" style="width:${pagado}%;"></div></div>
       </div>`;
