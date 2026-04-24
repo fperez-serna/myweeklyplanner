@@ -3715,7 +3715,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
             <div class="debt-card-val" style="color:var(--teal);" id="debt-abono-${di}">${fmt(debt.abono||0)}</div>
           </div>
           <div class="debt-card-item">
-            <div class="debt-card-lbl">${es?'Saldo original':'Original balance'}</div>
+            <div class="debt-card-lbl">${debt.tipo==='tarjeta'?(es?'Límite de crédito':'Credit limit'):(es?'Saldo original':'Original balance')}</div>
             <div class="debt-card-val">${fmt(debt.totalOriginal||debt.saldo)}</div>
           </div>
           <div class="debt-card-item">
@@ -4236,10 +4236,13 @@ function debtUpdatePlazoHint(){
   const tipo=(document.getElementById('d-tipo')||{}).value||'fijo';
   const es=!isEn();
   const el=document.getElementById('d-plazo-hint');
-  if(!el)return;
-  el.textContent=tipo==='tarjeta'
+  if(el)el.textContent=tipo==='tarjeta'
     ?(es?'Usa 12 para ver el costo anual. Las tarjetas no tienen plazo fijo.':'Use 12 to see the annual cost. Cards have no fixed term.')
     :(es?'Meses restantes de tu crédito. Ej: 36, 48, 60.':'Remaining months on your loan. E.g.: 36, 48, 60.');
+  const lbl=document.getElementById('d-original-lbl');
+  if(lbl)lbl.textContent=tipo==='tarjeta'
+    ?(es?'Límite de crédito':'Credit limit')
+    :(es?'Saldo original (total deuda)':'Original balance');
 }
 
 function debtRatePill(type){
@@ -4360,7 +4363,7 @@ function budgetAddDebt(){
         <input id="d-saldo" class="debt-sinput" type="number" placeholder="0" style="margin-top:3px;" oninput="const m=document.getElementById('d-calc-monto');if(m&&!m.dataset.manual)m.value=this.value;debtCalcUpdate();"/>
       </div>
       <div>
-        <div class="debt-card-lbl">${es?'Saldo original (total deuda)':'Original balance'}</div>
+        <div class="debt-card-lbl" id="d-original-lbl">${es?'Saldo original (total deuda)':'Original balance'}</div>
         <input id="d-original" class="debt-sinput" type="number" placeholder="0" style="margin-top:3px;"/>
       </div>
       <div>
@@ -4407,7 +4410,7 @@ function budgetEditDebt(di){
         <input id="d-saldo" class="debt-sinput" type="number" value="${debt.saldo}" style="margin-top:3px;" oninput="const m=document.getElementById('d-calc-monto');if(m&&!m.dataset.manual)m.value=this.value;debtCalcUpdate();"/>
       </div>
       <div>
-        <div class="debt-card-lbl">${es?'Saldo original':'Original balance'}</div>
+        <div class="debt-card-lbl" id="d-original-lbl">${debt.tipo==='tarjeta'?(es?'Límite de crédito':'Credit limit'):(es?'Saldo original':'Original balance')}</div>
         <input id="d-original" class="debt-sinput" type="number" value="${debt.totalOriginal||debt.saldo}" style="margin-top:3px;"/>
       </div>
       <div>
