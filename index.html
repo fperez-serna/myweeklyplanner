@@ -3680,7 +3680,10 @@ function renderBudget(dashboardTotals,forceExpand=false){
       const intMensual=debt.tasa>0?debt.saldo*(debt.tasa/100):0;
       const minPago=debt.saldo>0?Math.max(intMensual+debt.saldo*0.015,intMensual*1.1):0;
       const isTarjeta=debt.tipo==='tarjeta';
-      const pagado=debt.totalOriginal>0?Math.min(100,Math.round(isTarjeta?(debt.saldo/debt.totalOriginal)*100:((debt.totalOriginal-debt.saldo)/debt.totalOriginal)*100)):0;
+      const autoSum=isTarjeta&&cardPeriodSums[debt.nombre]!==undefined?cardPeriodSums[debt.nombre]:null;
+      const isAutoSaldo=isTarjeta&&autoSum!==null&&!debt.saldoManualOverride;
+      const effectiveSaldo=isAutoSaldo?autoSum:(debt.saldo||0);
+      const pagado=debt.totalOriginal>0?Math.min(100,Math.round(isTarjeta?(effectiveSaldo/debt.totalOriginal)*100:((debt.totalOriginal-effectiveSaldo)/debt.totalOriginal)*100)):0;
       const barColor=isTarjeta?(pagado<=40?'#27ae60':pagado<=70?'#f39c12':'#c0392b'):'var(--mauve)';
       const diasLabel=debt.fechaPago?`📅 ${es?'Pago: ':'Due: '}${debt.fechaPago}`:es?'Sin fecha de pago':'No due date';
       const rateLbl=debt.tasaTipo==='cat'?'CAT':debt.tasaTipo==='apr'?'APR':debt.tasaTipo==='anual'?(es?'Tasa anual':'Ann. rate'):(es?'Tasa mensual':'Monthly rate');
@@ -3724,7 +3727,10 @@ function renderBudget(dashboardTotals,forceExpand=false){
             ${corteInfo}
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-            <div class="debt-card-balance">${fmt(debt.saldo)}</div>
+            <div class="debt-card-balance" style="display:flex;align-items:center;gap:6px;">
+              <span>${fmt(effectiveSaldo)}</span>
+              ${isTarjeta?`<span onclick="debtToggleSaldoOverride(${di})" style="font-size:11px;cursor:pointer;opacity:0.7;" title="${isAutoSaldo?(es?'Editar manual':'Edit manually'):(es?'Restablecer automático':'Reset to auto')}">${isAutoSaldo?'🔄':'✏️'}</span>`:''}
+            </div>
             <div style="display:flex;gap:4px;">
               <button onclick="budgetEditDebt(${di})" style="background:none;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text3);font-size:11px;padding:2px 7px;">✏️</button>
               <button onclick="budgetDelDebt(${di})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0 3px;">×</button>
@@ -4527,6 +4533,43 @@ function budgetDelDebt(di){
   budgetData.debts.splice(di,1);
   saveBudgetConfig();
   loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'⚠️ Could not load budget data':'⚠️ No se pudo cargar el presupuesto');});
+}
+
+function debtToggleSaldoOverride(di){
+  const debt=budgetData.debts[di];
+  if(debt.saldoManualOverride){
+    // Reset to auto
+    delete debt.saldoManualOverride;
+    saveBudgetConfig();
+    loadMonthGastos().then(d=>renderBudget(d));
+    return;
+  }
+  // Switch to manual — inline edit
+  const es=!isEn();
+  const balanceEl=document.querySelector(`#debt-card-balance-${di}`);
+  const autoSum=cardPeriodSums[debt.nombre]||0;
+  const input=document.createElement('input');
+  input.type='number';input.value=autoSum;
+  input.style.cssText='width:90px;font-size:14px;font-weight:600;color:var(--text);background:transparent;border:none;border-bottom:1.5px solid var(--mauve);outline:none;padding:0;';
+  // Find the balance span and replace it
+  const wrap=document.querySelector(`.debt-card:nth-child(${di+1}) .debt-card-balance span`);
+  if(!wrap)return;
+  const parent=wrap.parentNode;
+  const iconSpan=parent.querySelector('span:last-child');
+  wrap.replaceWith(input);
+  if(iconSpan)iconSpan.style.display='none';
+  input.focus();input.select();
+  async function save(){
+    const val=parseFloat(input.value)||0;
+    debt.saldo=val;
+    debt.saldoManualOverride=true;
+    debt.saldoInicialMes=val;
+    await saveBudgetConfig();
+    const d=await loadMonthGastos();
+    renderBudget(d);
+  }
+  input.addEventListener('blur',save);
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')input.blur();if(e.key==='Escape'){loadMonthGastos().then(d=>renderBudget(d));}});
 }
 
 function debtEditAbono(di,cardEl){
