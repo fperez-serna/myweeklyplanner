@@ -743,7 +743,7 @@ body{padding:.75rem;}
           <select class="t-sel" id="ev-h"><option>12</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option></select>
           <select class="t-sel" id="ev-m"><option>00</option><option>15</option><option>30</option><option>45</option></select>
           <select class="t-sel" id="ev-ap"><option>AM</option><option>PM</option></select>
-          <select class="t-sel" id="ev-dur" onchange="document.getElementById('ev-dur-custom').style.display=this.value==='custom'?'':'none'">
+          <select class="t-sel" id="ev-dur">
             <option value="15">15m</option>
             <option value="30">30m</option>
             <option value="60" selected>1h</option>
@@ -751,9 +751,7 @@ body{padding:.75rem;}
             <option value="180">3h</option>
             <option value="240">4h</option>
             <option value="480">8h</option>
-            <option value="custom">Custom</option>
           </select>
-          <input type="text" id="ev-dur-custom" placeholder="ej. 1:30" style="display:none;width:52px;font-size:12px;padding:5px 6px;border:0.5px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);outline:none;">
           <input type="text" id="ev-title" placeholder="Evento..." onkeydown="if(event.key==='Enter')addEv()">
           <button onclick="addEv()">+</button>
         </div>
@@ -1450,8 +1448,17 @@ function renderEvts(di){
     if(ev.src==='manual')del='<button class="ev-del" data-idx="'+ev.idx+'" data-di="'+di+'" onclick="delManualEv(this)">×</button>';
     else if(ev.src==='gcal'&&ev.gcalId)del='<button class="ev-del" data-gid="'+ev.gcalId+'" onclick="delGCalEv(this)">×</button>';
     const isManual=ev.src==='manual';
-    const durTag=ev.dur?'<span style="font-size:10px;color:var(--text3);margin-left:4px;">'+ev.dur+'</span>':'';
-    d.innerHTML='<div class="ev-time">'+ev.time+'</div><div class="ev-dot"></div><div class="ev-title"'+(isManual?' contenteditable="true" spellcheck="false" data-idx="'+ev.idx+'" onblur="updateEvText(this)"':'')+'>'+ev.title+durTag+'</div>'+del;
+    let timeDisplay=ev.time;
+    if(ev.durMins>0&&ev.time&&ev.time!=='Todo el día'&&ev.time!=='All day'){
+      const p=ev.time.includes('PM');const pts=ev.time.replace(/AM|PM/,'').trim().split(':');
+      let sh=parseInt(pts[0]);const sm=parseInt(pts[1]||0);
+      if(p&&sh!==12)sh+=12;if(!p&&sh===12)sh=0;
+      const totalEnd=sh*60+sm+ev.durMins;
+      const eh=Math.floor(totalEnd/60)%24;const em=totalEnd%60;
+      const eap=eh>=12?'PM':'AM';const eh12=eh===0?12:eh>12?eh-12:eh;
+      timeDisplay=ev.time+' – '+eh12+':'+String(em).padStart(2,'0')+' '+eap;
+    }
+    d.innerHTML='<div class="ev-time">'+timeDisplay+'</div><div class="ev-dot"></div><div class="ev-title"'+(isManual?' contenteditable="true" spellcheck="false" data-idx="'+ev.idx+'" onblur="updateEvText(this)"':'')+'>'+ev.title+'</div>'+del;
     list.appendChild(d);
   });
 }
@@ -1499,13 +1506,7 @@ async function delGCalEv(el){
 
 function getEvDurMins(){
   const sel=document.getElementById('ev-dur');
-  if(!sel)return 60;
-  if(sel.value==='custom'){
-    const raw=document.getElementById('ev-dur-custom').value.trim();
-    if(raw.includes(':')){const[hh,mm]=raw.split(':');return parseInt(hh||0)*60+parseInt(mm||0);}
-    return parseInt(raw)||60;
-  }
-  return parseInt(sel.value)||60;
+  return sel?parseInt(sel.value)||60:60;
 }
 
 function addEv(){
@@ -1529,7 +1530,7 @@ function addEv(){
         const targetTdi=targetWeekDays.findIndex(d=>dk(d)===targetDate);
         if(!data.events)data.events={};
         if(!data.events[targetTdi])data.events[targetTdi]=[];
-        data.events[targetTdi].push({time:h+':'+m+' '+ap,title:evTitle,dur:durMins>0?durMins+'m':''});
+        data.events[targetTdi].push({time:h+':'+m+' '+ap,title:evTitle,durMins});
         return userCol().doc(targetWid).set(data);
       }).catch(e=>{console.error('Error saving event to other week:',e);showToast(isEn()?'⚠️ Could not save event, try again':'⚠️ No se pudo guardar el evento, intenta de nuevo');});
     }
@@ -1543,8 +1544,7 @@ function addEv(){
   }
   if(!weekData.events)weekData.events={};
   if(!weekData.events[tdi])weekData.events[tdi]=[];
-  const durLabel=durMins>=60?(durMins%60===0?(durMins/60)+'h':(Math.floor(durMins/60))+'h '+(durMins%60)+'m'):durMins+'m';
-  weekData.events[tdi].push({time:h+':'+m+' '+ap,title:evTitle,dur:durLabel});
+  weekData.events[tdi].push({time:h+':'+m+' '+ap,title:evTitle,durMins});
   saveDB();
   if(gcalToken&&targetDate){
     createGCalEv(evTitle,targetDate,h,m,ap,durMins);
@@ -1681,7 +1681,7 @@ async function fetchGCal(){
         if(mins>0){const h=Math.floor(mins/60);const m=mins%60;dur=h&&m?h+'h '+m+'m':h?h+'h':m+'m';}
       }
       if(!gcalEvts[key])gcalEvts[key]=[];
-      if(!deletedGCalIds.has(ev.id)) gcalEvts[key].push({time:ts,title:ev.summary||'(sin título)',gcalId:ev.id,sort:jd.getTime(),dur});
+      if(!deletedGCalIds.has(ev.id)) gcalEvts[key].push({time:ts,title:ev.summary||'(sin título)',gcalId:ev.id,sort:jd.getTime(),durMins:mins||0});
     });
     Object.keys(gcalEvts).forEach(k=>gcalEvts[k].sort((a,b)=>a.sort-b.sort));
     renderEvts(dayIdx());buildOv();buildNav();
