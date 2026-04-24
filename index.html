@@ -746,7 +746,10 @@ body{padding:.75rem;}
           <input type="text" id="ev-title" placeholder="Evento..." onkeydown="if(event.key==='Enter')addEv()">
           <button onclick="addEv()">+</button>
         </div>
-        <button class="gcal-btn" id="gcal-btn" onclick="handleGCal()">Conectar Google Calendar</button>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="gcal-btn" id="gcal-btn" onclick="handleGCal()">Conectar Google Calendar</button>
+          <button class="gcal-btn" id="gcal-disconnect-btn" onclick="disconnectGCal()" style="display:none;background:transparent;border-color:#c0392b;color:#c0392b;">Desconectar</button>
+        </div>
         <div class="snote" id="gcal-note"></div>
         <div class="snote" id="gcal-snote" style="margin-top:4px;color:var(--text3);font-style:italic;">*Por seguridad, tu calendario no puede permanecer conectado. Conéctate cuando quieras que tus eventos se reflejen aquí y cuando quieras que tus eventos de aquí se guarden en tu Google Calendar.</div>
       </div>
@@ -1435,7 +1438,9 @@ function renderEvts(di){
     let del='';
     if(ev.src==='manual')del='<button class="ev-del" data-idx="'+ev.idx+'" data-di="'+di+'" onclick="delManualEv(this)">×</button>';
     else if(ev.src==='gcal'&&ev.gcalId)del='<button class="ev-del" data-gid="'+ev.gcalId+'" onclick="delGCalEv(this)">×</button>';
-    const isManual=ev.src==='manual';d.innerHTML='<div class="ev-time">'+ev.time+'</div><div class="ev-dot"></div><div class="ev-title"'+(isManual?' contenteditable="true" spellcheck="false" data-idx="'+ev.idx+'" onblur="updateEvText(this)"':'')+'>'+ev.title+'</div>'+del;
+    const isManual=ev.src==='manual';
+    const durTag=ev.dur?'<span style="font-size:10px;color:var(--text3);margin-left:4px;">'+ev.dur+'</span>':'';
+    d.innerHTML='<div class="ev-time">'+ev.time+'</div><div class="ev-dot"></div><div class="ev-title"'+(isManual?' contenteditable="true" spellcheck="false" data-idx="'+ev.idx+'" onblur="updateEvText(this)"':'')+'>'+ev.title+durTag+'</div>'+del;
     list.appendChild(d);
   });
 }
@@ -1604,6 +1609,23 @@ function initGCal(){
 function setGCalConnected(){
   const btn=document.getElementById('gcal-btn');
   btn.textContent='✓ Google Calendar';btn.classList.add('connected');
+  const dis=document.getElementById('gcal-disconnect-btn');
+  if(dis)dis.style.display='';
+}
+
+function disconnectGCal(){
+  gcalToken=null;
+  localStorage.removeItem('gct');
+  localStorage.removeItem('gct_exp');
+  gcalEvts={};
+  const btn=document.getElementById('gcal-btn');
+  btn.textContent=isEn()?'Connect Google Calendar':'Conectar Google Calendar';
+  btn.classList.remove('connected');
+  const dis=document.getElementById('gcal-disconnect-btn');
+  if(dis)dis.style.display='none';
+  renderEvts(dayIdx());buildOv();buildNav();
+  document.getElementById('gcal-note').textContent=isEn()?'Disconnected':'Desconectado';
+  setTimeout(()=>document.getElementById('gcal-note').textContent='',2000);
 }
 
 function handleGCal(){
@@ -1629,8 +1651,13 @@ async function fetchGCal(){
       const h=jd.getHours();const mn=String(jd.getMinutes()).padStart(2,'0');
       const ap=h>=12?'PM':'AM';const h12=h===0?12:h>12?h-12:h;
       const ts=isAll?'Todo el día':h12+':'+mn+' '+ap;
+      let dur='';
+      if(ev.start.dateTime&&ev.end&&ev.end.dateTime){
+        const mins=Math.round((new Date(ev.end.dateTime)-jd)/60000);
+        if(mins>0){const h=Math.floor(mins/60);const m=mins%60;dur=h&&m?h+'h '+m+'m':h?h+'h':m+'m';}
+      }
       if(!gcalEvts[key])gcalEvts[key]=[];
-      if(!deletedGCalIds.has(ev.id)) gcalEvts[key].push({time:ts,title:ev.summary||'(sin título)',gcalId:ev.id,sort:jd.getTime()});
+      if(!deletedGCalIds.has(ev.id)) gcalEvts[key].push({time:ts,title:ev.summary||'(sin título)',gcalId:ev.id,sort:jd.getTime(),dur});
     });
     Object.keys(gcalEvts).forEach(k=>gcalEvts[k].sort((a,b)=>a.sort-b.sort));
     renderEvts(dayIdx());buildOv();buildNav();
