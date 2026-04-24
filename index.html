@@ -3486,6 +3486,15 @@ async function saveBudgetData(){
   }
 }
 
+function corteDaysLeft(diaCorte){
+  if(!diaCorte)return null;
+  const now=new Date();now.setHours(0,0,0,0);
+  const thisMonth=new Date(now.getFullYear(),now.getMonth(),diaCorte);
+  const nextMonth=new Date(now.getFullYear(),now.getMonth()+1,diaCorte);
+  const target=thisMonth>=now?thisMonth:nextMonth;
+  return Math.round((target-now)/(1000*60*60*24));
+}
+
 function buildPagoSelect(){
   const sel=document.getElementById('gasto-pago');
   if(!sel)return;
@@ -3662,6 +3671,14 @@ function renderBudget(dashboardTotals,forceExpand=false){
       const diasLabel=debt.fechaPago?`📅 ${debt.fechaPago}`:es?'Sin fecha':'No date';
       const rateLbl=debt.tasaTipo==='cat'?'CAT':debt.tasaTipo==='apr'?'APR':debt.tasaTipo==='anual'?(es?'Tasa anual':'Ann. rate'):(es?'Tasa mensual':'Monthly rate');
       const rateDisplay=debt.tasaTipo&&debt.tasaTipo!=='mensual'&&debt.tasaAnual?`${debt.tasaAnual}% ${rateLbl}`:`${debt.tasa}% ${rateLbl}`;
+      const corteInfo=(()=>{
+        if(debt.tipo!=='tarjeta'||!debt.fechaCorte)return '';
+        const days=corteDaysLeft(debt.fechaCorte);
+        if(days===null)return '';
+        if(days===0)return `<div style="font-size:11px;font-weight:600;color:#c0392b;margin-top:6px;">⚠️ ${es?'¡Hoy es tu fecha de corte!':'Today is your billing cut date!'}</div>`;
+        if(days<=3)return `<div style="font-size:11px;font-weight:600;color:#e67e22;margin-top:6px;">⚠️ ${days} ${es?`día${days===1?'':'s'} para tu corte del ${debt.fechaCorte}`:`day${days===1?'':'s'} until your cut date on the ${debt.fechaCorte}`}</div>`;
+        return `<div style="font-size:11px;color:var(--text3);margin-top:6px;">✂️ ${days} ${es?`días para tu corte del ${debt.fechaCorte}`:`days until your cut date on the ${debt.fechaCorte}`}</div>`;
+      })();
       const tarjetaGastos=debt.tipo==='tarjeta'?[...Array(7).keys()].reduce((s,d)=>{
         return s+(gastosForDay(d)||[]).filter(g=>g.pagoCon===debt.nombre).reduce((ss,g)=>ss+(g.monto||0),0);
       },0):0;
@@ -3670,6 +3687,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
           <div>
             <div class="debt-card-name">${debt.nombre}</div>
             <div style="font-size:10px;color:var(--text3);margin-top:2px;">${diasLabel}</div>
+            ${corteInfo}
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
             <div class="debt-card-balance">${fmt(debt.saldo)}</div>
@@ -4345,9 +4363,13 @@ function budgetAddDebt(){
         <div class="debt-card-lbl">${es?'Saldo original (total deuda)':'Original balance'}</div>
         <input id="d-original" class="debt-sinput" type="number" placeholder="0" style="margin-top:3px;"/>
       </div>
-      <div style="grid-column:1/-1;">
+      <div>
         <div class="debt-card-lbl">${es?'Fecha límite de pago':'Payment due date'}</div>
         <input id="d-fecha" class="debt-sinput" type="text" placeholder="${es?'Ej: día 15':'Ex: 15th'}" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Fecha de corte (día)':'Billing cut date (day)'}</div>
+        <input id="d-corte" class="debt-sinput" type="number" min="1" max="31" placeholder="${es?'Ej: 26':'Ex: 26'}" style="margin-top:3px;"/>
       </div>
     </div>
     ${debtCalcHTML('','',0,0,'fijo')}
@@ -4388,9 +4410,13 @@ function budgetEditDebt(di){
         <div class="debt-card-lbl">${es?'Saldo original':'Original balance'}</div>
         <input id="d-original" class="debt-sinput" type="number" value="${debt.totalOriginal||debt.saldo}" style="margin-top:3px;"/>
       </div>
-      <div style="grid-column:1/-1;">
+      <div>
         <div class="debt-card-lbl">${es?'Fecha límite':'Due date'}</div>
         <input id="d-fecha" class="debt-sinput" type="text" value="${debt.fechaPago||''}" style="margin-top:3px;"/>
+      </div>
+      <div>
+        <div class="debt-card-lbl">${es?'Fecha de corte (día)':'Billing cut date (day)'}</div>
+        <input id="d-corte" class="debt-sinput" type="number" min="1" max="31" value="${debt.fechaCorte||''}" placeholder="${es?'Ej: 26':'Ex: 26'}" style="margin-top:3px;"/>
       </div>
     </div>
     ${debtCalcHTML(debt.tasaTipo||'',debt.tasaAnual||debt.tasa||0,debt.meses||0,debt.saldo||0,debt.tipo||'fijo')}
@@ -4436,6 +4462,7 @@ function budgetSaveDebt(di){
     tasa:parseFloat((document.getElementById('d-tasa')||{}).value)||0,
     tasaTipo,tasaAnual,meses,
     fechaPago:document.getElementById('d-fecha').value.trim(),
+    fechaCorte:parseInt(document.getElementById('d-corte')?.value)||0,
     abono:0,
   };
   if(di===-1){
