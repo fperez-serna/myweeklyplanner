@@ -3643,7 +3643,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
   const debtOpen=budgetDebtOpen===undefined?true:budgetDebtOpen;
   html+=`<div class="budget-divider"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;cursor:pointer;" onclick="toggleDebtSection()">
-    <div class="debt-section-title" style="margin:0;">🏦 ${es?'Préstamos & Deudas':'Loans & Debts'}</div>
+    <div class="debt-section-title" style="margin:0;">🏦 ${es?'Crédito, Préstamos y Deudas':'Credit, Loans & Debts'}</div>
     <div style="display:flex;align-items:center;gap:8px;">
       <span style="font-size:11px;color:var(--text3);transition:transform .2s;display:inline-block;transform:${debtOpen?'rotate(0deg)':'rotate(-90deg)'}">▾</span>
     </div>
