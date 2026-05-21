@@ -9,8 +9,8 @@ const MES_ES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto',
 const MES_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 let MES=MES_ES;
 const ICAL_URL='https://calendar.google.com/calendar/ical/f.perezserna%40gmail.com/private-00450f29f66ba6d8112c19e9435f65b5/basic.ics';
-const WE={Tennis:'🎾','E. Club':'🏇',Swimming:'🏊‍♀️',Pilates:'🤸',Gym:'🏋️',Yoga:'🧘',Box:'🥊','Free Diving':'🤿',Climbing:'🧗',Rest:'😴',Otro:'✨'};
-const HE={Meditar:'🧘',Leer:'📖',Stretching:'🤸',Escribir:'✍️',Otro:'✨'};
+const WE={Tennis:'','E. Club':'',Swimming:'',Pilates:'',Gym:'',Yoga:'',Box:'','Free Diving':'',Climbing:'',Rest:'',Otro:''};
+const HE={Meditar:'',Leer:'',Stretching:'',Escribir:'',Otro:''};
 const DW={0:{wo1:'',wo2:'',ha1:'',ha2:''},1:{wo1:'',wo2:'',ha1:'',ha2:''},2:{wo1:'',wo2:'',ha1:'',ha2:''},3:{wo1:'',wo2:'',ha1:'',ha2:''},4:{wo1:'',wo2:'',ha1:'',ha2:''},5:{wo1:'',wo2:'',ha1:'',ha2:''},6:{wo1:'',wo2:'',ha1:'',ha2:''}};
 const GCAL_ID='768734489364-vtacuutjbop0h19kj85qgoeodgd4dseq.apps.googleusercontent.com';
 
@@ -624,7 +624,7 @@ function addEv(){
         if(!data.events[targetTdi])data.events[targetTdi]=[];
         data.events[targetTdi].push({time:h+':'+m+' '+ap,title:evTitle,durMins});
         return userCol().doc(targetWid).set(data);
-      }).catch(e=>{console.error('Error saving event to other week:',e);showToast(isEn()?'⚠️ Could not save event, try again':'⚠️ No se pudo guardar el evento, intenta de nuevo');});
+      }).catch(e=>{console.error('Error saving event to other week:',e);showToast(isEn()?'Could not save event, try again':'No se pudo guardar el evento, intenta de nuevo');});
     }
     if(gcalToken)createGCalEv(evTitle,targetDate,h,m,ap,durMins);
     titleIn.value='';
@@ -1005,7 +1005,7 @@ function renderSh(){
   cats.forEach((catName,idx)=>{
     const key='cat'+idx;
     if(!shoppingItems[key])shoppingItems[key]=[];
-    const emoji=SHOP_EMOJI[catName]||'🛍';
+    const emoji=SHOP_EMOJI[catName]||'';
     const col=document.createElement('div');
     const items=shoppingItems[key]||[];
     let itemsHtml=items.map((item,i)=>`
@@ -1062,17 +1062,17 @@ function updateShCat(el){
 }
 
 const GASTO_COLORS = {
-  'Restaurante':    {bg:'#e8f0ef',color:'#2c5f5c',emoji:'🍽'},
-  'Entretenimiento':{bg:'#f5e8eb',color:'#8f4652',emoji:'🎬'},
-  'Gasolina':       {bg:'#fef3e2',color:'#8a5a00',emoji:'⛽'},
-  'Suscripción':    {bg:'#e8f0fe',color:'#1a56a0',emoji:'📱'},
-  'Ejercicio':      {bg:'#e8f5e9',color:'#2e7d32',emoji:'💪'},
-  'Pago a servicio':{bg:'#f3e5f5',color:'#6a1b9a',emoji:'🔧'},
-  'Negocio':        {bg:'#e8f0ef',color:'#2c5f5c',emoji:'💼'},
-  'Casa':           {bg:'#f7f0ec',color:'#414535',emoji:'🏠'},
-  'Préstamo':       {bg:'#fce4ec',color:'#880e4f',emoji:'💳'},
-  'Viaje':          {bg:'#e3f2fd',color:'#0d47a1',emoji:'✈️'},
-  'Otro':           {bg:'#f0f0f0',color:'#666',emoji:'📌'},
+  'Restaurante':    {bg:'#e8f0ef',color:'#2c5f5c',icon:'utensils'},
+  'Entretenimiento':{bg:'#f5e8eb',color:'#8f4652',icon:'film'},
+  'Gasolina':       {bg:'#fef3e2',color:'#8a5a00',icon:'fuel'},
+  'Suscripción':    {bg:'#e8f0fe',color:'#1a56a0',icon:'smartphone'},
+  'Ejercicio':      {bg:'#e8f5e9',color:'#2e7d32',icon:'dumbbell'},
+  'Pago a servicio':{bg:'#f3e5f5',color:'#6a1b9a',icon:'wrench'},
+  'Negocio':        {bg:'#e8f0ef',color:'#2c5f5c',icon:'briefcase'},
+  'Casa':           {bg:'#f7f0ec',color:'#414535',icon:'home'},
+  'Préstamo':       {bg:'#fce4ec',color:'#880e4f',icon:'credit-card'},
+  'Viaje':          {bg:'#e3f2fd',color:'#0d47a1',icon:'plane'},
+  'Otro':           {bg:'#f0f0f0',color:'#666',icon:'tag'},
 };
 
 function gastosForDay(di){return (weekData.gastos&&weekData.gastos[di])||[];}
@@ -1904,7 +1904,7 @@ function applyConfig(cfg){
   if(gc.length){const sel=document.getElementById('gasto-cat');if(sel)sel.innerHTML=gc.map(c=>'<option>'+c+'</option>').join('');}
 }
 
-const SHOP_EMOJI={'Supermercado':'🛒','Supermarket':'🛒','Casa':'🏠','Home':'🏠','Personal':'🧴','Oficina':'💼','Office':'💼','Mamá':'👩‍🦳','Mom':'👩‍🦳','Negocio':'💼','Business':'💼'};
+const SHOP_EMOJI={};
 
 function applyShopCats(cats){
   const shAll=document.getElementById('sh-all');
@@ -1913,7 +1913,7 @@ function applyShopCats(cats){
   cats.forEach((cat,idx)=>{
     const key='cat'+idx;
     if(!shoppingItems[key])shoppingItems[key]=[];
-    const emoji=SHOP_EMOJI[cat]||'🛍';
+    const emoji=SHOP_EMOJI[cat]||'';
     const col=document.createElement('div');
     col.innerHTML=`
       <div style="font-size:11px;font-weight:500;color:var(--mauve);margin-bottom:6px;">${emoji} ${cat}</div>
@@ -1993,11 +1993,11 @@ function shareTasks(){
   const dateStr=DIAS[activeDate.getDay()]+', '+activeDate.getDate()+' de '+MES[activeDate.getMonth()];
   const undone=tasks.filter(t=>t.doneOnDay===undefined);
   const done=tasks.filter(t=>t.doneOnDay!==undefined);
-  let txt=isEn()?'📋 To-do — '+dateStr+'\n':'📋 Pendientes — '+dateStr+'\n';
+  let txt=isEn()?'To-do — '+dateStr+'\n':'Pendientes — '+dateStr+'\n';
   txt+='\n';
   undone.forEach(t=>{txt+='• '+t.text+'\n';});
   if(done.length){
-    txt+='\n'+(isEn()?'✅ Done:':'✅ Completados:')+'\n';
+    txt+='\n'+(isEn()?'Done:':'Completados:')+'\n';
     done.forEach(t=>{txt+='✓ '+t.text+'\n';});
   }
   if(!undone.length&&!done.length)txt+=(isEn()?'No tasks yet':'Sin pendientes aún');
@@ -2006,19 +2006,19 @@ function shareTasks(){
 
 function shareShopping(){
   const cats=setupCfg.shopCats||DEFAULT_SHOP;
-  let txt=isEn()?'🛒 Shopping List\n':'🛒 Lista de compras\n';
+  let txt=isEn()?'Shopping List\n':'Lista de compras\n';
   txt+='\n';
   cats.forEach((cat,idx)=>{
     const key='cat'+idx;
     const items=(shoppingItems[key]||[]);
     if(items.length){
-      const emoji=SHOP_EMOJI[cat]||'🛍';
+      const emoji=SHOP_EMOJI[cat]||'';
       txt+=emoji+' '+cat+':\n';
       items.forEach(i=>{txt+=(i.done?'✓ ~'+i.text+'~':'• '+i.text)+'\n';});
       txt+='\n';
     }
   });
-  if(txt.trim()===(isEn()?'🛒 Shopping List':'🛒 Lista de compras'))
+  if(txt.trim()===(isEn()?'Shopping List':'Lista de compras'))
     txt+=(isEn()?'List is empty':'Lista vacía');
   shareText(txt.trim());
 }
@@ -2026,7 +2026,7 @@ function shareShopping(){
 function shareGastos(){
   const di=dayIdx();
   const dateStr=DIAS[activeDate.getDay()]+', '+activeDate.getDate();
-  let txt=(isEn()?'💸 Expenses — ':'💸 Gastos — ')+dateStr+'\n\n';
+  let txt=(isEn()?'Expenses — ':'Gastos — ')+dateStr+'\n\n';
   const items=gastosForDay(di);
   if(items.length){
     items.forEach(g=>{txt+='• '+g.desc+' ('+g.cat+') — $'+g.monto.toLocaleString()+'\n';});
@@ -2042,7 +2042,7 @@ function shareFocus(){
   const di=dayIdx();
   const f=focusForDay(di);
   const dateStr=DIAS[activeDate.getDay()]+', '+activeDate.getDate()+' de '+MES[activeDate.getMonth()];
-  let txt=(isEn()?'🎯 Focus — ':'🎯 Enfoque — ')+dateStr+'\n\n';
+  let txt=(isEn()?'Focus — ':'Enfoque — ')+dateStr+'\n\n';
   const lines=[1,2,3].filter(n=>f[n]);
   if(lines.length){
     lines.forEach(n=>{const done=!!(weekData.focusDone&&weekData.focusDone[String(di)+'_'+String(n)]!==undefined);txt+=(done?'✓ ':'• ')+f[n]+'\n';});
@@ -2328,7 +2328,7 @@ async function restoreBudgetFromBackup(){
     if(!budgetData.debts)budgetData.debts=[];
     const dash=await loadMonthGastos();
     renderBudget(dash);
-    showToast(isEn()?'✅ Budget restored from backup':'✅ Presupuesto restaurado del respaldo');
+    showToast(isEn()?'Budget restored from backup':'Presupuesto restaurado del respaldo');
   }catch(e){
     console.error('Restore failed:',e);
     alert(isEn()?'Restore failed: '+e.message:'Error al restaurar: '+e.message);
@@ -2356,8 +2356,9 @@ async function loadBudgetData(){
   if(modalTitle)modalTitle.textContent=isEn()?'Monthly Budget':'Presupuesto mensual';
   const pdfBtn=document.getElementById('budget-pdf-btn');
   const xlsBtn=document.getElementById('budget-excel-btn');
-  if(pdfBtn)pdfBtn.innerHTML=isEn()?'📄 Download PDF':'📄 Descargar PDF';
-  if(xlsBtn)xlsBtn.innerHTML=isEn()?'📊 Download Excel':'📊 Descargar Excel';
+  if(pdfBtn)pdfBtn.innerHTML='<i data-lucide="file-text" style="width:15px;height:15px;flex-shrink:0;"></i>'+(isEn()?'Download PDF':'Descargar PDF');
+  if(xlsBtn)xlsBtn.innerHTML='<i data-lucide="file-spreadsheet" style="width:15px;height:15px;flex-shrink:0;"></i>'+(isEn()?'Download Excel':'Descargar Excel');
+  if(typeof lucide!=='undefined')lucide.createIcons();
   const loadingEl=document.getElementById('budget-loading');
   if(loadingEl)loadingEl.textContent=isEn()?'Loading...':'Cargando...';
   const nextBtn=document.getElementById('budget-next-btn');
@@ -2598,7 +2599,7 @@ async function saveBudgetData(){
     await userCol().doc(monthKey).set(actuals);
   }catch(e){
     console.error('Budget save:',e);
-    showToast(isEn()?'⚠️ Could not save budget data. Check your connection.':'⚠️ No se pudo guardar el presupuesto. Verifica tu conexión.');
+    showToast(isEn()?'Could not save budget data. Check your connection.':'No se pudo guardar el presupuesto. Verifica tu conexión.');
   }
 }
 
@@ -3152,7 +3153,7 @@ function budgetMoveSub(gi,si,dir){
   if(ni<0||ni>=subs.length)return;
   [subs[si],subs[ni]]=[subs[ni],subs[si]];
   saveBudgetConfig();
-  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'⚠️ Could not load budget data':'⚠️ No se pudo cargar el presupuesto');});
+  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'Could not load budget data':'No se pudo cargar el presupuesto');});
 }
 
 function budgetMoveGroup(gi,dir){
@@ -3160,7 +3161,7 @@ function budgetMoveGroup(gi,dir){
   if(newIdx<0||newIdx>=budgetData.groups.length)return;
   [budgetData.groups[gi],budgetData.groups[newIdx]]=[budgetData.groups[newIdx],budgetData.groups[gi]];
   saveBudgetConfig();
-  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'⚠️ Could not load budget data':'⚠️ No se pudo cargar el presupuesto');});
+  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'Could not load budget data':'No se pudo cargar el presupuesto');});
 }
 
 async function budgetDelSub(gi,si){
@@ -3629,14 +3630,14 @@ function budgetSaveDebt(di){
   }
   document.getElementById('debt-modal').remove();
   saveBudgetConfig();
-  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'⚠️ Could not load budget data':'⚠️ No se pudo cargar el presupuesto');});
+  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'Could not load budget data':'No se pudo cargar el presupuesto');});
 }
 
 function budgetDelDebt(di){
   if(!confirm(!isEn()?'¿Eliminar esta deuda?':'Delete this debt?'))return;
   budgetData.debts.splice(di,1);
   saveBudgetConfig();
-  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'⚠️ Could not load budget data':'⚠️ No se pudo cargar el presupuesto');});
+  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'Could not load budget data':'No se pudo cargar el presupuesto');});
 }
 
 function debtToggleSaldoOverride(di){
@@ -4589,7 +4590,7 @@ async function restoreFromBackup(dateStr){
     );
     await Promise.all(restorePromises);
     
-    showToast(es?'✅ Datos restaurados — recargando...' : '✅ Data restored — reloading...');
+    showToast(es?'Datos restaurados — recargando...' : 'Data restored — reloading...');
     setTimeout(() => window.location.reload(), 1500);
   }catch(e){
     console.error('Restore failed:', e);
@@ -4605,12 +4606,12 @@ async function openBackupsUI(){
   
   modal.innerHTML = `<div style="background:var(--bg);border-radius:16px;padding:20px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.2);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <div style="font-size:16px;font-weight:600;color:var(--text);">🗄️ ${es?'Respaldos':'Backups'}</div>
+      <div style="font-size:16px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:7px;"><i data-lucide="database" style="width:16px;height:16px;"></i>${es?'Respaldos':'Backups'}</div>
       <button onclick="document.getElementById('backups-modal').remove()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);">×</button>
     </div>
     <div id="backups-list" style="font-size:13px;color:var(--text3);text-align:center;padding:16px;">${es?'Cargando...':'Loading...'}</div>
     <button onclick="forceBackupNow()" id="force-backup-btn" style="width:100%;margin-top:12px;padding:10px;border-radius:10px;border:none;background:var(--mauve);color:#fff;font-size:13px;font-weight:500;cursor:pointer;">
-      ${es?'💾 Hacer respaldo ahora':'💾 Backup now'}
+      <i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>${es?'Hacer respaldo ahora':'Backup now'}
     </button>
     <div style="font-size:11px;color:var(--text3);margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);">
       ${es?'Se guarda un respaldo automático una vez al día. Se mantienen los últimos 7 días.':'Auto-backup runs once daily. Last 7 days are kept.'}
@@ -4618,7 +4619,8 @@ async function openBackupsUI(){
   </div>`;
   
   document.body.appendChild(modal);
-  
+  if(typeof lucide!=='undefined')lucide.createIcons();
+
   const list = document.getElementById('backups-list');
   const backups = await getBackupList();
   
@@ -4650,11 +4652,11 @@ async function forceBackupNow(){
   try{
     localStorage.removeItem(BACKUP_KEY+'_'+currentUser.uid);
     await autoBackup();
-    if(btn){btn.textContent=es?'✅ Respaldo guardado':'✅ Backup saved';}
+    if(btn){btn.textContent=es?'Respaldo guardado':'Backup saved';}
     setTimeout(()=>document.getElementById('backups-modal')?.remove(),1200);
   }catch(e){
-    if(btn){btn.disabled=false;btn.textContent=es?'💾 Hacer respaldo ahora':'💾 Backup now';}
-    showToast(es?'⚠️ Error al hacer respaldo':'⚠️ Backup failed');
+    if(btn){btn.disabled=false;btn.innerHTML='<i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>'+(es?'Hacer respaldo ahora':'Backup now');if(typeof lucide!=='undefined')lucide.createIcons();}
+    showToast(es?'Error al hacer respaldo':'Backup failed');
   }
 }
 

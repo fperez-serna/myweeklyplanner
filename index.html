@@ -86,7 +86,7 @@
             <div style="background:#414535;flex:1;"></div>
             <div style="background:#f7f0ec;flex:1;border-radius:0 6px 6px 0;"></div>
           </div>
-          <div class="pal-name">🌿 Forest</div>
+          <div class="pal-name">Forest</div>
         </div>
 
         <div class="pal-opt" data-pal="rose" onclick="selectPal(this)">
@@ -96,7 +96,7 @@
             <div style="background:#E87EA1;flex:1;"></div>
             <div style="background:#3D0814;flex:1;border-radius:0 6px 6px 0;"></div>
           </div>
-          <div class="pal-name">🌸 Rosé</div>
+          <div class="pal-name">Rosé</div>
         </div>
 
         <div class="pal-opt" data-pal="earth" onclick="selectPal(this)">
@@ -106,7 +106,7 @@
             <div style="background:#CEB3AB;flex:1;"></div>
             <div style="background:#C4C6E7;flex:1;border-radius:0 6px 6px 0;"></div>
           </div>
-          <div class="pal-name">🏺 Earth</div>
+          <div class="pal-name">Earth</div>
         </div>
 
         <div class="pal-opt" data-pal="minimal" onclick="selectPal(this)">
@@ -116,7 +116,7 @@
             <div style="background:#BFA89E;flex:1;"></div>
             <div style="background:#FFFFFF;flex:1;border-radius:0 6px 6px 0;border:0.5px solid #ddd;"></div>
           </div>
-          <div class="pal-name">🤍 Minimal</div>
+          <div class="pal-name">Minimal</div>
         </div>
 
         <div class="pal-opt" data-pal="bw" onclick="selectPal(this)" style="grid-column:span 2;">
@@ -126,7 +126,7 @@
             <div style="background:#AAAAAA;flex:1;"></div>
             <div style="background:#FFFFFF;flex:2;border-radius:0 6px 6px 0;border:0.5px solid #ddd;"></div>
           </div>
-          <div class="pal-name">🖤 Black & White</div>
+          <div class="pal-name">Black & White</div>
         </div>
 
       </div>
@@ -214,7 +214,7 @@
 <div id="privacy-modal">
   <div id="privacy-panel">
     <div id="privacy-header">
-      <div class="privacy-title">🔒 Aviso de Privacidad</div>
+      <div class="privacy-title"><i data-lucide="lock" style="width:15px;height:15px;vertical-align:middle;display:inline-block;margin-right:5px;"></i>Aviso de Privacidad</div>
       <div class="privacy-subtitle">Léelo antes de crear tu cuenta — es breve y claro</div>
     </div>
     <div id="privacy-body">
@@ -465,15 +465,15 @@
       <input type="text" id="gasto-desc" placeholder="Descripción..." style="width:100%;padding:6px 10px;border:0.5px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-size:12px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')document.getElementById('gasto-monto').focus()">
       <div class="add-row" style="margin:0;">
       <select id="gasto-cat" style="flex:2;font-size:12px;padding:5px 8px;border:0.5px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);">
-        <option>🍽 Restaurante</option><option>🛒 Supermercado</option><option>🎬 Entretenimiento</option>
-        <option>⛽ Gasolina</option><option>🚗 Transporte</option><option>📱 Suscripción</option>
-        <option>💪 Ejercicio</option><option>📚 Escuela</option><option>🔧 Pago a servicio</option>
-        <option>💼 Negocio</option><option>🏠 Casa</option><option>💳 Préstamo</option>
-        <option>✈️ Viaje</option><option>💸 Otro</option>
+        <option>Restaurante</option><option>Supermercado</option><option>Entretenimiento</option>
+        <option>Gasolina</option><option>Transporte</option><option>Suscripción</option>
+        <option>Ejercicio</option><option>Escuela</option><option>Pago a servicio</option>
+        <option>Negocio</option><option>Casa</option><option>Préstamo</option>
+        <option>Viaje</option><option>Otro</option>
       </select>
       <select id="gasto-pago" style="flex:1.5;font-size:12px;padding:5px 8px;border:0.5px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);">
-        <option value="Efectivo">💵 Efectivo</option>
-        <option value="Débito">💳 Débito</option>
+        <option value="Efectivo">Efectivo</option>
+        <option value="Débito">Débito</option>
       </select>
       <input type="number" id="gasto-monto" placeholder="$0" style="width:80px;" onkeydown="if(event.key==='Enter')addGasto()">
       <button id="btn-add-gasto" onclick="addGasto()">+ Agregar</button>
@@ -516,12 +516,12 @@
         <button onclick="showBudgetExportMenu()" style="background:none;border:0.5px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer;color:var(--text2);display:flex;align-items:center;" title="Exportar">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </button>
-        <button onclick="generateAnnualReport()" style="background:var(--mauve);border:none;border-radius:8px;padding:4px 10px;cursor:pointer;color:#fff;font-size:11px;font-weight:500;white-space:nowrap;" id="annual-report-btn">📄 <span id="annual-btn-lbl">Reporte anual</span></button>
+        <button onclick="generateAnnualReport()" style="background:var(--mauve);border:none;border-radius:8px;padding:4px 10px;cursor:pointer;color:#fff;font-size:11px;font-weight:500;white-space:nowrap;display:flex;align-items:center;gap:5px;" id="annual-report-btn"><i data-lucide="file-text" style="width:13px;height:13px;"></i><span id="annual-btn-lbl">Reporte anual</span></button>
       </div>
     </div>
     <div id="budget-export-menu" style="display:none;position:absolute;top:56px;right:16px;background:var(--bg);border:0.5px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:10;overflow:hidden;min-width:180px;">
-      <button onclick="budgetExportPDF()" id="budget-pdf-btn" style="display:block;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);">📄 Descargar PDF</button>
-      <button onclick="budgetExportExcel()" id="budget-excel-btn" style="display:block;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);border-top:0.5px solid var(--border);">📊 Descargar Excel</button>
+      <button onclick="budgetExportPDF()" id="budget-pdf-btn" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);"><i data-lucide="file-text" style="width:15px;height:15px;flex-shrink:0;"></i>Descargar PDF</button>
+      <button onclick="budgetExportExcel()" id="budget-excel-btn" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);border-top:0.5px solid var(--border);"><i data-lucide="file-spreadsheet" style="width:15px;height:15px;flex-shrink:0;"></i>Descargar Excel</button>
       <button onclick="restoreBudgetFromBackup()" style="display:block;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text3);border-top:0.5px solid var(--border);">↩ Restaurar respaldo</button>
     </div>
     <div id="budget-content">
@@ -546,13 +546,13 @@
     </div>
     <!-- Export menu -->
     <div id="export-menu" style="display:none;position:absolute;top:56px;right:16px;background:var(--bg);border:0.5px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:10;overflow:hidden;">
-      <button onclick="exportPDF()" style="display:block;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);" id="export-pdf-btn">📄 Descargar PDF</button>
-      <button onclick="exportImage()" style="display:block;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);border-top:0.5px solid var(--border);" id="export-img-btn">🖼 Descargar imagen</button>
+      <button onclick="exportPDF()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);" id="export-pdf-btn"><i data-lucide="file-text" style="width:15px;height:15px;flex-shrink:0;"></i>Descargar PDF</button>
+      <button onclick="exportImage()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);border-top:0.5px solid var(--border);" id="export-img-btn"><i data-lucide="image" style="width:15px;height:15px;flex-shrink:0;"></i>Descargar imagen</button>
     </div>
     <div class="report-toggles">
-      <div class="rtog on" data-key="gastos" onclick="toggleReportSection(this)">💸 Gastos</div>
-      <div class="rtog on" data-key="workout" onclick="toggleReportSection(this)">💪 Workouts</div>
-      <div class="rtog on" data-key="productivity" onclick="toggleReportSection(this)">🎯 Productividad</div>
+      <div class="rtog on" data-key="gastos" onclick="toggleReportSection(this)" style="display:flex;align-items:center;gap:5px;"><i data-lucide="receipt" style="width:13px;height:13px;"></i>Gastos</div>
+      <div class="rtog on" data-key="workout" onclick="toggleReportSection(this)" style="display:flex;align-items:center;gap:5px;"><i data-lucide="dumbbell" style="width:13px;height:13px;"></i>Workouts</div>
+      <div class="rtog on" data-key="productivity" onclick="toggleReportSection(this)" style="display:flex;align-items:center;gap:5px;"><i data-lucide="target" style="width:13px;height:13px;"></i>Productividad</div>
     </div>
     <div id="report-content">
       <div class="report-loading">Cargando...</div>
