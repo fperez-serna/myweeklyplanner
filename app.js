@@ -678,47 +678,57 @@ function saveWorkout(){
 }
 
 // ── GOOGLE CALENDAR ────────────────────────
+let _gcalInitRetries=0;
 function initGCal(){
-  if(typeof google==='undefined'){setTimeout(initGCal,500);return;}
+  if(typeof google==='undefined'){
+    if(_gcalInitRetries++ < 20){setTimeout(initGCal,500);}
+    return;
+  }
   tokenClient=google.accounts.oauth2.initTokenClient({
     client_id:GCAL_ID,
     scope:'https://www.googleapis.com/auth/calendar',
     prompt:'',
     callback:(res)=>{
       if(res.error){
-        // If silent refresh failed, try with consent
+        // Silent refresh failed — clear token so user can reconnect manually
         if(res.error==='interaction_required'||res.error==='consent_required'){
-          tokenClient.requestAccessToken({prompt:'consent'});
+          gcalToken=null;
+          localStorage.removeItem('gct');
+          localStorage.removeItem('gct_exp');
+          const btn=document.getElementById('gcal-btn');
+          if(btn){btn.textContent='Conectar Google Calendar';btn.classList.remove('connected');}
         }
         return;
       }
       gcalToken=res.access_token;
       localStorage.setItem('gct',gcalToken);
-      // Store expiry time (tokens last 1hr, refresh at 50min)
       localStorage.setItem('gct_exp', Date.now() + 50*60*1000);
       setGCalConnected();
       fetchGCal();
-      // Schedule silent refresh before expiry
-      setTimeout(()=>tokenClient.requestAccessToken({prompt:''}), 50*60*1000);
+      // Programar refresh silencioso antes de que expire
+      // Usar visibilitychange para no depender de un timer que se pierde al recargar
+      const _scheduleRefresh=()=>{
+        const exp=parseInt(localStorage.getItem('gct_exp')||'0');
+        const msLeft=exp-Date.now();
+        if(msLeft>0)setTimeout(()=>tokenClient.requestAccessToken({prompt:''}),msLeft);
+      };
+      _scheduleRefresh();
     }
   });
-  // Try silent refresh on load
+  // Al cargar: usar token guardado si sigue vigente
   const saved=localStorage.getItem('gct');
   const exp=parseInt(localStorage.getItem('gct_exp')||'0');
-  if(saved){
+  if(saved && exp > Date.now()){
     gcalToken=saved;
     setGCalConnected();
     fetchGCal();
-    if(exp>0){
-      const msLeft=exp-Date.now();
-      if(msLeft>0){
-        // Token still valid - schedule refresh
-        setTimeout(()=>tokenClient.requestAccessToken({prompt:''}), Math.max(msLeft,0));
-      } else {
-        // Expired - silent refresh
-        tokenClient.requestAccessToken({prompt:''});
-      }
-    }
+    const msLeft=exp-Date.now();
+    setTimeout(()=>tokenClient.requestAccessToken({prompt:''}), msLeft);
+  } else {
+    // Token expirado o no existe — limpiar y dejar que el usuario reconecte
+    localStorage.removeItem('gct');
+    localStorage.removeItem('gct_exp');
+    gcalToken=null;
   }
 }
 
