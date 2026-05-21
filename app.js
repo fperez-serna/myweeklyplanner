@@ -1941,7 +1941,9 @@ function openSettings(){
   document.getElementById('setup-screen').style.display='block';
 }
 
-function initApp(){if(typeof QS!=='undefined')shuffleArr(QS);
+function initApp(){
+  if(typeof lucide!=='undefined')lucide.createIcons();
+  if(typeof QS!=='undefined')shuffleArr(QS);
   const saved=localStorage.getItem('wp_config');
   if(!saved){
     // First time — show setup
