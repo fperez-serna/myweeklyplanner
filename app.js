@@ -1340,7 +1340,7 @@ const T = {
     segundoEnfoque:'Segundo enfoque...',
     tercerEnfoque:'Tercer enfoque...',
     desc:'Descripción...', monto:'$0',
-    listo:'¡Listo, empezar! 🎉'
+    listo:'¡Listo, empezar!'
   },
   en: {
     viendo:'Viewing', progreso:'Day progress',
@@ -1361,7 +1361,7 @@ const T = {
     segundoEnfoque:'Second focus...',
     tercerEnfoque:'Third focus...',
     desc:'Description...', monto:'$0',
-    listo:'Get started! 🎉'
+    listo:'Get started!'
   }
 };
 
@@ -1753,7 +1753,7 @@ const SETUP_T={
     shopAdd:'Agregar categoría...',
     gastoCats:'Rubros de gastos',
     gastoAdd:'Agregar rubro...',
-    btn:'¡Listo, empezar! 🎉',
+    btn:'¡Listo, empezar!',
     currencies:['MXN — Peso mexicano ($)','USD — Dólar ($)','EUR — Euro (€)','COP — Peso colombiano ($)','ARS — Peso argentino ($)','Otra'],
   },
   en:{
@@ -1784,7 +1784,7 @@ const SETUP_T={
     shopAdd:'Add category...',
     gastoCats:'Expense categories',
     gastoAdd:'Add category...',
-    btn:'Get started! 🎉',
+    btn:'Get started!',
     currencies:['MXN — Mexican Peso ($)','USD — US Dollar ($)','EUR — Euro (€)','COP — Colombian Peso ($)','ARS — Argentine Peso ($)','Other'],
   }
 };
