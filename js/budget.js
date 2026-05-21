@@ -513,16 +513,16 @@ function getDefaultGroups(){
   return [
     {id:'hogar',name:es?'Hogar':'Home',subs:[
       {id:'hogar_renta',name:es?'Renta/Hipoteca':'Rent/Mortgage',presup:0,actual:0,rubro:''},
-      {id:'hogar_elec',name:es?'Electricidad':'Electricity',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
-      {id:'hogar_internet',name:es?'Internet':'Internet',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
-      {id:'hogar_gas',name:es?'Gas/Agua':'Gas/Water',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
+      {id:'hogar_elec',name:es?'Electricidad':'Electricity',presup:0,actual:0,rubro:es?'Pago a servicio':'Service payment'},
+      {id:'hogar_internet',name:es?'Internet':'Internet',presup:0,actual:0,rubro:es?'Pago a servicio':'Service payment'},
+      {id:'hogar_gas',name:es?'Gas/Agua':'Gas/Water',presup:0,actual:0,rubro:es?'Pago a servicio':'Service payment'},
     ]},
     {id:'transporte',name:es?'Transporte':'Transport',subs:[
-      {id:'trans_gas',name:es?'Gasolina':'Gas',presup:0,actual:0,rubro:es?'⛽ Gasolina':'⛽ Gas'},
-      {id:'trans_seguro',name:es?'Seguro auto':'Car insurance',presup:0,actual:0,rubro:es?'🔧 Pago a servicio':'🔧 Service payment'},
+      {id:'trans_gas',name:es?'Gasolina':'Gas',presup:0,actual:0,rubro:es?'Gasolina':'Gas'},
+      {id:'trans_seguro',name:es?'Seguro auto':'Car insurance',presup:0,actual:0,rubro:es?'Pago a servicio':'Service payment'},
     ]},
     {id:'salud',name:es?'Salud':'Health',subs:[
-      {id:'salud_gym',name:es?'Ejercicio/Gym':'Exercise/Gym',presup:0,actual:0,rubro:es?'💪 Ejercicio':'💪 Exercise'},
+      {id:'salud_gym',name:es?'Ejercicio/Gym':'Exercise/Gym',presup:0,actual:0,rubro:es?'Ejercicio':'Exercise'},
       {id:'salud_seguro',name:es?'Seguro médico':'Health insurance',presup:0,actual:0,rubro:''},
     ]},
     {id:'ahorros',name:es?'Ahorros':'Savings',subs:[
@@ -649,7 +649,7 @@ function buildPagoSelect(){
   if(!sel)return;
   const es=!isEn();
   const prev=sel.value;
-  sel.innerHTML=`<option value="Efectivo">💵 ${es?'Efectivo':'Cash'}</option><option value="Débito">🏦 ${es?'Débito':'Debit'}</option>`;
+  sel.innerHTML=`<option value="Efectivo">${es?'Efectivo':'Cash'}</option><option value="Débito"><i data-lucide="landmark" style="width:15px;height:15px;vertical-align:middle;display:inline-block;margin-right:6px;"></i>${es?'Débito':'Debit'}</option>`;
   (budgetData.debts||[]).filter(d=>d.tipo==='tarjeta').forEach(d=>{
     const opt=document.createElement('option');
     opt.value=d.nombre;opt.textContent='💳 '+d.nombre;
@@ -801,7 +801,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
   const debtOpen=budgetDebtOpen===undefined?true:budgetDebtOpen;
   html+=`<div class="budget-divider"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;cursor:pointer;" onclick="toggleDebtSection()">
-    <div class="debt-section-title" style="margin:0;">🏦 ${es?'Crédito, Préstamos y Deudas':'Credit, Loans & Debts'}</div>
+    <div class="debt-section-title" style="margin:0;"><i data-lucide="landmark" style="width:16px;height:16px;vertical-align:middle;display:inline-block;margin-right:6px;"></i>${es?'Crédito, Préstamos y Deudas':'Credit, Loans & Debts'}</div>
     <div style="display:flex;align-items:center;gap:8px;">
       <span style="font-size:11px;color:var(--text3);transition:transform .2s;display:inline-block;transform:${debtOpen?'rotate(0deg)':'rotate(-90deg)'}">▾</span>
     </div>
@@ -822,16 +822,16 @@ function renderBudget(dashboardTotals,forceExpand=false){
       const effectiveSaldo=isAutoSaldo?autoSum:(debt.saldo||0);
       const pagado=debt.totalOriginal>0?Math.min(100,Math.round(isTarjeta?(effectiveSaldo/debt.totalOriginal)*100:((debt.totalOriginal-effectiveSaldo)/debt.totalOriginal)*100)):0;
       const barColor=isTarjeta?(pagado<=40?'#27ae60':pagado<=70?'#f39c12':'#c0392b'):'var(--mauve)';
-      const diasLabel=debt.fechaPago?`📅 ${es?'Pago: ':'Due: '}${debt.fechaPago}`:es?'Sin fecha de pago':'No due date';
+      const diasLabel=debt.fechaPago?`<i data-lucide="calendar" style="width:11px;height:11px;vertical-align:middle;display:inline-block;margin-right:3px;"></i>${es?'Pago: ':'Due: '}${debt.fechaPago}`:es?'Sin fecha de pago':'No due date';
       const rateLbl=debt.tasaTipo==='cat'?'CAT':debt.tasaTipo==='apr'?'APR':debt.tasaTipo==='anual'?(es?'Tasa anual':'Ann. rate'):(es?'Tasa mensual':'Monthly rate');
       const rateDisplay=debt.tasaTipo&&debt.tasaTipo!=='mensual'&&debt.tasaAnual?`${debt.tasaAnual}% ${rateLbl}`:`${debt.tasa}% ${rateLbl}`;
       const corteInfo=(()=>{
         if(debt.tipo!=='tarjeta'||!debt.fechaCorte)return '';
         const days=corteDaysLeft(debt.fechaCorte);
         if(days===null)return '';
-        if(days===0)return `<div style="font-size:11px;font-weight:600;color:#c0392b;margin-top:6px;">⚠️ ${es?'¡Hoy es tu fecha de corte!':'Today is your billing cut date!'}</div>`;
-        if(days<=3)return `<div style="font-size:11px;font-weight:600;color:#e67e22;margin-top:6px;">⚠️ ${days} ${es?`día${days===1?'':'s'} para tu corte del ${debt.fechaCorte}`:`day${days===1?'':'s'} until your cut date on the ${debt.fechaCorte}`}</div>`;
-        return `<div style="font-size:11px;color:var(--text3);margin-top:6px;">✂️ ${days} ${es?`días para tu corte del ${debt.fechaCorte}`:`days until your cut date on the ${debt.fechaCorte}`}</div>`;
+        if(days===0)return `<div style="font-size:11px;font-weight:600;color:#c0392b;margin-top:6px;">${es?'¡Hoy es tu fecha de corte!':'Today is your billing cut date!'}</div>`;
+        if(days<=3)return `<div style="font-size:11px;font-weight:600;color:#e67e22;margin-top:6px;">${days} ${es?`día${days===1?'':'s'} para tu corte del ${debt.fechaCorte}`:`day${days===1?'':'s'} until your cut date on the ${debt.fechaCorte}`}</div>`;
+        return `<div style="font-size:11px;color:var(--text3);margin-top:6px;">✂ ${days} ${es?`días para tu corte del ${debt.fechaCorte}`:`days until your cut date on the ${debt.fechaCorte}`}</div>`;
       })();
       const tarjetaGastos=(()=>{
         if(debt.tipo!=='tarjeta')return 0;
@@ -866,7 +866,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
             <div class="debt-card-balance" style="display:flex;align-items:center;gap:6px;">
               <span>${fmt(effectiveSaldo)}</span>
-              ${isTarjeta?`<span onclick="debtToggleSaldoOverride(${di})" style="font-size:11px;cursor:pointer;opacity:0.7;" title="${isAutoSaldo?(es?'Editar manual':'Edit manually'):(es?'Restablecer automático':'Reset to auto')}">${isAutoSaldo?'🔄':'✏️'}</span>`:''}
+              ${isTarjeta?`<span onclick="debtToggleSaldoOverride(${di})" style="font-size:11px;cursor:pointer;opacity:0.7;" title="${isAutoSaldo?(es?'Editar manual':'Edit manually'):(es?'Restablecer automático':'Reset to auto')}">${isAutoSaldo?'↺':'✏️'}</span>`:''}
             </div>
             <div style="display:flex;gap:4px;">
               <button onclick="budgetEditDebt(${di})" style="background:none;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text3);font-size:11px;padding:2px 7px;">✏️</button>
@@ -900,7 +900,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
             <div class="debt-card-val" style="color:${barColor};">${pagado}%</div>
           </div>
           ${debt.tipo==='tarjeta'?`<div class="debt-card-item" style="grid-column:1/-1;background:var(--bg);border-radius:7px;padding:6px 10px;">
-            <div class="debt-card-lbl">💳 ${es?`Gastado en este periodo (${tarjetaPeriodoLabel})`:`Spent this period (${tarjetaPeriodoLabel})`}</div>
+            <div class="debt-card-lbl">${es?`Gastado en este periodo (${tarjetaPeriodoLabel})`:`Spent this period (${tarjetaPeriodoLabel})`}</div>
             <div class="debt-card-val" style="color:#c0392b;">${fmt(tarjetaGastos)}</div>
           </div>`:''}
         </div>
@@ -924,7 +924,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
   // Add debt abonos as a special rubro entry
   const totalAbonos2=(budgetData.debts||[]).reduce((s,d)=>s+(d.abono||0),0);
   if(totalAbonos2>0){
-    const debtLabel=es?'💳 Préstamos & Deudas':'💳 Loans & Debts';
+    const debtLabel=es?'Préstamos & Deudas':'Loans & Debts';
     if(!rubroMap[debtLabel])rubroMap[debtLabel]={presup:0,manual:0};
     rubroMap[debtLabel].manual+=totalAbonos2;
   }
@@ -1033,7 +1033,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
   html+=`<div class="budget-divider"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:6px;" onclick="toggleAnnualSection()">
     <div style="display:flex;align-items:center;gap:6px;">
-      <span class="budget-sec-title" style="margin:0;">📅 ${es?'Anual':'Annual'}</span>
+      <span class="budget-sec-title" style="margin:0;"><i data-lucide="calendar" style="width:14px;height:14px;vertical-align:middle;display:inline-block;margin-right:5px;"></i>${es?'Anual':'Annual'}</span>
       <span class="annual-note">(${es?'solo se refleja en el reporte anual, no en el mensual':'only reflected in annual report, not monthly'})</span>
     </div>
     <span id="annual-arrow" style="font-size:11px;color:var(--text3);">▾</span>
@@ -1109,6 +1109,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
   </div>`;
 
   document.getElementById('budget-content').innerHTML=html;
+  if(typeof lucide!=='undefined')lucide.createIcons();
   // Populate mobile cards
   const cardsEl=document.getElementById('budget-rubro-cards');
   if(cardsEl)cardsEl.innerHTML=mobileCards;
@@ -1522,7 +1523,7 @@ function budgetAddDebt(){
   modal.id='debt-modal';
   modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;';
   modal.innerHTML=`<div style="background:var(--bg);border-radius:16px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.18);margin:auto;">
-    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px;">🏦 ${es?'Nueva deuda / préstamo':'New debt / loan'}</div>
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px;"><i data-lucide="landmark" style="width:15px;height:15px;vertical-align:middle;display:inline-block;margin-right:6px;"></i>${es?'Nueva deuda / préstamo':'New debt / loan'}</div>
     <div class="debt-add-grid">
       <div style="grid-column:1/-1;">
         <div class="debt-card-lbl">${es?'Descripción':'Description'}</div>
@@ -1561,6 +1562,7 @@ function budgetAddDebt(){
     </div>
   </div>`;
   document.body.appendChild(modal);
+  if(typeof lucide!=='undefined')lucide.createIcons();
   setTimeout(()=>document.getElementById('d-nombre').focus(),100);
 }
 
@@ -1571,7 +1573,7 @@ function budgetEditDebt(di){
   modal.id='debt-modal';
   modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;';
   modal.innerHTML=`<div style="background:var(--bg);border-radius:16px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.18);margin:auto;">
-    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px;">✏️ ${es?'Editar deuda':'Edit debt'}</div>
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px;"><i data-lucide="pencil" style="width:15px;height:15px;vertical-align:middle;display:inline-block;margin-right:6px;"></i>${es?'Editar deuda':'Edit debt'}</div>
     <div class="debt-add-grid">
       <div style="grid-column:1/-1;">
         <div class="debt-card-lbl">${es?'Descripción':'Description'}</div>
@@ -1610,6 +1612,7 @@ function budgetEditDebt(di){
     </div>
   </div>`;
   document.body.appendChild(modal);
+  if(typeof lucide!=='undefined')lucide.createIcons();
   if(debt.tasaTipo)setTimeout(debtCalcUpdate,50);
 }
 
@@ -1623,7 +1626,7 @@ function budgetSaveDebt(di){
   if(!nombre){
     nombreEl.style.borderColor='#c0392b';
     nombreEl.style.background='rgba(192,57,43,0.06)';
-    nombreEl.placeholder='⚠ Requerido';
+    nombreEl.placeholder='Requerido';
     nombreEl.focus();
     invalid=true;
   }
