@@ -296,7 +296,7 @@ function buildOv(){
     const fd=weekData.focusDone||{};
     [1,2,3].forEach(n=>{
       if(df[n]){
-        const isDone=fd[i+'_'+n]!==undefined||fd[String(i)+'_'+String(n)]!==undefined;
+        const isDone=fd[String(i)+'_'+String(n)]!==undefined;
         const el=document.createElement('div');
         el.className='wtsk'+(isDone?' done-task':'');
         el.textContent=df[n];
@@ -488,7 +488,7 @@ function renderBubbles(di){
   [1,2,3].forEach(n=>{
     if(f[n]){
       const b=document.createElement('div');
-      const isDone=!!(weekData.focusDone&&weekData.focusDone[di+'_'+n]!==undefined);
+      const isDone=!!(weekData.focusDone&&weekData.focusDone[String(di)+'_'+String(n)]!==undefined);
       b.className='fbub'+(isDone?' tachado':'');
       b.setAttribute('data-n',n);
       b.setAttribute('data-di',di);
@@ -508,9 +508,9 @@ function renderBubbles(di){
 
 function toggleFdone(num,di){
   if(!weekData.focusDone)weekData.focusDone={};
-  const k=di+'_'+num;
+  const k=String(di)+'_'+String(num);
   if(weekData.focusDone[k]!==undefined){delete weekData.focusDone[k];}
-  else{weekData.focusDone[k]=di;}
+  else{weekData.focusDone[k]=String(di);}
   saveDB();renderBubbles(di);
 }
 
@@ -2043,7 +2043,7 @@ function shareFocus(){
   let txt=(isEn()?'🎯 Focus — ':'🎯 Enfoque — ')+dateStr+'\n\n';
   const lines=[1,2,3].filter(n=>f[n]);
   if(lines.length){
-    lines.forEach(n=>{const done=!!(weekData.focusDone&&weekData.focusDone[di+'_'+n]!==undefined);txt+=(done?'✓ ':'• ')+f[n]+'\n';});
+    lines.forEach(n=>{const done=!!(weekData.focusDone&&weekData.focusDone[String(di)+'_'+String(n)]!==undefined);txt+=(done?'✓ ':'• ')+f[n]+'\n';});
   } else {
     txt+=(isEn()?'No focus set':'Sin enfoques aún');
   }
