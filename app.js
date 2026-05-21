@@ -682,6 +682,10 @@ let _gcalInitRetries=0;
 function initGCal(){
   if(typeof google==='undefined'){
     if(_gcalInitRetries++ < 20){setTimeout(initGCal,500);}
+    else{
+      const note=document.getElementById('gcal-note');
+      if(note)note.textContent='No se pudo cargar Google Calendar. Toca el botón para reconectar.';
+    }
     return;
   }
   tokenClient=google.accounts.oauth2.initTokenClient({
