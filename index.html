@@ -333,8 +333,8 @@
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;">
       <input id="qg-desc" type="text" placeholder="Descripción..." style="width:100%;padding:12px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')document.getElementById('qg-cat').focus()">
-      <input id="qg-cat" list="qg-cat-list" placeholder="Categoría..." style="width:100%;padding:11px 10px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')document.getElementById('qg-pago').focus()">
-      <datalist id="qg-cat-list"></datalist>
+      <select id="qg-cat" style="width:100%;padding:11px 10px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px;" onchange="qgToggleNewCat(this.value)"></select>
+      <input id="qg-cat-new" type="text" placeholder="Nueva categoría..." style="display:none;width:100%;padding:11px 10px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')quickGastoAdd()">
       <div style="display:flex;gap:8px;">
         <select id="qg-pago" style="flex:1.5;padding:11px 10px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px;"></select>
         <input id="qg-monto" type="number" placeholder="$0" style="flex:1;padding:11px 10px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')quickGastoAdd()">
