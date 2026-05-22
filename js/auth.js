@@ -129,10 +129,8 @@ async function signInEmail(){
   }
   try{
     const remember=document.getElementById('remember-me')?.checked!==false;
-    const persistence=remember
-      ?firebase.auth.Auth.Persistence.LOCAL
-      :firebase.auth.Auth.Persistence.SESSION;
-    await auth.setPersistence(persistence);
+    localStorage.setItem('wp_remember',remember?'1':'0');
+    await auth.setPersistence(remember?firebase.auth.Auth.Persistence.LOCAL:firebase.auth.Auth.Persistence.SESSION);
     await auth.signInWithEmailAndPassword(email,pass);
     if(err)err.style.display='none';
   }catch(e){
@@ -164,6 +162,9 @@ function signOut(){
 // ── MAIN INIT ──────────────────────────────
 (function(){
   initFirebase();
+  // Set persistence at startup from saved preference — avoids blocking login
+  const rememberPref=localStorage.getItem('wp_remember')!=='0';
+  auth.setPersistence(rememberPref?firebase.auth.Auth.Persistence.LOCAL:firebase.auth.Auth.Persistence.SESSION);
   document.getElementById('login-screen').style.display='flex';
   document.querySelector('.db').style.display='none';
   applyLoginLang();
