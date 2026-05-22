@@ -8,6 +8,7 @@ function applyLoginLang(){
   if(b('login-pass'))b('login-pass').placeholder=en?'Password':'Contraseña';
   if(b('login-btn'))b('login-btn').textContent=en?'Sign in':'Entrar';
   if(b('login-forgot-btn'))b('login-forgot-btn').textContent=en?'Forgot my password':'Olvidé mi contraseña';
+  if(b('remember-me-lbl'))b('remember-me-lbl').textContent=en?'Remember me':'Recuérdame';
   if(b('login-privacy'))b('login-privacy').textContent=en?'Your data is private and only you can see it.':'Tus datos son privados y solo tú puedes verlos.';
   if(b('login-signup-prompt'))b('login-signup-prompt').textContent=en?"Don't have an account yet?":'¿Aún no tienes cuenta?';
   if(b('login-buy-link'))b('login-buy-link').textContent=en?'Buy access →':'Comprar acceso →';
@@ -28,6 +29,11 @@ async function signInEmail(){
     return;
   }
   try{
+    const remember=document.getElementById('remember-me')?.checked!==false;
+    const persistence=remember
+      ?firebase.auth.Auth.Persistence.LOCAL
+      :firebase.auth.Auth.Persistence.SESSION;
+    await auth.setPersistence(persistence);
     await auth.signInWithEmailAndPassword(email,pass);
     if(err)err.style.display='none';
   }catch(e){
