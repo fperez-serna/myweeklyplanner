@@ -169,7 +169,18 @@ function signOut(){
 
       document.getElementById('login-screen').style.display='none';
 
-      // Load all Firebase data in background regardless of which screen shows
+      // Mostrar pantalla inmediatamente — no esperar a Firebase
+      const isMobile=window.innerWidth<=768;
+      const neverShow=localStorage.getItem('wp_never_quick_gasto')==='1';
+      const quickGastoEnabled=setupCfg.features?.quickGasto!==false;
+
+      if(isMobile&&quickGastoEnabled&&!neverShow){
+        showQuickGasto();
+      } else {
+        launchFullApp();
+      }
+
+      // Cargar Firebase en background sin bloquear la UI
       document.getElementById('ev-date').value=dk(today);
       try{
         await loadDB();
@@ -187,17 +198,6 @@ function signOut(){
       }
       fetchGCal();
       initGCal();
-
-      // Decide which screen to show
-      const isMobile=window.innerWidth<=768;
-      const neverShow=localStorage.getItem('wp_never_quick_gasto')==='1';
-      const quickGastoEnabled=setupCfg.features?.quickGasto!==false;
-
-      if(isMobile&&quickGastoEnabled&&!neverShow){
-        showQuickGasto();
-      } else {
-        launchFullApp();
-      }
     } else {
       document.getElementById('login-screen').style.display='flex';
       document.querySelector('.db').style.display='none';
