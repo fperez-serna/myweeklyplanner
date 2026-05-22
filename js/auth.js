@@ -26,15 +26,14 @@ function showQuickGasto(){
   if(b('qg-full-btn'))b('qg-full-btn').textContent=es?'Ver semana completa →':'Open full app →';
   if(b('qg-never-lbl'))b('qg-never-lbl').textContent=es?'Nunca más mostrar esta pantalla':'Never show this screen again';
 
-  // Categorías
-  const catSel=b('qg-cat');
-  if(catSel){
+  // Categorías — datalist con sugerencias
+  const catList=b('qg-cat-list');
+  if(catList){
     const cats=(setupCfg.gastoCats&&setupCfg.gastoCats.length)?setupCfg.gastoCats:DEFAULT_GASTOS;
-    const otroLabel=es?'Otro...':'Other...';
-    catSel.innerHTML=cats.map(c=>`<option>${c}</option>`).join('')+`<option value="__new__">${otroLabel}</option>`;
+    catList.innerHTML=cats.map(c=>`<option value="${c}">`).join('');
   }
-  const newCatEl=b('qg-cat-new');
-  if(newCatEl){newCatEl.style.display='none';newCatEl.value='';}
+  const catInp=b('qg-cat');
+  if(catInp){catInp.placeholder=es?'Categoría...':'Category...';catInp.value='';}
 
   // Métodos de pago (igual que el formulario principal)
   const pagoSel=b('qg-pago');
@@ -62,18 +61,9 @@ function qgUpdateTotal(){
   totalEl.textContent=`${es?'Total semana':'Week total'}: $${total.toLocaleString()}`;
 }
 
-function qgToggleNewCat(val){
-  const inp=document.getElementById('qg-cat-new');
-  if(!inp)return;
-  inp.style.display=val==='__new__'?'block':'none';
-  if(val==='__new__')setTimeout(()=>inp.focus(),50);
-}
-
 function quickGastoAdd(){
   const desc=document.getElementById('qg-desc')?.value.trim();
-  const catSel=document.getElementById('qg-cat');
-  const catNew=document.getElementById('qg-cat-new')?.value.trim();
-  const cat=(catSel?.value==='__new__'&&catNew)?catNew:(catSel?.value||'Otro');
+  const cat=document.getElementById('qg-cat')?.value.trim()||'Otro';
   const pagoCon=document.getElementById('qg-pago')?.value||'Efectivo';
   const monto=parseFloat(document.getElementById('qg-monto')?.value);
   if(!desc||!monto||monto<=0){
