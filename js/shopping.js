@@ -2,7 +2,7 @@
 function renderSh(){
   const shAll=document.getElementById('sh-all');
   if(!shAll)return;
-  const cats=setupCfg.shopCats||DEFAULT_SHOP;
+  const cats=(setupCfg.shopCats&&setupCfg.shopCats.length)?setupCfg.shopCats:DEFAULT_SHOP;
   // Rebuild entire shopping DOM every time for reliability
   shAll.innerHTML='';
   cats.forEach((catName,idx)=>{

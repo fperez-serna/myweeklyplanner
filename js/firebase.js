@@ -51,7 +51,7 @@ async function loadShoppingDB(){
   if(!db)return;
   try{
     const snap=await userCol().doc('shopping').get();
-    const cats=setupCfg.shopCats||DEFAULT_SHOP;
+    const cats=(setupCfg.shopCats&&setupCfg.shopCats.length)?setupCfg.shopCats:DEFAULT_SHOP;
     cats.forEach((_,i)=>{if(!shoppingItems['cat'+i])shoppingItems['cat'+i]=[];});
     if(snap.exists){
       const data=snap.data();

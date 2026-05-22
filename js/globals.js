@@ -24,7 +24,7 @@ const deletedGCalIds=new Set(); // track locally deleted events so fetchGCal doe
 let gcalToken=null;
 let shoppingItems={};
 function initShoppingItems(){
-  const cats=setupCfg.shopCats||DEFAULT_SHOP;
+  const cats=(setupCfg.shopCats&&setupCfg.shopCats.length)?setupCfg.shopCats:DEFAULT_SHOP;
   cats.forEach((cat,idx)=>{
     const key='cat'+idx;
     if(!shoppingItems[key])shoppingItems[key]=[];
