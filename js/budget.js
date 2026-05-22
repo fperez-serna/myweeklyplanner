@@ -215,7 +215,7 @@ async function budgetExportPDF(){
     let gName=clean(group.name).toUpperCase();
     while(pdf.getTextWidth(gName+'...')>_maxNameW&&gName.length>1)gName=gName.slice(0,-1);
     pdf.text(gName+(gName!==clean(group.name).toUpperCase()?'...':''),13,y+4.5);
-    pdf.text(_rightTxt,200,y+4.5,{align:'right'});
+    pdf.text(_rightTxt,196,y+4.5,{align:'right'});
     y+=13;
     // Col headers
     pdf.setFontSize(7);pdf.setFont('helvetica','normal');pdf.setTextColor(...grayC);
