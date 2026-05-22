@@ -332,14 +332,16 @@
       <p id="qg-sub" style="font-size:12px;color:var(--text3);">Registra rápido y sigue con tu día</p>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;">
-      <input id="qg-desc" type="text" placeholder="Descripción..." style="width:100%;padding:12px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')document.getElementById('qg-monto').focus()">
+      <input id="qg-desc" type="text" placeholder="Descripción..." style="width:100%;padding:12px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')document.getElementById('qg-cat').focus()">
+      <select id="qg-cat" style="width:100%;padding:11px 10px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px;"></select>
       <div style="display:flex;gap:8px;">
-        <select id="qg-cat" style="flex:2;padding:11px 10px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px;"></select>
+        <select id="qg-pago" style="flex:1.5;padding:11px 10px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px;"></select>
         <input id="qg-monto" type="number" placeholder="$0" style="flex:1;padding:11px 10px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')quickGastoAdd()">
       </div>
       <button onclick="quickGastoAdd()" style="width:100%;padding:13px;border-radius:12px;border:none;background:var(--mauve);color:#fff;font-size:14px;font-weight:500;cursor:pointer;" id="qg-btn">+ Agregar gasto</button>
     </div>
     <div id="qg-confirm" style="display:none;text-align:center;padding:12px;font-size:13px;color:var(--mauve);font-weight:500;"></div>
+    <div id="qg-total" style="text-align:center;padding:8px;font-size:13px;color:var(--text3);"></div>
     <div style="margin-top:2rem;text-align:center;border-top:0.5px solid var(--border);padding-top:1.5rem;">
       <button onclick="quickGastoGoFull(false)" style="background:none;border:none;color:var(--text2);font-size:13px;cursor:pointer;text-decoration:underline;" id="qg-full-btn">Ver semana completa →</button>
       <label style="display:flex;align-items:center;justify-content:center;gap:7px;margin-top:12px;font-size:11px;color:var(--text3);cursor:pointer;">

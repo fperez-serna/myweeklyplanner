@@ -26,17 +26,43 @@ function showQuickGasto(){
   if(b('qg-full-btn'))b('qg-full-btn').textContent=es?'Ver semana completa →':'Open full app →';
   if(b('qg-never-lbl'))b('qg-never-lbl').textContent=es?'Nunca más mostrar esta pantalla':'Never show this screen again';
 
+  // Categorías
   const catSel=b('qg-cat');
   if(catSel){
     const cats=setupCfg.gastoCats||['Restaurante','Supermercado','Transporte','Ejercicio','Casa','Otro'];
     catSel.innerHTML=cats.map(c=>`<option>${c}</option>`).join('');
   }
+
+  // Métodos de pago (igual que el formulario principal)
+  const pagoSel=b('qg-pago');
+  if(pagoSel){
+    pagoSel.innerHTML=`<option value="Efectivo">${es?'Efectivo':'Cash'}</option><option value="Débito">${es?'Débito':'Debit'}</option>`;
+    (budgetData?.debts||[]).filter(d=>d.tipo==='tarjeta').forEach(d=>{
+      const opt=document.createElement('option');
+      opt.value=d.nombre;opt.textContent=d.nombre;
+      pagoSel.appendChild(opt);
+    });
+  }
+
+  qgUpdateTotal();
   setTimeout(()=>b('qg-desc')?.focus(),300);
+}
+
+function qgUpdateTotal(){
+  const totalEl=document.getElementById('qg-total');
+  if(!totalEl)return;
+  const es=!isEn();
+  let total=0;
+  for(let i=0;i<7;i++){
+    (weekData.gastos?.[i]||[]).forEach(g=>total+=g.monto||0);
+  }
+  totalEl.textContent=`${es?'Total semana':'Week total'}: $${total.toLocaleString()}`;
 }
 
 function quickGastoAdd(){
   const desc=document.getElementById('qg-desc')?.value.trim();
   const cat=document.getElementById('qg-cat')?.value||'Otro';
+  const pagoCon=document.getElementById('qg-pago')?.value||'Efectivo';
   const monto=parseFloat(document.getElementById('qg-monto')?.value);
   if(!desc||!monto||monto<=0){
     if(!desc)document.getElementById('qg-desc')?.focus();
@@ -45,8 +71,9 @@ function quickGastoAdd(){
   const di=dayIdx();
   if(!weekData.gastos)weekData.gastos={};
   if(!weekData.gastos[di])weekData.gastos[di]=[];
-  weekData.gastos[di].push({desc,cat,monto,pagoCon:'Efectivo'});
+  weekData.gastos[di].push({desc,cat,monto,pagoCon});
   saveDB();
+  qgUpdateTotal();
 
   const confirm=document.getElementById('qg-confirm');
   if(confirm){
