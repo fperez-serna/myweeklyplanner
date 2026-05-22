@@ -109,6 +109,10 @@ function subscribeConfig(){
           setupCfg={...setupCfg,...remoteCfg};
           localStorage.setItem('wp_config',JSON.stringify(setupCfg));
           applyConfig(setupCfg);
+          const setupOpen=document.getElementById('setup-screen')?.style.display!=='none';
+          if(setupOpen)initSetupChips();
+          const qgOpen=document.getElementById('quick-gasto-screen')?.style.display==='flex';
+          if(qgOpen&&typeof showQuickGasto==='function')showQuickGasto();
         }
       }
     }catch(e){console.error('subscribeConfig handler error:',e);}

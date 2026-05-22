@@ -29,9 +29,12 @@ function showQuickGasto(){
   // Categorías
   const catSel=b('qg-cat');
   if(catSel){
-    const cats=setupCfg.gastoCats||['Restaurante','Supermercado','Transporte','Ejercicio','Casa','Otro'];
-    catSel.innerHTML=cats.map(c=>`<option>${c}</option>`).join('');
+    const cats=(setupCfg.gastoCats&&setupCfg.gastoCats.length)?setupCfg.gastoCats:DEFAULT_GASTOS;
+    const otroLabel=es?'Otro...':'Other...';
+    catSel.innerHTML=cats.map(c=>`<option>${c}</option>`).join('')+`<option value="__new__">${otroLabel}</option>`;
   }
+  const newCatEl=b('qg-cat-new');
+  if(newCatEl){newCatEl.style.display='none';newCatEl.value='';}
 
   // Métodos de pago (igual que el formulario principal)
   const pagoSel=b('qg-pago');
@@ -59,9 +62,18 @@ function qgUpdateTotal(){
   totalEl.textContent=`${es?'Total semana':'Week total'}: $${total.toLocaleString()}`;
 }
 
+function qgToggleNewCat(val){
+  const inp=document.getElementById('qg-cat-new');
+  if(!inp)return;
+  inp.style.display=val==='__new__'?'block':'none';
+  if(val==='__new__')setTimeout(()=>inp.focus(),50);
+}
+
 function quickGastoAdd(){
   const desc=document.getElementById('qg-desc')?.value.trim();
-  const cat=document.getElementById('qg-cat')?.value||'Otro';
+  const catSel=document.getElementById('qg-cat');
+  const catNew=document.getElementById('qg-cat-new')?.value.trim();
+  const cat=(catSel?.value==='__new__'&&catNew)?catNew:(catSel?.value||'Otro');
   const pagoCon=document.getElementById('qg-pago')?.value||'Efectivo';
   const monto=parseFloat(document.getElementById('qg-monto')?.value);
   if(!desc||!monto||monto<=0){
