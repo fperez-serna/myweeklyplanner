@@ -22,12 +22,16 @@ function initFirebase(){
   }
 }
 
+let _saveDBTimer=null;
 async function saveDB(){
   if(!db)return;
-  // Safety: only skip if weekData is null/undefined (not just empty)
   if(weekData===null||weekData===undefined){console.warn('saveDB: skipped null data');return;}
-  try{await userCol().doc(wid()).set(weekData);showSync();}
-  catch(e){console.error('Save error:',e);if(e.code!=='unavailable')showToast(isEn()?'Could not save. Check your connection.':'No se pudo guardar. Verifica tu conexión.');}
+  // Debounce — espera 500ms antes de guardar para agrupar cambios rápidos
+  clearTimeout(_saveDBTimer);
+  _saveDBTimer=setTimeout(async()=>{
+    try{await userCol().doc(wid()).set(weekData);showSync();}
+    catch(e){console.error('Save error:',e);if(e.code!=='unavailable')showToast(isEn()?'Could not save. Check your connection.':'No se pudo guardar. Verifica tu conexión.');}
+  },500);
 }
 
 let _shSaving=false;
