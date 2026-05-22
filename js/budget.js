@@ -128,6 +128,13 @@ async function budgetExportPDF(){
   const fmt=n=>'$'+(Math.round(n)||0).toLocaleString();
   const pw=190; // page width usable
   let y=10;
+  const COL={presupR:130,actualR:158,rubroR:200,presupW:28,actualW:28,rubroW:35};
+  const fitNum=(text,colW)=>{
+    const orig=pdf.getFontSize();
+    let sz=orig;
+    while(pdf.getTextWidth(text)>colW&&sz>7){sz-=0.5;pdf.setFontSize(sz);}
+    return orig;
+  };
 
   // Colors
   const mauveC=[171,130,130];
@@ -203,9 +210,13 @@ async function budgetExportPDF(){
     // Group header
     pdf.setFillColor(...mauveC);pdf.roundedRect(10,y,pw,7,1,1,'F');
     pdf.setFontSize(8);pdf.setFont('helvetica','bold');pdf.setTextColor(255,255,255);
-    pdf.text(clean(group.name).toUpperCase(),13,y+4.5);
-    pdf.text(fmt(gActual)+' / '+fmt(gPresup),200,y+4.5,{align:'right'});
-    y+=9;
+    const _rightTxt=fmt(gActual)+' / '+fmt(gPresup);
+    const _maxNameW=pw-pdf.getTextWidth(_rightTxt)-8;
+    let gName=clean(group.name).toUpperCase();
+    while(pdf.getTextWidth(gName+'…')>_maxNameW&&gName.length>1)gName=gName.slice(0,-1);
+    pdf.text(gName+(gName!==clean(group.name).toUpperCase()?'…':''),13,y+4.5);
+    pdf.text(_rightTxt,200,y+4.5,{align:'right'});
+    y+=13;
     // Col headers
     pdf.setFontSize(7);pdf.setFont('helvetica','normal');pdf.setTextColor(...grayC);
     pdf.text(es?'Subcategoría':'Subcategory',13,y);
@@ -222,10 +233,9 @@ async function budgetExportPDF(){
       if(ok){pdf.setDrawColor(...tealC);pdf.line(13,y+0.5,13+pdf.getTextWidth(clean(sub.name)),y+0.5);}
       if(over){pdf.setDrawColor(192,57,43);pdf.line(13,y+0.5,13+pdf.getTextWidth(clean(sub.name)),y+0.5);}
       pdf.text(clean(sub.name),13,y);
-      pdf.text(fmt(sub.presup),130,y,{align:'right'});
-      pdf.text(fmt(sub.actual),158,y,{align:'right'});
-      pdf.setFontSize(7);pdf.setTextColor(...grayC);
-      pdf.text(clean(sub.rubro||'—'),200,y,{align:'right'});
+      const _pTxt=fmt(sub.presup);const _pOrig=fitNum(_pTxt,COL.presupW);pdf.setTextColor(...darkC);pdf.text(_pTxt,COL.presupR,y,{align:'right'});pdf.setFontSize(_pOrig);
+      const _aTxt=fmt(sub.actual);const _aOrig=fitNum(_aTxt,COL.actualW);pdf.setTextColor(...darkC);pdf.text(_aTxt,COL.actualR,y,{align:'right'});pdf.setFontSize(_aOrig);
+      const _rTxt=clean(sub.rubro||'—');pdf.setFontSize(7);pdf.setTextColor(...grayC);fitNum(_rTxt,COL.rubroW);pdf.text(_rTxt,COL.rubroR,y,{align:'right'});pdf.setFontSize(8);
       y+=5;
     });
     y+=3;
