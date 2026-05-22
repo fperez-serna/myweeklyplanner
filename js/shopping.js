@@ -35,6 +35,7 @@ function renderSh(){
 function togShCat(cat,i){
   if(!shoppingItems[cat])return;
   shoppingItems[cat][i].done=!shoppingItems[cat][i].done;
+  shoppingItems[cat].sort((a,b)=>(a.done?1:0)-(b.done?1:0));
   saveShoppingDB();renderSh();
 }
 function delShCat(cat,i){
