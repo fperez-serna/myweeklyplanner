@@ -196,12 +196,20 @@ function signOut(){
 
       document.getElementById('login-screen').style.display='none';
 
-      // Mostrar pantalla inmediatamente — no esperar a Firebase
       const isMobile=window.innerWidth<=768;
       const neverShow=localStorage.getItem('wp_never_quick_gasto')==='1';
       const quickGastoEnabled=setupCfg.features?.quickGasto!==false;
 
       if(isMobile&&quickGastoEnabled&&!neverShow){
+        // Pre-cargar config y tarjetas antes de mostrar el widget (dos lecturas rápidas en paralelo)
+        try{
+          const [cfgSnap,budSnap]=await Promise.all([
+            userCol().doc('config').get(),
+            userCol().doc('budget_config').get(),
+          ]);
+          if(cfgSnap.exists)Object.assign(setupCfg,cfgSnap.data());
+          if(budSnap.exists&&budSnap.data().debts)budgetData.debts=budSnap.data().debts;
+        }catch(e){}
         showQuickGasto();
       } else {
         launchFullApp();
