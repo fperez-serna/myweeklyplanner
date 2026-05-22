@@ -289,7 +289,7 @@ const DEFAULT_GASTOS=['🍽 Restaurante','🛒 Supermercado','🎬 Entretenimien
 
 let setupCfg={
   name:'',lang:'es',currency:'MXN',palette:'forest',
-  features:{quotes:true,gcal:true,weather:true,gastos:true},
+  features:{quotes:true,gcal:true,weather:true,gastos:true,quickGasto:true},
   workouts:[],
   habitos:[],
   shopCats:[],
@@ -424,6 +424,8 @@ const SETUP_T={
     weatherSub:'Temperatura y pronóstico',
     gastos:'Widget de gastos',
     gastosSub:'Registro y totales semanales',
+    quickGasto:'Gasto rápido en móvil',
+    quickGastoSub:'Pantalla de acceso directo al abrir en celular',
     workouts:'Workouts',
     woAdd:'Agregar workout...',
     habitos:'Hábitos',
@@ -455,6 +457,8 @@ const SETUP_T={
     weatherSub:'Temperature and forecast',
     gastos:'Expenses widget',
     gastosSub:'Weekly records and totals',
+    quickGasto:'Quick expense on mobile',
+    quickGastoSub:'Direct access screen when opening on phone',
     workouts:'Workouts',
     woAdd:'Add workout...',
     habitos:'Habits',
@@ -493,8 +497,8 @@ function translateSetup(lang){
   // Toggle labels
   const toggleNames=document.querySelectorAll('#setup-screen .toggle-name');
   const toggleSubs=document.querySelectorAll('#setup-screen .toggle-sub');
-  const tNames=[t.quotes,t.gcal,t.weather,t.gastos];
-  const tSubs=[t.quotesSub,t.gcalSub,t.weatherSub,t.gastosSub];
+  const tNames=[t.quotes,t.gcal,t.weather,t.gastos,t.quickGasto];
+  const tSubs=[t.quotesSub,t.gcalSub,t.weatherSub,t.gastosSub,t.quickGastoSub];
   toggleNames.forEach((el,i)=>{if(tNames[i])el.textContent=tNames[i];});
   toggleSubs.forEach((el,i)=>{if(tSubs[i])el.textContent=tSubs[i];});
   // Input placeholders for chips
@@ -617,6 +621,12 @@ function openSettings(){
       e.classList.toggle('active',e.dataset.pal===cfg.palette);
     });
   }
+  // Sync feature toggle states
+  const featureToggles={quotes:'tog-quotes',gcal:'tog-gcal',weather:'tog-weather',gastos:'tog-gastos',quickGasto:'tog-quickgasto'};
+  Object.entries(featureToggles).forEach(([key,id])=>{
+    const el=document.getElementById(id);
+    if(el)el.classList.toggle('active',(cfg.features||{})[key]!==false);
+  });
   document.getElementById('setup-screen').style.display='block';
 }
 

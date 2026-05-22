@@ -167,6 +167,13 @@
         </div>
         <div class="tog active" id="tog-gastos" onclick="toggleCfg(this,'gastos')"></div>
       </div>
+      <div class="toggle-item">
+        <div>
+          <div class="toggle-name" id="tog-quickgasto-name">Gasto rápido en móvil</div>
+          <div class="toggle-sub" id="tog-quickgasto-sub">Pantalla de acceso directo al abrir en celular</div>
+        </div>
+        <div class="tog active" id="tog-quickgasto" onclick="toggleCfg(this,'quickGasto')"></div>
+      </div>
     </div>
 
     <!-- PASO 4: Workouts -->
@@ -313,6 +320,33 @@
     <button id="logout-btn" onclick="signOut()" style="display:none;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#999;font-size:11px;">
       <i data-lucide="log-out" style="width:22px;height:22px;stroke:#999;stroke-width:1.75;"></i><span style="font-size:11px;" id="bar-lbl-logout">Salir</span>
     </button>
+  </div>
+</div>
+
+<!-- QUICK GASTO WIDGET (móvil) -->
+<div id="quick-gasto-screen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9998;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem;">
+  <div style="width:100%;max-width:340px;">
+    <div style="text-align:center;margin-bottom:2rem;">
+      <i data-lucide="receipt" style="width:32px;height:32px;color:var(--mauve);margin-bottom:10px;display:block;margin-left:auto;margin-right:auto;"></i>
+      <h2 id="qg-title" style="font-size:20px;font-weight:500;color:var(--text);margin-bottom:4px;">Agregar gasto</h2>
+      <p id="qg-sub" style="font-size:12px;color:var(--text3);">Registra rápido y sigue con tu día</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <input id="qg-desc" type="text" placeholder="Descripción..." style="width:100%;padding:12px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')document.getElementById('qg-monto').focus()">
+      <div style="display:flex;gap:8px;">
+        <select id="qg-cat" style="flex:2;padding:11px 10px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px;"></select>
+        <input id="qg-monto" type="number" placeholder="$0" style="flex:1;padding:11px 10px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')quickGastoAdd()">
+      </div>
+      <button onclick="quickGastoAdd()" style="width:100%;padding:13px;border-radius:12px;border:none;background:var(--mauve);color:#fff;font-size:14px;font-weight:500;cursor:pointer;" id="qg-btn">+ Agregar gasto</button>
+    </div>
+    <div id="qg-confirm" style="display:none;text-align:center;padding:12px;font-size:13px;color:var(--mauve);font-weight:500;"></div>
+    <div style="margin-top:2rem;text-align:center;border-top:0.5px solid var(--border);padding-top:1.5rem;">
+      <button onclick="quickGastoGoFull(false)" style="background:none;border:none;color:var(--text2);font-size:13px;cursor:pointer;text-decoration:underline;" id="qg-full-btn">Ver semana completa →</button>
+      <label style="display:flex;align-items:center;justify-content:center;gap:7px;margin-top:12px;font-size:11px;color:var(--text3);cursor:pointer;">
+        <input type="checkbox" id="qg-never" style="accent-color:var(--mauve);cursor:pointer;">
+        <span id="qg-never-lbl">Nunca más mostrar esta pantalla</span>
+      </label>
+    </div>
   </div>
 </div>
 

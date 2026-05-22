@@ -1,3 +1,73 @@
+// ── QUICK GASTO WIDGET ─────────────────────
+function launchFullApp(){
+  document.querySelector('.db').style.display='';
+  document.getElementById('settings-btn-wrap').style.display='flex';
+  document.getElementById('logout-btn').style.display='block';
+  const qs=document.getElementById('quick-gasto-screen');
+  if(qs)qs.style.display='none';
+  initApp();
+  renderDay();
+  buildCalendar();
+  setTimeout(()=>{showQ(QS[qcur]);fetchWeather();},200);
+  renderSh();
+}
+
+function showQuickGasto(){
+  const screen=document.getElementById('quick-gasto-screen');
+  if(!screen)return launchFullApp();
+  screen.style.display='flex';
+  if(typeof lucide!=='undefined')lucide.createIcons();
+
+  const es=!isEn();
+  const b=id=>document.getElementById(id);
+  if(b('qg-title'))b('qg-title').textContent=es?'Agregar gasto':'Add expense';
+  if(b('qg-sub'))b('qg-sub').textContent=es?'Registra rápido y sigue con tu día':'Log it fast and get on with your day';
+  if(b('qg-btn'))b('qg-btn').textContent=es?'+ Agregar gasto':'+ Add expense';
+  if(b('qg-full-btn'))b('qg-full-btn').textContent=es?'Ver semana completa →':'Open full app →';
+  if(b('qg-never-lbl'))b('qg-never-lbl').textContent=es?'Nunca más mostrar esta pantalla':'Never show this screen again';
+
+  const catSel=b('qg-cat');
+  if(catSel){
+    const cats=setupCfg.gastoCats||['Restaurante','Supermercado','Transporte','Ejercicio','Casa','Otro'];
+    catSel.innerHTML=cats.map(c=>`<option>${c}</option>`).join('');
+  }
+  setTimeout(()=>b('qg-desc')?.focus(),300);
+}
+
+function quickGastoAdd(){
+  const desc=document.getElementById('qg-desc')?.value.trim();
+  const cat=document.getElementById('qg-cat')?.value||'Otro';
+  const monto=parseFloat(document.getElementById('qg-monto')?.value);
+  if(!desc||!monto||monto<=0){
+    if(!desc)document.getElementById('qg-desc')?.focus();
+    return;
+  }
+  const di=dayIdx();
+  if(!weekData.gastos)weekData.gastos={};
+  if(!weekData.gastos[di])weekData.gastos[di]=[];
+  weekData.gastos[di].push({desc,cat,monto,pagoCon:'Efectivo'});
+  saveDB();
+
+  const confirm=document.getElementById('qg-confirm');
+  if(confirm){
+    const es=!isEn();
+    confirm.textContent=es?`Listo — $${monto.toLocaleString()} registrado`:`Done — $${monto.toLocaleString()} logged`;
+    confirm.style.display='block';
+    setTimeout(()=>confirm.style.display='none',2000);
+  }
+  document.getElementById('qg-desc').value='';
+  document.getElementById('qg-monto').value='';
+  document.getElementById('qg-desc')?.focus();
+}
+
+function quickGastoGoFull(fromBtn=true){
+  const neverCb=document.getElementById('qg-never');
+  if(neverCb?.checked){
+    localStorage.setItem('wp_never_quick_gasto','1');
+  }
+  launchFullApp();
+}
+
 // ── AUTH ───────────────────────────────────
 let loginLang=localStorage.getItem('wp_login_lang')||'es';
 function applyLoginLang(){
@@ -98,11 +168,8 @@ function signOut(){
       }
 
       document.getElementById('login-screen').style.display='none';
-      document.querySelector('.db').style.display='';
-      document.getElementById('settings-btn-wrap').style.display='flex';
-      document.getElementById('logout-btn').style.display='block';
 
-      initApp();
+      // Load all Firebase data in background regardless of which screen shows
       document.getElementById('ev-date').value=dk(today);
       try{
         await loadDB();
@@ -111,20 +178,26 @@ function signOut(){
         await loadAnnualData();
         applyConfig(setupCfg);
         applyLang(setupCfg.lang||'es');
-        renderDay();
-        buildCalendar();
-        setTimeout(()=>{showQ(QS[qcur]);fetchWeather();},200);
         subscribeDB();
-        setTimeout(()=>autoBackup(),3000); // run after everything loads
+        setTimeout(()=>autoBackup(),3000);
         subscribeShoppingDB();
         subscribeConfig();
       }catch(e){
         console.warn('Firebase error:',e);
-        renderDay();
-        renderSh();
       }
       fetchGCal();
       initGCal();
+
+      // Decide which screen to show
+      const isMobile=window.innerWidth<=768;
+      const neverShow=localStorage.getItem('wp_never_quick_gasto')==='1';
+      const quickGastoEnabled=setupCfg.features?.quickGasto!==false;
+
+      if(isMobile&&quickGastoEnabled&&!neverShow){
+        showQuickGasto();
+      } else {
+        launchFullApp();
+      }
     } else {
       document.getElementById('login-screen').style.display='flex';
       document.querySelector('.db').style.display='none';
