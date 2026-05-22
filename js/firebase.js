@@ -4,7 +4,19 @@ function initFirebase(){
   firebase.initializeApp(cfg);
   auth=firebase.auth();
   db=firebase.firestore();
-  // Initialize Functions with correct region
+
+  // Persistencia offline — Firestore cachea datos localmente y encola
+  // escrituras cuando no hay señal. Sincroniza automáticamente al reconectar.
+  db.enablePersistence({synchronizeTabs:true}).catch(err=>{
+    if(err.code==='failed-precondition'){
+      // Múltiples pestañas abiertas — solo una puede tener persistencia activa
+      console.warn('Offline persistence unavailable: multiple tabs open');
+    } else if(err.code==='unimplemented'){
+      // Navegador no soporta IndexedDB
+      console.warn('Offline persistence not supported in this browser');
+    }
+  });
+
   if(firebase.functions){
     window.fbFunctions=firebase.app().functions('us-central1');
   }
@@ -15,7 +27,7 @@ async function saveDB(){
   // Safety: only skip if weekData is null/undefined (not just empty)
   if(weekData===null||weekData===undefined){console.warn('saveDB: skipped null data');return;}
   try{await userCol().doc(wid()).set(weekData);showSync();}
-  catch(e){console.error('Save error:',e);}
+  catch(e){console.error('Save error:',e);if(e.code!=='unavailable')showToast(isEn()?'Could not save. Check your connection.':'No se pudo guardar. Verifica tu conexión.');}
 }
 
 let _shSaving=false;
