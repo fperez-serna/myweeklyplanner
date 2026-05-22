@@ -578,17 +578,7 @@
     <div class="report-nav">
       <button class="report-nav-btn" onclick="reportPrevMonth()">‹</button>
       <div class="report-month" id="report-month-lbl"></div>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <button class="report-nav-btn" onclick="reportNextMonth()" id="report-next-btn">›</button>
-        <button onclick="showExportMenu()" style="background:none;border:0.5px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer;color:var(--text2);display:flex;align-items:center;gap:4px;" title="Exportar">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-        </button>
-      </div>
-    </div>
-    <!-- Export menu -->
-    <div id="export-menu" style="display:none;position:absolute;top:56px;right:16px;background:var(--bg);border:0.5px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:10;overflow:hidden;">
-      <button onclick="exportPDF()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);" id="export-pdf-btn"><i data-lucide="file-text" style="width:15px;height:15px;flex-shrink:0;"></i>Descargar PDF</button>
-      <button onclick="exportImage()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 20px;border:none;background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--text);border-top:0.5px solid var(--border);" id="export-img-btn"><i data-lucide="image" style="width:15px;height:15px;flex-shrink:0;"></i>Descargar imagen</button>
+      <button class="report-nav-btn" onclick="reportNextMonth()" id="report-next-btn">›</button>
     </div>
     <div class="report-toggles">
       <div class="rtog on" data-key="gastos" onclick="toggleReportSection(this)" style="display:flex;align-items:center;gap:5px;"><i data-lucide="receipt" style="width:13px;height:13px;"></i>Gastos</div>
