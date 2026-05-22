@@ -213,8 +213,8 @@ async function budgetExportPDF(){
     const _rightTxt=fmt(gActual)+' / '+fmt(gPresup);
     const _maxNameW=pw-pdf.getTextWidth(_rightTxt)-8;
     let gName=clean(group.name).toUpperCase();
-    while(pdf.getTextWidth(gName+'…')>_maxNameW&&gName.length>1)gName=gName.slice(0,-1);
-    pdf.text(gName+(gName!==clean(group.name).toUpperCase()?'…':''),13,y+4.5);
+    while(pdf.getTextWidth(gName+'...')>_maxNameW&&gName.length>1)gName=gName.slice(0,-1);
+    pdf.text(gName+(gName!==clean(group.name).toUpperCase()?'...':''),13,y+4.5);
     pdf.text(_rightTxt,200,y+4.5,{align:'right'});
     y+=13;
     // Col headers
