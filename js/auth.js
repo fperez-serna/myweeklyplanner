@@ -201,13 +201,12 @@ function signOut(){
       const quickGastoEnabled=setupCfg.features?.quickGasto!==false;
 
       if(isMobile&&quickGastoEnabled&&!neverShow){
-        // Pre-cargar config y tarjetas antes de mostrar el widget (dos lecturas rápidas en paralelo)
+        // Leer config del localStorage (instantáneo, mismo dispositivo)
+        const savedCfg=localStorage.getItem('wp_config');
+        if(savedCfg)try{Object.assign(setupCfg,JSON.parse(savedCfg));}catch(e){}
+        // Pre-cargar tarjetas de crédito desde Firebase (una lectura rápida)
         try{
-          const [cfgSnap,budSnap]=await Promise.all([
-            userCol().doc('config').get(),
-            userCol().doc('budget_config').get(),
-          ]);
-          if(cfgSnap.exists)Object.assign(setupCfg,cfgSnap.data());
+          const budSnap=await userCol().doc('budget_config').get();
           if(budSnap.exists&&budSnap.data().debts)budgetData.debts=budSnap.data().debts;
         }catch(e){}
         showQuickGasto();
