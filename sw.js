@@ -1,4 +1,4 @@
-const CACHE_NAME = 'weekly-planner-v7';
+const CACHE_NAME = 'weekly-planner-v8';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
