@@ -96,19 +96,21 @@ async function fetchGCal(){
     gcalEvts={};
     (data.items||[]).forEach(ev=>{
       const start=ev.start.dateTime||ev.start.date;
-      const jd=new Date(start);
-      const key=dk(jd);
       const isAll=!ev.start.dateTime;
+      let jd;
+      if(isAll){const p=start.split('-');jd=new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));}
+      else{jd=new Date(start);}
+      const key=dk(jd);
       const h=jd.getHours();const mn=String(jd.getMinutes()).padStart(2,'0');
       const ap=h>=12?'PM':'AM';const h12=h===0?12:h>12?h-12:h;
       const ts=isAll?'Todo el día':h12+':'+mn+' '+ap;
-      let dur='';
+      let dur='';let mins=0;
       if(ev.start.dateTime&&ev.end&&ev.end.dateTime){
-        const mins=Math.round((new Date(ev.end.dateTime)-jd)/60000);
+        mins=Math.round((new Date(ev.end.dateTime)-jd)/60000);
         if(mins>0){const h=Math.floor(mins/60);const m=mins%60;dur=h&&m?h+'h '+m+'m':h?h+'h':m+'m';}
       }
       if(!gcalEvts[key])gcalEvts[key]=[];
-      if(!deletedGCalIds.has(ev.id)) gcalEvts[key].push({time:ts,title:ev.summary||'(sin título)',gcalId:ev.id,sort:jd.getTime(),durMins:mins||0});
+      if(!deletedGCalIds.has(ev.id)) gcalEvts[key].push({time:ts,title:ev.summary||'(sin título)',gcalId:ev.id,sort:jd.getTime(),durMins:mins});
     });
     Object.keys(gcalEvts).forEach(k=>gcalEvts[k].sort((a,b)=>a.sort-b.sort));
     renderEvts(dayIdx());buildOv();buildNav();
