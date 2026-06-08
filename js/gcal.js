@@ -62,10 +62,14 @@ function setGCalConnected(){
   btn.textContent='✓ Google Calendar';btn.classList.add('connected');
   const dis=document.getElementById('gcal-disconnect-btn');
   if(dis)dis.style.display='';
+  const hint=document.getElementById('gcal-pin-hint');
+  if(hint)hint.style.display='';
 }
 
 function disconnectGCal(){
   gcalToken=null;
+  const hint=document.getElementById('gcal-pin-hint');
+  if(hint)hint.style.display='none';
   localStorage.removeItem('gct');
   localStorage.removeItem('gct_exp');
   gcalEvts={};
