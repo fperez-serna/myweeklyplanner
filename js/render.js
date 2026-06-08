@@ -61,9 +61,21 @@ function buildOv(){
     });
     const gcalEvDay=gcalEvts[dk(d)]||[];
     const manualEvDay=dayEvts(i);
+    const pinnedTitles=new Set(manualEvDay.filter(e=>e.pinned).map(e=>e.title.toLowerCase()));
     const gcalTitlesOv=new Set(gcalEvDay.map(e=>e.title.toLowerCase()));
-    const evs=[...gcalEvDay,...manualEvDay.filter(e=>!gcalTitlesOv.has(e.title.toLowerCase()))];
-    evs.forEach(ev=>{const t=document.createElement('div');t.className='wtag wev';t.textContent=ev.title;col.appendChild(t);});
+    // GCal events — clickable to pin into local storage
+    gcalEvDay.forEach(ev=>{
+      const isPinned=pinnedTitles.has(ev.title.toLowerCase());
+      const t=document.createElement('div');
+      t.className='wtag wev'+(isPinned?' pinned':'');
+      t.textContent=ev.title;
+      t.title=isPinned?'Guardado en el planner':'Click para guardar en el planner';
+      t.onclick=()=>pinGCalEvent(i,ev);
+      col.appendChild(t);
+    });
+    // Manual events not already from GCal
+    manualEvDay.filter(e=>!e.pinned&&!gcalTitlesOv.has((e.title||'').toLowerCase()))
+      .forEach(ev=>{const t=document.createElement('div');t.className='wtag wev';t.textContent=ev.title;col.appendChild(t);});
     ov.appendChild(col);
   });
 }

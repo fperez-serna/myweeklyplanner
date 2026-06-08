@@ -161,6 +161,21 @@ async function createGCalEv(title,date,hour,min,ampm,durMins=60){
   }catch(e){console.error('createGCalEv error:',e);}
 }
 
+function pinGCalEvent(dayIndex, ev){
+  if(!weekData.events)weekData.events={};
+  if(!weekData.events[dayIndex])weekData.events[dayIndex]=[];
+  // Si ya está anclado, desanclar
+  const existing=weekData.events[dayIndex].findIndex(e=>e.pinned&&e.title.toLowerCase()===ev.title.toLowerCase());
+  if(existing>=0){
+    weekData.events[dayIndex].splice(existing,1);
+    saveDB();buildOv();
+    return;
+  }
+  // Anclar: copiar evento GCal a eventos locales con flag pinned
+  weekData.events[dayIndex].push({time:ev.time,title:ev.title,durMins:ev.durMins||0,pinned:true});
+  saveDB();buildOv();
+}
+
 // ── WEATHER ────────────────────────────────
 let _lastWeather=null;
 function renderWeatherDesc(code,temp,pre){
