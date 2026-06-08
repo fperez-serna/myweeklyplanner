@@ -172,7 +172,7 @@ function pinGCalEvent(dayIndex, ev){
     return;
   }
   // Anclar: copiar evento GCal a eventos locales con flag pinned
-  weekData.events[dayIndex].push({time:ev.time,title:ev.title,durMins:ev.durMins||0,pinned:true});
+  weekData.events[dayIndex].push({time:ev.time,title:ev.title,durMins:ev.durMins||0,pinned:true,sort:ev.sort||null});
   saveDB();buildOv();
 }
 
