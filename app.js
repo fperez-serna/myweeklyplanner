@@ -761,6 +761,15 @@ function disconnectGCal(){
 function handleGCal(){
   if(gcalToken){fetchGCal();}
   else if(tokenClient){tokenClient.requestAccessToken({prompt:'consent'});}
+  else{
+    // tokenClient aún no inicializado — esperar y reintentar una vez
+    const note=document.getElementById('gcal-note');
+    if(note)note.textContent='Conectando...';
+    setTimeout(()=>{
+      if(tokenClient)tokenClient.requestAccessToken({prompt:'consent'});
+      if(note)setTimeout(()=>{if(note.textContent==='Conectando...')note.textContent='';},3000);
+    },800);
+  }
 }
 
 async function fetchGCal(){
@@ -4811,6 +4820,13 @@ async function forgotPassword(){
 function signOut(){
   auth.signOut().then(()=>{
     currentUser=null;
+    // Limpiar estado de Google Calendar para la próxima sesión
+    gcalToken=null;
+    gcalEvts={};
+    const gcalBtn=document.getElementById('gcal-btn');
+    if(gcalBtn){gcalBtn.textContent='Conectar Google Calendar';gcalBtn.classList.remove('connected');}
+    const gcalDis=document.getElementById('gcal-disconnect-btn');
+    if(gcalDis)gcalDis.style.display='none';
     const wall=document.getElementById('payment-wall');
     if(wall)wall.remove();
     document.getElementById('login-screen').style.display='flex';
