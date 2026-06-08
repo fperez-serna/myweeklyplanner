@@ -91,7 +91,9 @@ async function fetchGCal(){
     const e=new Date(weekDays[6]);e.setHours(23,59,59,999);
     const url='https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin='+s.toISOString()+'&timeMax='+e.toISOString()+'&singleEvents=true&orderBy=startTime';
     const r=await fetch(url,{headers:{Authorization:'Bearer '+gcalToken}});
+    console.log('[GCal] fetch status:',r.status);
     if(r.status===401){gcalToken=null;localStorage.removeItem('gct');if(tokenClient)tokenClient.requestAccessToken({prompt:''});return;}
+    if(!r.ok){const err=await r.json();console.error('[GCal] API error:',err);throw new Error('API '+r.status);}
     const data=await r.json();
     gcalEvts={};
     (data.items||[]).forEach(ev=>{
@@ -117,7 +119,13 @@ async function fetchGCal(){
     document.getElementById('gcal-note').textContent='Google Calendar sincronizado ✓';
   }catch(e){
     console.error(e);
-    document.getElementById('gcal-note').textContent='Error al cargar calendario';
+    gcalToken=null;
+    localStorage.removeItem('gct');localStorage.removeItem('gct_exp');
+    document.getElementById('gcal-note').textContent='Error al cargar — toca Desconectar e intenta de nuevo';
+    const btn=document.getElementById('gcal-btn');
+    if(btn){btn.textContent='Conectar Google Calendar';btn.classList.remove('connected');}
+    const dis=document.getElementById('gcal-disconnect-btn');
+    if(dis)dis.style.display='';
   }
 }
 
