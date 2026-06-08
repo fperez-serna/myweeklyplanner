@@ -775,9 +775,12 @@ async function fetchGCal(){
     gcalEvts={};
     (data.items||[]).forEach(ev=>{
       const start=ev.start.dateTime||ev.start.date;
-      const jd=new Date(start);
-      const key=dk(jd);
       const isAll=!ev.start.dateTime;
+      // All-day events come as "YYYY-MM-DD" — parse as local date to avoid UTC offset shifting the day
+      let jd;
+      if(isAll){const p=start.split('-');jd=new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));}
+      else{jd=new Date(start);}
+      const key=dk(jd);
       const h=jd.getHours();const mn=String(jd.getMinutes()).padStart(2,'0');
       const ap=h>=12?'PM':'AM';const h12=h===0?12:h>12?h-12:h;
       const ts=isAll?'Todo el día':h12+':'+mn+' '+ap;
