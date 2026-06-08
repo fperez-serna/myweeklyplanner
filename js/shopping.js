@@ -64,6 +64,12 @@ function updateShCat(el){
     saveShoppingDB();
   }
 }
+function clearCheckedSh(){
+  Object.keys(shoppingItems).forEach(cat=>{
+    shoppingItems[cat]=shoppingItems[cat].filter(item=>!item.done);
+  });
+  saveShoppingDB();renderSh();
+}
 
 const GASTO_COLORS = {
   'Restaurante':    {bg:'#e8f0ef',color:'#2c5f5c',icon:'utensils'},
