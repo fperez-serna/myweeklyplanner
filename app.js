@@ -1656,9 +1656,19 @@ function renderChips(type,arr){
   arr.forEach((item,i)=>{
     const el=document.createElement('div');
     el.className='chip-item';
-    el.innerHTML=item+'<span class="chip-x" onclick="removeChip(\''+type+'\','+i+')">×</span>';
+    el.innerHTML='<span contenteditable="true" spellcheck="false" style="outline:none;" '+
+      'onblur="editChip(\''+type+'\','+i+',this)" '+
+      'onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}">'+item+'</span>'+
+      '<span class="chip-x" onclick="removeChip(\''+type+'\','+i+')">×</span>';
     wrap.appendChild(el);
   });
+}
+
+function editChip(type,i,el){
+  const arr={workout:setupCfg.workouts,habito:setupCfg.habitos,shop:setupCfg.shopCats,gasto:setupCfg.gastoCats}[type];
+  const v=el.textContent.trim();
+  if(v){arr[i]=v;saveConfigToFirebase();}
+  else{removeChip(type,i);}
 }
 
 function addChip(type){
