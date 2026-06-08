@@ -61,21 +61,25 @@ function buildOv(){
     });
     const gcalEvDay=gcalEvts[dk(d)]||[];
     const manualEvDay=dayEvts(i);
-    const pinnedTitles=new Set(manualEvDay.filter(e=>e.pinned).map(e=>e.title.toLowerCase()));
-    const gcalTitlesOv=new Set(gcalEvDay.map(e=>e.title.toLowerCase()));
-    // GCal events — clickable to pin into local storage
-    gcalEvDay.forEach(ev=>{
-      const isPinned=pinnedTitles.has(ev.title.toLowerCase());
+    const manualTitles=new Set(manualEvDay.map(e=>(e.title||'').toLowerCase()));
+    const gcalTitles=new Set(gcalEvDay.map(e=>e.title.toLowerCase()));
+    // 1. Manual events siempre visibles (pinned en teal, normales en gris)
+    manualEvDay.forEach(ev=>{
       const t=document.createElement('div');
-      t.className='wtag wev'+(isPinned?' pinned':'');
+      t.className='wtag wev'+(ev.pinned?' pinned':'');
       t.textContent=ev.title;
-      t.title=isPinned?'Guardado en el planner':'Click para guardar en el planner';
+      if(ev.pinned){t.title='Click para desanclar';t.onclick=()=>pinGCalEvent(i,ev);}
+      col.appendChild(t);
+    });
+    // 2. Eventos GCal que no están ya en manual — solo cuando GCal conectado
+    gcalEvDay.filter(e=>!manualTitles.has(e.title.toLowerCase())).forEach(ev=>{
+      const t=document.createElement('div');
+      t.className='wtag wev';
+      t.textContent=ev.title;
+      t.title='Click para guardar en el planner';
       t.onclick=()=>pinGCalEvent(i,ev);
       col.appendChild(t);
     });
-    // Manual events not already from GCal
-    manualEvDay.filter(e=>!e.pinned&&!gcalTitlesOv.has((e.title||'').toLowerCase()))
-      .forEach(ev=>{const t=document.createElement('div');t.className='wtag wev';t.textContent=ev.title;col.appendChild(t);});
     ov.appendChild(col);
   });
 }
