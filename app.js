@@ -305,9 +305,23 @@ function buildOv(){
     });
     const gcalEvDay=gcalEvts[dk(d)]||[];
     const manualEvDay=dayEvts(i);
-    const gcalTitlesOv=new Set(gcalEvDay.map(e=>e.title.toLowerCase()));
-    const evs=[...gcalEvDay,...manualEvDay.filter(e=>!gcalTitlesOv.has(e.title.toLowerCase()))];
-    evs.forEach(ev=>{const t=document.createElement('div');t.className='wtag wev';t.textContent=ev.title;col.appendChild(t);});
+    const manualTitles=new Set(manualEvDay.map(e=>(e.title||'').toLowerCase()));
+    const parseT=t=>{if(!t||t==='Todo el día'||t==='All day')return-1;const m=t.match(/(\d+):(\d+)\s*(AM|PM)/i);if(!m)return-1;let h=parseInt(m[1]);const mn=parseInt(m[2]);const ap=m[3].toUpperCase();if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;return h*60+mn;};
+    const sortKey=e=>e.sort!=null?(e.sort/60000%1440):parseT(e.time);
+    const allEvs=[
+      ...manualEvDay.map(e=>({...e,_src:'manual'})),
+      ...gcalEvDay.filter(e=>!manualTitles.has(e.title.toLowerCase())).map(e=>({...e,_src:'gcal'}))
+    ].sort((a,b)=>sortKey(a)-sortKey(b));
+    allEvs.forEach(ev=>{
+      const isPinned=!!ev.pinned;
+      const isGcal=ev._src==='gcal';
+      const t=document.createElement('div');
+      t.className='wtag wev'+(isPinned?' pinned':'');
+      t.textContent=ev.title;
+      if(isPinned){t.title='Click para desanclar';t.onclick=()=>pinGCalEvent(i,ev);}
+      else if(isGcal){t.title='Click para guardar en el planner';t.onclick=()=>pinGCalEvent(i,ev);}
+      col.appendChild(t);
+    });
     ov.appendChild(col);
   });
 }
