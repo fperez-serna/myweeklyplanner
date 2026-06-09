@@ -61,7 +61,7 @@ function tasksForDay(di){
   const dayDate=weekDays[di];
   const carryTasks=pendingTasks
     .filter(p=>!currentWeekIds.has(p.id)&&p.addedDate<=dk(dayDate)&&!p.deleted)
-    .map(p=>({id:p.id,text:p.text,addedOnDay:-1,fromPrevWeek:true,doneOnDay:p.done?0:undefined}));
+    .map(p=>({id:p.id,text:p.text,addedOnDay:-1,fromPrevWeek:true,doneOnDay:undefined})); // pending no done (done ones now live in weekData.tasks)
   return [...carryTasks,...weekTasks];
 }
 function focusForDay(di){
@@ -388,13 +388,20 @@ function toggleTask(el){
     }
     saveDB();
   } else if(pt){
-    // Task from a previous week - toggle done in pendingTasks
+    // Task from a previous week
     if(pt.done){
-      pt.done=false;
-      delete pt.doneDate;
-      savePendingTasks();
+      // Untachar — quitar de weekData.tasks si está y restaurar en pendingTasks
+      pt.done=false;delete pt.doneDate;
+      if(weekData.tasks)weekData.tasks=weekData.tasks.filter(wt=>wt.id!==id);
+      savePendingTasks();saveDB();
     } else {
+      // Tachar — añadir a weekData.tasks con doneOnDay correcto para que quede visible hoy
+      if(!weekData.tasks)weekData.tasks=[];
+      if(!weekData.tasks.find(wt=>wt.id===id)){
+        weekData.tasks.push({id,text:pt.text,addedOnDay:-1,fromPrevWeek:true,doneOnDay:di});
+      }
       resolvePendingTask(id);
+      saveDB();
     }
   }
   renderTasks(di);updateProg(di);buildNav();buildOv();
