@@ -307,7 +307,7 @@ function buildOv(){
     const manualEvDay=dayEvts(i);
     const manualTitles=new Set(manualEvDay.map(e=>(e.title||'').toLowerCase()));
     const parseT=t=>{if(!t||t==='Todo el día'||t==='All day')return-1;const m=t.match(/(\d+):(\d+)\s*(AM|PM)/i);if(!m)return-1;let h=parseInt(m[1]);const mn=parseInt(m[2]);const ap=m[3].toUpperCase();if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;return h*60+mn;};
-    const sortKey=e=>e.sort!=null?(e.sort/60000%1440):parseT(e.time);
+    const sortKey=e=>parseT(e.time);
     const allEvs=[
       ...manualEvDay.map(e=>({...e,_src:'manual'})),
       ...gcalEvDay.filter(e=>!manualTitles.has(e.title.toLowerCase())).map(e=>({...e,_src:'gcal'}))

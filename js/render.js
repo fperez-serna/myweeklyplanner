@@ -64,8 +64,7 @@ function buildOv(){
     const manualTitles=new Set(manualEvDay.map(e=>(e.title||'').toLowerCase()));
     // Parsear hora para ordenar ("8:30 AM" → segundos, "Todo el día" → -1)
     const parseT=t=>{if(!t||t==='Todo el día'||t==='All day')return-1;const m=t.match(/(\d+):(\d+)\s*(AM|PM)/i);if(!m)return-1;let h=parseInt(m[1]);const mn=parseInt(m[2]);const ap=m[3].toUpperCase();if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;return h*60+mn;};
-    // GCal tiene timestamp exacto (sort); manual usa parseT — normalizar ambos a minutos
-    const sortKey=e=>e.sort!=null?(e.sort/60000%1440):parseT(e.time);
+    const sortKey=e=>parseT(e.time); // ev.time siempre en hora local — más confiable que sort UTC
     // Combinar: manual (siempre) + GCal no duplicados
     const allEvs=[
       ...manualEvDay.map(e=>({...e,_src:'manual'})),
