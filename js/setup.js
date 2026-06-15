@@ -143,11 +143,11 @@ function updateGastosLang(lang){
   // Annual report button
   const annBtn=document.getElementById('annual-btn-lbl');if(annBtn)annBtn.textContent=isEn?'Annual report':'Reporte anual';
   // Sync SmartSelect inputs after rebuilding workout/habit options
-  const di=typeof dayIdx==='function'?dayIdx():0;
   ['wo1','wo2','ha1','ha2'].forEach(id=>{
     const sel=document.getElementById(id);
-    const ss=document.getElementById(id+'_ss');
-    if(sel&&ss)ss.value=sel.value;
+    const wrap=document.getElementById(id+'_ss');
+    const inp=wrap?.querySelector('input.ss-input');
+    if(sel&&inp)inp.value=sel.value;
   });
 }
 

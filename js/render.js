@@ -139,7 +139,13 @@ function toggleTask(el){
     if(t.doneOnDay!==undefined){
       delete t.doneOnDay;
       // Restore to pending if undone
-      if(pt===undefined)addPendingTask(id,t.text,dk(weekDays[t.addedOnDay]||activeDate));
+      if(pt===undefined){
+        addPendingTask(id,t.text,dk(weekDays[t.addedOnDay]||activeDate));
+      }else if(pt.done){
+        pt.done=false;
+        delete pt.doneDate;
+        savePendingTasks();
+      }
     }else{
       t.doneOnDay=di;
       resolvePendingTask(id);
@@ -423,19 +429,22 @@ function addEv(){
 function setSelectVal(id, val){
   const sel=document.getElementById(id);
   if(!sel)return;
-  // If empty, reset to blank option
-  if(!val){sel.value='';return;}
-  // Try direct match first
-  if([...sel.options].some(o=>o.value===val)){sel.value=val;return;}
-  // Try translated match (ES->EN or EN->ES)
-  const mapped=WORKOUT_MAP[val]||Object.keys(WORKOUT_MAP).find(k=>WORKOUT_MAP[k]===val);
-  const hmapped=HABITO_MAP[val]||Object.keys(HABITO_MAP).find(k=>HABITO_MAP[k]===val);
-  const alt=mapped||hmapped;
-  if(alt&&[...sel.options].some(o=>o.value===alt)){sel.value=alt;}
-  else sel.value=''; // Not found - reset to blank
-  // Sync SmartSelect input
-  const ssEl=document.getElementById(id+'_ss');
-  if(ssEl)ssEl.value=sel.value;
+  if(!val){
+    sel.value='';
+    const wrap=document.getElementById(id+'_ss');
+    if(wrap){const inp=wrap.querySelector('input.ss-input');if(inp&&inp!==document.activeElement)inp.value='';}
+    return;
+  }
+  if([...sel.options].some(o=>o.value===val)){sel.value=val;}
+  else {
+    const mapped=WORKOUT_MAP[val]||Object.keys(WORKOUT_MAP).find(k=>WORKOUT_MAP[k]===val);
+    const hmapped=HABITO_MAP[val]||Object.keys(HABITO_MAP).find(k=>HABITO_MAP[k]===val);
+    const alt=mapped||hmapped;
+    if(alt&&[...sel.options].some(o=>o.value===alt)){sel.value=alt;}
+    else sel.value='';
+  }
+  const wrap=document.getElementById(id+'_ss');
+  if(wrap){const inp=wrap.querySelector('input.ss-input');if(inp&&inp!==document.activeElement)inp.value=sel.value;}
 }
 function renderWo(di){
   const w=dayWo(di);
@@ -444,8 +453,15 @@ function renderWo(di){
 }
 function saveWorkout(){
   const di=dayIdx();if(!weekData.workout)weekData.workout={};
-  const _v=id=>{const ss=document.getElementById(id+'_ss');return ss?ss.value:(document.getElementById(id)?.value||'');};
-  weekData.workout[di]={wo1:_v('wo1'),wo2:_v('wo2'),ha1:_v('ha1'),ha2:_v('ha2')};
+  const _v=id=>{
+    const wrap=document.getElementById(id+'_ss');
+    const inp=wrap?.querySelector('input.ss-input');
+    return inp?.value||(document.getElementById(id)?.value||'');
+  };
+  let wo1=_v('wo1'),wo2=_v('wo2'),ha1=_v('ha1'),ha2=_v('ha2');
+  if(wo1&&wo1===wo2)wo2='';
+  if(ha1&&ha1===ha2)ha2='';
+  weekData.workout[di]={wo1,wo2,ha1,ha2};
   saveDB();buildOv();
 }
 

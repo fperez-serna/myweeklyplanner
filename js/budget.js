@@ -1278,8 +1278,8 @@ async function budgetDelIncome(i){
 }
 
 async function budgetAddIncome(){
-  const desc=document.getElementById('budget-inc-desc').value.trim();
-  const amt=parseFloat(document.getElementById('budget-inc-amt').value)||0;
+  const desc=document.getElementById('budget-inc-desc')?.value.trim()||'';
+  const amt=parseFloat(document.getElementById('budget-inc-amt')?.value)||0;
   if(!desc||!amt){
     if(!desc)flashInvalid(document.getElementById('budget-inc-desc'));
     if(!amt)flashInvalid(document.getElementById('budget-inc-amt'));
@@ -1315,7 +1315,7 @@ async function budgetAddSub(gi){
 async function budgetDelGroup(gi){
   if(!confirm(isEn()?'Delete this group and all its subcategories?':'¿Eliminar este grupo y todas sus subcategorías?'))return;
   budgetData.groups.splice(gi,1);
-  saveBudgetConfig();
+  await saveBudgetConfig();
   const dash=await loadMonthGastos();
   renderBudget(dash);
 }
@@ -1766,7 +1766,7 @@ function toggleAnnualSection(){
   if(arrow)arrow.style.transform=open?'rotate(-90deg)':'rotate(0deg)';
 }
 
-function annualAdd(type){
+async function annualAdd(type){
   const nameEl=document.getElementById('ann-'+type.slice(0,3)+'-name');
   const amtEl=document.getElementById('ann-'+type.slice(0,3)+'-amt');
   const monthEl=document.getElementById('ann-'+type.slice(0,3)+'-month');
@@ -1779,14 +1779,14 @@ function annualAdd(type){
     return;
   }
   annualData[type].push({name,amt,month});
-  saveAnnualData();
+  await saveAnnualData();
   nameEl.value='';amtEl.value='';
   loadBudgetData();
 }
 
-function annualDel(type,idx){
+async function annualDel(type,idx){
   annualData[type].splice(idx,1);
-  saveAnnualData();
+  await saveAnnualData();
   loadBudgetData();
 }
 

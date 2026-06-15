@@ -164,6 +164,7 @@ function resolvePendingTask(id, deleted=false){
   if(pt){
     if(deleted){
       pt.deleted=true;
+      pt.deletedDate=dk(activeDate);
     } else {
       pt.done=true;
       pt.doneDate=dk(activeDate);

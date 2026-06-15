@@ -672,19 +672,33 @@ function addEv(){
 function setSelectVal(id, val){
   const sel=document.getElementById(id);
   if(!sel)return;
-  // If empty, reset to blank option
-  if(!val){sel.value='';return;}
+  if(!val){
+    sel.value='';
+    const ssEl=document.getElementById(id+'_ss');
+    if(ssEl)ssEl.value='';
+    _updateSSDisplay(id,'');
+    return;
+  }
   // Try direct match first
-  if([...sel.options].some(o=>o.value===val)){sel.value=val;return;}
-  // Try translated match (ES->EN or EN->ES)
-  const mapped=WORKOUT_MAP[val]||Object.keys(WORKOUT_MAP).find(k=>WORKOUT_MAP[k]===val);
-  const hmapped=HABITO_MAP[val]||Object.keys(HABITO_MAP).find(k=>HABITO_MAP[k]===val);
-  const alt=mapped||hmapped;
-  if(alt&&[...sel.options].some(o=>o.value===alt)){sel.value=alt;}
-  else sel.value=''; // Not found - reset to blank
-  // Sync SmartSelect input
+  if([...sel.options].some(o=>o.value===val)){sel.value=val;}
+  else {
+    // Try translated match
+    const mapped=WORKOUT_MAP[val]||Object.keys(WORKOUT_MAP).find(k=>WORKOUT_MAP[k]===val);
+    const hmapped=HABITO_MAP[val]||Object.keys(HABITO_MAP).find(k=>HABITO_MAP[k]===val);
+    const alt=mapped||hmapped;
+    if(alt&&[...sel.options].some(o=>o.value===alt)){sel.value=alt;}
+    else sel.value='';
+  }
+  // Sync SmartSelect input y display
   const ssEl=document.getElementById(id+'_ss');
   if(ssEl)ssEl.value=sel.value;
+  _updateSSDisplay(id, sel.value);
+}
+function _updateSSDisplay(id, val){
+  const wrap=document.getElementById(id+'_ss');
+  if(!wrap)return;
+  const input=wrap.querySelector('input.ss-input');
+  if(input&&input!==document.activeElement)input.value=val||'';
 }
 function renderWo(di){
   const w=dayWo(di);
@@ -693,8 +707,15 @@ function renderWo(di){
 }
 function saveWorkout(){
   const di=dayIdx();if(!weekData.workout)weekData.workout={};
-  const _v=id=>{const ss=document.getElementById(id+'_ss');return ss?ss.value:(document.getElementById(id)?.value||'');};
-  weekData.workout[di]={wo1:_v('wo1'),wo2:_v('wo2'),ha1:_v('ha1'),ha2:_v('ha2')};
+  const _v=id=>{
+    const wrap=document.getElementById(id+'_ss');
+    const input=wrap?.querySelector('input.ss-input');
+    return input?.value||(document.getElementById(id)?.value||'');
+  };
+  let wo1=_v('wo1'),wo2=_v('wo2'),ha1=_v('ha1'),ha2=_v('ha2');
+  if(wo1&&wo1===wo2)wo2='';
+  if(ha1&&ha1===ha2)ha2='';
+  weekData.workout[di]={wo1,wo2,ha1,ha2};
   saveDB();buildOv();
 }
 
@@ -1497,11 +1518,11 @@ function updateGastosLang(lang){
   // Annual report button
   const annBtn=document.getElementById('annual-btn-lbl');if(annBtn)annBtn.textContent=isEn?'Annual report':'Reporte anual';
   // Sync SmartSelect inputs after rebuilding workout/habit options
-  const di=typeof dayIdx==='function'?dayIdx():0;
   ['wo1','wo2','ha1','ha2'].forEach(id=>{
     const sel=document.getElementById(id);
-    const ss=document.getElementById(id+'_ss');
-    if(sel&&ss)ss.value=sel.value;
+    const wrap=document.getElementById(id+'_ss');
+    const input=wrap?.querySelector('input.ss-input');
+    if(sel&&input)input.value=sel.value;
   });
 }
 
@@ -4275,12 +4296,9 @@ function initSmartSelects(){
       options: opts,
       value: cur,
       placeholder: '—',
-      onChange: (v) => { 
-        sel.value=v; 
-        // Also update any other SS inputs that might exist
-        const ssEl=document.getElementById(id+'_ss');
-        if(ssEl&&ssEl!==document.activeElement)ssEl.value=v;
-        saveWorkout(); 
+      onChange: (v) => {
+        if(v){const otherId=id==='wo1'?'wo2':'wo1';const otherSel=document.getElementById(otherId);if(otherSel?.value===v){showToast(isEn()?'Already selected in the other field':'Ya seleccionado en el otro campo');return;}}
+        sel.value=v; saveWorkout();
       },
       onAddNew: (name) => {
         if(!setupCfg.workouts) setupCfg.workouts=[...DEFAULT_WORKOUTS];
@@ -4306,12 +4324,9 @@ function initSmartSelects(){
       options: haOpts,
       value: cur,
       placeholder: '—',
-      onChange: (v) => { 
-        sel.value=v; 
-        // Also update any other SS inputs that might exist
-        const ssEl=document.getElementById(id+'_ss');
-        if(ssEl&&ssEl!==document.activeElement)ssEl.value=v;
-        saveWorkout(); 
+      onChange: (v) => {
+        if(v){const otherId=id==='ha1'?'ha2':'ha1';const otherSel=document.getElementById(otherId);if(otherSel?.value===v){showToast(isEn()?'Already selected in the other field':'Ya seleccionado en el otro campo');return;}}
+        sel.value=v; saveWorkout();
       },
       onAddNew: (name) => {
         if(!setupCfg.habitos) setupCfg.habitos=[...DEFAULT_HABITOS];
@@ -4361,6 +4376,7 @@ function initSmartSelects(){
 
 // Reset SmartSelects on re-render (remove old ones first)
 function resetSmartSelects(){
+  if(document.activeElement?.classList.contains('ss-input'))return;
   document.querySelectorAll('.ss-wrap').forEach(el => el.remove());
   document.querySelectorAll('[data-ss-replaced]').forEach(el => {
     el.style.display = '';

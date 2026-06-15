@@ -284,12 +284,9 @@ function initSmartSelects(){
       options: opts,
       value: cur,
       placeholder: '—',
-      onChange: (v) => { 
-        sel.value=v; 
-        // Also update any other SS inputs that might exist
-        const ssEl=document.getElementById(id+'_ss');
-        if(ssEl&&ssEl!==document.activeElement)ssEl.value=v;
-        saveWorkout(); 
+      onChange: (v) => {
+        if(v){const otherId=id==='wo1'?'wo2':'wo1';const otherSel=document.getElementById(otherId);if(otherSel?.value===v){showToast(isEn()?'Already selected in the other field':'Ya seleccionado en el otro campo');return;}}
+        sel.value=v; saveWorkout();
       },
       onAddNew: (name) => {
         if(!setupCfg.workouts) setupCfg.workouts=[...DEFAULT_WORKOUTS];
@@ -315,12 +312,9 @@ function initSmartSelects(){
       options: haOpts,
       value: cur,
       placeholder: '—',
-      onChange: (v) => { 
-        sel.value=v; 
-        // Also update any other SS inputs that might exist
-        const ssEl=document.getElementById(id+'_ss');
-        if(ssEl&&ssEl!==document.activeElement)ssEl.value=v;
-        saveWorkout(); 
+      onChange: (v) => {
+        if(v){const otherId=id==='ha1'?'ha2':'ha1';const otherSel=document.getElementById(otherId);if(otherSel?.value===v){showToast(isEn()?'Already selected in the other field':'Ya seleccionado en el otro campo');return;}}
+        sel.value=v; saveWorkout();
       },
       onAddNew: (name) => {
         if(!setupCfg.habitos) setupCfg.habitos=[...DEFAULT_HABITOS];
@@ -337,8 +331,9 @@ function initSmartSelects(){
   // Sync all select values to SS inputs
   ['wo1','wo2','ha1','ha2'].forEach(id=>{
     const sel=document.getElementById(id);
-    const ss=document.getElementById(id+'_ss');
-    if(sel&&ss&&sel.value)ss.value=sel.value;
+    const wrap=document.getElementById(id+'_ss');
+    const inp=wrap?.querySelector('input.ss-input');
+    if(sel&&inp)inp.value=sel.value;
   });
 
   // Gasto category select
@@ -370,6 +365,7 @@ function initSmartSelects(){
 
 // Reset SmartSelects on re-render (remove old ones first)
 function resetSmartSelects(){
+  if(document.activeElement?.classList.contains('ss-input'))return;
   document.querySelectorAll('.ss-wrap').forEach(el => el.remove());
   document.querySelectorAll('[data-ss-replaced]').forEach(el => {
     el.style.display = '';
