@@ -341,6 +341,7 @@ function initSmartSelects(){
   // Gasto category select
   const gastoCatSel = document.getElementById('gasto-cat');
   if(gastoCatSel && !gastoCatSel.dataset.ssReplaced){
+    gastoCatSel.value = '';
     gastoCatSel.dataset.ssReplaced = '1';
     const gaOpts = (setupCfg.gastoCats||DEFAULT_GASTOS);
     const ss = createSmartSelect({

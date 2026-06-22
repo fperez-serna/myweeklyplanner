@@ -56,7 +56,9 @@ function qgUpdateTotal(){
   if(!totalEl)return;
   const es=!isEn();
   let total=0;
-  for(let i=0;i<7;i++){
+  const todayDi=weekDays.findIndex(d=>dk(d)===dk(today));
+  const maxDi=todayDi>=0?todayDi:6;
+  for(let i=0;i<=maxDi;i++){
     (weekData.gastos?.[i]||[]).forEach(g=>total+=g.monto||0);
   }
   totalEl.textContent=`${es?'Total semana':'Week total'}: $${total.toLocaleString()}`;
@@ -73,7 +75,11 @@ function quickGastoAdd(){
   const desc=document.getElementById('qg-desc')?.value.trim();
   const catSel=document.getElementById('qg-cat');
   const catNew=document.getElementById('qg-cat-new')?.value.trim();
-  const cat=(catSel?.value==='__new__')?( catNew||'Otro'):(catSel?.value||'Otro');
+  const cat=(catSel?.value==='__new__')?(catNew||'Otro'):(catSel?.value||'Otro');
+  if(catSel?.value==='__new__'&&catNew){
+    if(!setupCfg.gastoCats)setupCfg.gastoCats=[...DEFAULT_GASTOS];
+    if(!setupCfg.gastoCats.includes(catNew)){setupCfg.gastoCats.push(catNew);saveConfigToFirebase();localStorage.setItem('wp_config',JSON.stringify(setupCfg));}
+  }
   const pagoCon=document.getElementById('qg-pago')?.value||'Efectivo';
   const monto=parseFloat(document.getElementById('qg-monto')?.value);
   if(!desc||!monto||monto<=0){

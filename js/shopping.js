@@ -71,6 +71,17 @@ function clearCheckedSh(){
   saveShoppingDB();renderSh();
 }
 
+const GASTO_PALETTE=[
+  {bg:'#e8f0ef',color:'#2c5f5c'},{bg:'#f5e8eb',color:'#8f4652'},
+  {bg:'#fef3e2',color:'#8a5a00'},{bg:'#e8f0fe',color:'#1a56a0'},
+  {bg:'#e8f5e9',color:'#2e7d32'},{bg:'#f3e5f5',color:'#6a1b9a'},
+  {bg:'#e3f2fd',color:'#0d47a1'},{bg:'#fce4ec',color:'#880e4f'},
+];
+function getGastoColor(cat){
+  if(GASTO_COLORS[cat])return GASTO_COLORS[cat];
+  let h=0;for(let i=0;i<(cat||'').length;i++)h=(h*31+cat.charCodeAt(i))>>>0;
+  return GASTO_PALETTE[h%GASTO_PALETTE.length];
+}
 const GASTO_COLORS = {
   'Restaurante':    {bg:'#e8f0ef',color:'#2c5f5c',icon:'utensils'},
   'Entretenimiento':{bg:'#f5e8eb',color:'#8f4652',icon:'film'},
@@ -100,7 +111,7 @@ function renderGastos(di){
   }
   body.innerHTML='';
   items.forEach((g,i)=>{
-    const c=GASTO_COLORS[g.cat]||GASTO_COLORS['Otro'];
+    const c=getGastoColor(g.cat);
     const tr=document.createElement('tr');
     tr.innerHTML=
       '<td style="padding:6px;border-bottom:0.5px solid var(--border);"><span contenteditable="true" spellcheck="false" data-idx="'+i+'" onblur="updateGastoDesc(this)" style="color:var(--text);outline:none;">'+g.desc+'</span>'+(g.pagoCon?'<br><span style="font-size:9px;color:var(--text3);">'+g.pagoCon+'</span>':'')+'</td>'+
@@ -140,7 +151,7 @@ function renderGastosTotals(di){
   if(!rubros)return;
   rubros.innerHTML='';
   Object.entries(bycat).sort((a,b)=>b[1]-a[1]).forEach(([cat,amt])=>{
-    const c=GASTO_COLORS[cat]||GASTO_COLORS['Otro'];
+    const c=getGastoColor(cat);
     const div=document.createElement('div');
     div.style.cssText='background:var(--bg2);border-radius:7px;padding:7px 10px;display:flex;justify-content:space-between;align-items:center;';
     div.innerHTML='<span style="font-size:11px;color:var(--text2);">'+cat+'</span>'+
@@ -168,6 +179,10 @@ function addGasto(){
   saveDB();renderGastos(di);
   document.getElementById('gasto-desc').value='';
   document.getElementById('gasto-monto').value='';
+  const gastoCatSel=document.getElementById('gasto-cat');
+  if(gastoCatSel)gastoCatSel.value='';
+  const catInp=document.getElementById('gasto-cat_ss')?.querySelector('input.ss-input');
+  if(catInp)catInp.value='';
 }
 
 function delGasto(i){
@@ -204,18 +219,23 @@ function editGastoCat(span, idx){
 function updateGastoDesc(el){
   const di=dayIdx();
   const i=parseInt(el.dataset.idx);
-  if(weekData.gastos&&weekData.gastos[di]&&weekData.gastos[di][i]&&el.textContent.trim()){
-    weekData.gastos[di][i].desc=el.textContent.trim();
-    saveDB();
+  if(weekData.gastos&&weekData.gastos[di]&&weekData.gastos[di][i]){
+    const v=el.textContent.trim();
+    if(v){weekData.gastos[di][i].desc=v;saveDB();}
+    else el.textContent=weekData.gastos[di][i].desc;
   }
 }
 function updateGastoMonto(el){
   const di=dayIdx();
   const i=parseInt(el.dataset.idx);
-  const val=parseFloat(el.textContent.replace(/[$,]/g,''));
-  if(weekData.gastos&&weekData.gastos[di]&&weekData.gastos[di][i]&&!isNaN(val)&&val>0){
-    weekData.gastos[di][i].monto=val;
-    saveDB();renderGastosTotals(di);
+  const val=parseFloat(el.textContent.replace(/[$,\s]/g,''));
+  if(weekData.gastos&&weekData.gastos[di]&&weekData.gastos[di][i]){
+    if(!isNaN(val)&&val>0){
+      weekData.gastos[di][i].monto=val;
+      saveDB();renderGastosTotals(di);
+    } else {
+      el.textContent='$'+weekData.gastos[di][i].monto.toLocaleString();
+    }
   }
 }
 
