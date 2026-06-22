@@ -85,9 +85,10 @@ function buildOv(){
 }
 
 function renderDay(){
-  resetSmartSelects();
+  if(!_suppressSSReset) resetSmartSelects();
+  _suppressSSReset=false;
   const di=dayIdx();
-  
+
   document.getElementById('active-date').textContent=isEn()
     ?(DIAS[activeDate.getDay()]+', '+MES[activeDate.getMonth()]+' '+activeDate.getDate())
     :(DIAS[activeDate.getDay()]+', '+activeDate.getDate()+' de '+MES[activeDate.getMonth()]);

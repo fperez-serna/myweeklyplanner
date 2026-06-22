@@ -293,6 +293,7 @@ function initSmartSelects(){
         if(!setupCfg.workouts.includes(name)) setupCfg.workouts.push(name);
         saveConfigToFirebase();
         localStorage.setItem('wp_config', JSON.stringify(setupCfg));
+        _suppressSSReset=false;
         showToast(es?'Workout agregado ✓':'Workout added ✓');
       }
     });
@@ -321,6 +322,7 @@ function initSmartSelects(){
         if(!setupCfg.habitos.includes(name)) setupCfg.habitos.push(name);
         saveConfigToFirebase();
         localStorage.setItem('wp_config', JSON.stringify(setupCfg));
+        _suppressSSReset=false;
         showToast(es?'Hábito agregado ✓':'Habit added ✓');
       }
     });

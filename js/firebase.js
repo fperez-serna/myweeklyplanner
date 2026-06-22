@@ -26,6 +26,7 @@ let _saveDBTimer=null;
 async function saveDB(){
   if(!db)return;
   if(weekData===null||weekData===undefined){console.warn('saveDB: skipped null data');return;}
+  _suppressSSReset=true;
   // Debounce — espera 500ms antes de guardar para agrupar cambios rápidos
   clearTimeout(_saveDBTimer);
   _saveDBTimer=setTimeout(async()=>{

@@ -14,6 +14,9 @@ const HE={Meditar:'',Leer:'',Stretching:'',Escribir:'',Otro:''};
 const DW={0:{wo1:'',wo2:'',ha1:'',ha2:''},1:{wo1:'',wo2:'',ha1:'',ha2:''},2:{wo1:'',wo2:'',ha1:'',ha2:''},3:{wo1:'',wo2:'',ha1:'',ha2:''},4:{wo1:'',wo2:'',ha1:'',ha2:''},5:{wo1:'',wo2:'',ha1:'',ha2:''},6:{wo1:'',wo2:'',ha1:'',ha2:''}};
 const GCAL_ID='768734489364-vtacuutjbop0h19kj85qgoeodgd4dseq.apps.googleusercontent.com';
 
+// ── FLAGS ──────────────────────────────────
+let _suppressSSReset=false;
+
 // ── CATEGORIES ─────────────────────────────
 const CATS={personal:{label:'Personal',color:'#222'},familia:{label:'Familia',color:'#484848'},casa:{label:'Casa',color:'#6e6e6e'},trabajo:{label:'Trabajo',color:'#888'},social:{label:'Social',color:'#a0a0a0'},otro:{label:'Otro',color:'#b8b8b8'}};
 let taskCatFilter='all';
