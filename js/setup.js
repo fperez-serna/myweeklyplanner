@@ -423,8 +423,8 @@ const SETUP_T={
     currency:'Moneda para gastos',
     palette:'Paleta de colores',
     features:'Funciones',
-    quotes:'Frases motivacionales',
-    quotesSub:'Frase del día en el inicio',
+    quotes:'Recordatorio del día',
+    quotesSub:'Frase inspiracional en el inicio',
     gcal:'Google Calendar',
     gcalSub:'Sincronizar eventos',
     weather:'Clima',
@@ -456,8 +456,8 @@ const SETUP_T={
     currency:'Currency for expenses',
     palette:'Color palette',
     features:'Features',
-    quotes:'Motivational quotes',
-    quotesSub:'Daily quote on the home screen',
+    quotes:'Daily reminder',
+    quotesSub:'Inspirational quote on the home screen',
     gcal:'Google Calendar',
     gcalSub:'Sync events',
     weather:'Weather',
@@ -565,8 +565,7 @@ function applyConfig(cfg){
   // Show/hide features
   const weatherCard=document.querySelector('.card-teal');
   if(weatherCard)weatherCard.style.display=cfg.features.weather?'':'none';
-  const quoteCard=document.querySelector('.desktop-quote');
-  if(quoteCard)quoteCard.style.display=cfg.features.quotes?'':'none';
+  document.querySelectorAll('.desktop-quote,.mobile-quote').forEach(el=>el.style.display=cfg.features.quotes?'':'none');
   const gastosCard=document.getElementById('gastos-title');
   if(gastosCard)gastosCard.closest('.card').style.display=cfg.features.gastos?'':'none';
   const gcalBtn=document.getElementById('gcal-btn');
