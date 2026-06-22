@@ -184,11 +184,10 @@ function subscribeConfig(){
 function subscribeDB(){
   if(unsub)unsub();
   if(!db)return;
-  unsub=userCol().doc(wid()).onSnapshot(async snap=>{
+  unsub=userCol().doc(wid()).onSnapshot(snap=>{
     try{
       if(snap.exists){
         weekData=snap.data();
-        await loadPendingTasks();
         renderDay();
       }
     }catch(e){console.error('onSnapshot week handler error:',e);}
@@ -203,7 +202,7 @@ async function loadPendingTasks(){
   try{
     const snap=await userCol().doc('pending_tasks').get();
     if(snap.exists){
-      pendingTasks=(snap.data().tasks||[]).filter(t=>!t.doneDate&&!t.deletedDate);
+      pendingTasks=(snap.data().tasks||[]).filter(t=>!t.doneDate&&!t.deleted);
     }
   }catch(e){console.log('No pending tasks');}
 }
@@ -407,9 +406,13 @@ function toggleTask(el){
   renderTasks(di);updateProg(di);buildNav();buildOv();
 }
 function updateTaskText(el){
-  const id=el.dataset.id;
+  const id=el.dataset.id;const newText=el.textContent.trim();
   const t=(weekData.tasks||[]).find(t=>t.id===id);
-  if(t&&el.textContent.trim()){t.text=el.textContent.trim();saveDB();}
+  if(t&&newText){
+    t.text=newText;saveDB();
+    const pt=pendingTasks.find(p=>p.id===id);
+    if(pt){pt.text=newText;savePendingTasks();}
+  }
 }
 function deleteTask(el){
   const id=el.dataset.id;const di=dayIdx();
