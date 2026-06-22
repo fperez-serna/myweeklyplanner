@@ -335,7 +335,7 @@ function renderChips(type,arr){
   arr.forEach((item,i)=>{
     const el=document.createElement('div');
     el.className='chip-item';
-    el.innerHTML=item+'<span class="chip-x" onclick="removeChip(\''+type+'\','+i+')">×</span>';
+    el.innerHTML='<span contenteditable="true" spellcheck="false" style="outline:none;cursor:text;min-width:4px;" onblur="editChip(\''+type+'\','+i+',this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}">'+item+'</span><span class="chip-x" onclick="removeChip(\''+type+'\','+i+')">×</span>';
     wrap.appendChild(el);
   });
 }
@@ -365,6 +365,13 @@ function removeChip(type,i){
   arr.splice(i,1);
   renderChips(type,arr);
   saveConfigToFirebase();
+}
+function editChip(type,i,el){
+  const v=el.textContent.trim();
+  const arr={workout:setupCfg.workouts,habito:setupCfg.habitos,shop:setupCfg.shopCats,gasto:setupCfg.gastoCats}[type];
+  if(!arr)return;
+  if(!v){arr.splice(i,1);renderChips(type,arr);saveConfigToFirebase();return;}
+  if(v!==arr[i]){arr[i]=v;saveConfigToFirebase();}
 }
 
 function selectPal(el){
