@@ -139,7 +139,7 @@ function updateGastosLang(lang){
     ?'*For security, your calendar cannot stay connected. Connect whenever you want your events to appear here and when you want your events saved to Google Calendar.'
     :'*Por seguridad, tu calendario no puede permanecer conectado. Conéctate cuando quieras que tus eventos se reflejen aquí y cuando quieras que tus eventos de aquí se guarden en tu Google Calendar.';
   // Re-render weather descriptions in new language
-  if(_lastWeather)renderWeatherDesc(_lastWeather.code,_lastWeather.temp,_lastWeather.pre);
+  if(_lastWeather)renderWeatherDesc(_lastWeather.code,_lastWeather.temp,_lastWeather.pre,_lastWeather.feelsLike);
   // Annual report button
   const annBtn=document.getElementById('annual-btn-lbl');if(annBtn)annBtn.textContent=isEn?'Annual report':'Reporte anual';
   // Sync SmartSelect inputs after rebuilding workout/habit options
@@ -362,9 +362,20 @@ function saveConfigToFirebase(){
 
 function removeChip(type,i){
   const arr={workout:setupCfg.workouts,habito:setupCfg.habitos,shop:setupCfg.shopCats,gasto:setupCfg.gastoCats}[type];
+  if(type==='shop'){
+    const name=arr[i];
+    const msg=isEn()?`Delete "${name}"? All items in this list will be removed.`:`¿Eliminar "${name}"? Se borrarán todos los artículos de esta lista.`;
+    if(!confirm(msg))return;
+    // Re-index shoppingItems: shift everything after i down one slot
+    const newLen=arr.length-1;
+    for(let j=i;j<newLen;j++)shoppingItems['cat'+j]=shoppingItems['cat'+(j+1)]||[];
+    delete shoppingItems['cat'+newLen];
+    saveShoppingDB();
+  }
   arr.splice(i,1);
   renderChips(type,arr);
   saveConfigToFirebase();
+  if(type==='shop')renderSh();
 }
 function editChip(type,i,el){
   const v=el.textContent.trim();

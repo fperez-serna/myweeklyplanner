@@ -9,6 +9,7 @@ function launchFullApp(){
   renderDay();
   buildCalendar();
   setTimeout(()=>{showQ(QS[qcur]);fetchWeather();},200);
+  setInterval(fetchWeather, 10*60*1000);
   renderSh();
 }
 

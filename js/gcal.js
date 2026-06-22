@@ -182,13 +182,14 @@ function pinGCalEvent(dayIndex, ev){
 
 // ── WEATHER ────────────────────────────────
 let _lastWeather=null;
-function renderWeatherDesc(code,temp,pre){
+function renderWeatherDesc(code,temp,pre,feelsLike){
   const en=isEn();
   const ds=en
     ?{0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Cloudy',45:'Foggy',51:'Drizzle',61:'Light rain',63:'Moderate rain',65:'Heavy rain',80:'Showers',95:'Thunderstorm'}
     :{0:'Despejado',1:'Mayormente despejado',2:'Parcialmente nublado',3:'Nublado',45:'Neblina',51:'Llovizna',61:'Lluvia ligera',63:'Lluvia moderada',65:'Lluvia fuerte',80:'Chubascos',95:'Tormenta'};
   const wdesc=document.getElementById('wdesc');
-  if(wdesc)wdesc.textContent=(ds[code]||'Variable')+(en?' — feels like ':' — se siente ')+(temp+4)+'°C';
+  const fl=feelsLike!==undefined?feelsLike:(temp+4);
+  if(wdesc)wdesc.textContent=(ds[code]||'Variable')+(en?' — feels like ':' — se siente ')+fl+'°C';
   const rain=pre>40||[51,53,55,61,63,65,80,81,95].includes(code);
   const rainEl=document.getElementById('rain');
   if(rainEl)rainEl.textContent=rain?(en?'Rain likely ('+pre+'%)':'Lluvia probable ('+pre+'%)'):(en?'No rain today':'Sin lluvia hoy');
@@ -196,14 +197,15 @@ function renderWeatherDesc(code,temp,pre){
 async function fetchWeatherCoords(lat,lon){
   try{
     const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,precipitation_probability,weathercode&timezone='+encodeURIComponent(tz));
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,apparent_temperature,precipitation_probability,weathercode&timezone='+encodeURIComponent(tz));
     const d=await r.json();
     const temp=Math.round(d.current.temperature_2m);
+    const feelsLike=Math.round(d.current.apparent_temperature);
     const pre=d.current.precipitation_probability;
     const code=d.current.weathercode;
-    _lastWeather={code,temp,pre};
+    _lastWeather={code,temp,pre,feelsLike};
     document.getElementById('temp').textContent=temp+'°C';
-    renderWeatherDesc(code,temp,pre);
+    renderWeatherDesc(code,temp,pre,feelsLike);
     fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json')
       .then(r=>r.json())
       .then(geo=>{

@@ -59,9 +59,10 @@ function addShCat(cat){
 function updateShCat(el){
   const cat=el.dataset.cat;
   const i=parseInt(el.dataset.idx);
-  if(shoppingItems[cat]&&shoppingItems[cat][i]&&el.textContent.trim()){
-    shoppingItems[cat][i].text=el.textContent.trim();
-    saveShoppingDB();
+  if(shoppingItems[cat]&&shoppingItems[cat][i]){
+    const v=el.textContent.trim();
+    if(v){shoppingItems[cat][i].text=v;saveShoppingDB();}
+    else el.textContent=shoppingItems[cat][i].text;
   }
 }
 function clearCheckedSh(){
@@ -303,7 +304,9 @@ async function calGoTo(y,m,d){
       if(snap.exists)weekData=snap.data();
       await loadPendingTasks();
     }
-  }catch(e){}
+  }catch(e){console.error('calGoTo load error:',e);}
+  subscribeDB();
+  buildCalendar();
   renderDay();
 }
 
