@@ -467,16 +467,12 @@ async function loadBudgetData(){
           if(newSaldo!==(curSaldo!==undefined?curSaldo:debt.saldo||0))saldoChanged=true;
           debt.saldo=newSaldo;
         });
-        // Apply monthly income - fallback to budget_config income if monthly is empty
-        if(monthActuals.income&&monthActuals.income.length>0)budgetData.income=monthActuals.income;
-        else if(budgetData.income&&budgetData.income.length>0){} // keep from config
-        else budgetData.income=[];
+        // Income lives in budget_config — already loaded above, don't override
         // Auto-save updated saldos so the next month in the chain stays consistent
         if(saldoChanged)saveBudgetData().catch(()=>{});
       } else {
-        // New month - reset actuals to 0, keep income from config if exists
+        // New month - reset actuals to 0, income already loaded from config
         budgetData.groups.forEach(g=>g.subs.forEach(sub=>sub.actual=0));
-        if(!budgetData.income||budgetData.income.length===0)budgetData.income=[];
         (budgetData.debts||[]).forEach((debt,di)=>{
           debt.abono=0;
           const did=debt.id;const op='debt_'+di;
@@ -621,8 +617,9 @@ async function saveBudgetData(){
       }
     }catch(e){console.warn('Backup failed (non-critical):',e);}
 
-    // Save base config (presup + rubro only, not actuals)
+    // Save base config (presup + rubro + income)
     const config={
+      income:budgetData.income||[],
       groups:budgetData.groups.map(g=>({
         id:g.id,name:g.name,
         subs:g.subs.map(sub=>({id:sub.id,name:sub.name,presup:sub.presup,rubro:sub.rubro}))
@@ -637,7 +634,7 @@ async function saveBudgetData(){
     await userCol().doc('budget_config').set(config);
     // Save actuals for this month separately
     const monthKey='budget_actual_'+budgetYear+'_'+String(budgetMonth+1).padStart(2,'0');
-    const actuals={income:budgetData.income};
+    const actuals={};
     budgetData.groups.forEach((g)=>{
       g.subs.forEach((sub)=>{
         actuals[g.id+'_'+sub.id]=sub.actual||0;
