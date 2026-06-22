@@ -385,7 +385,7 @@ function ssClose(){
   _ssOpenId = null;
 }
 
-function ssOpen(inputEl, options, onChange, onAddNew){
+function ssOpen(inputEl, options, onChange, onAddNew, isTyping=false){
   clearTimeout(_ssCloseTimer);
   _ssCloseTimer = null;
   ssClose();
@@ -394,7 +394,7 @@ function ssOpen(inputEl, options, onChange, onAddNew){
   const drop = document.createElement('div');
   drop.id = id;
   drop.className = 'ss-dropdown';
-  
+
   // Position
   const spaceBelow = window.innerHeight - rect.bottom - 8;
   drop.style.position = 'fixed';
@@ -407,7 +407,7 @@ function ssOpen(inputEl, options, onChange, onAddNew){
     drop.style.top = Math.max(4, rect.top - Math.min(220, rect.top) - 2) + 'px';
   }
 
-  const filter = inputEl.value.toLowerCase();
+  const filter = isTyping ? inputEl.value.toLowerCase() : '';
   const filtered = filter ? options.filter(o => o.toLowerCase().includes(filter)) : options;
   
   // Empty option
@@ -477,9 +477,9 @@ function createSmartSelect({id, options, value='', placeholder='—', onChange, 
   arrow.textContent = '▾';
   arrow.addEventListener('mousedown', e => { e.preventDefault(); input.focus(); });
 
-  input.addEventListener('focus', () => ssOpen(input, options, onChange, onAddNew));
-  input.addEventListener('touchstart', (e) => { e.stopPropagation(); clearTimeout(_ssCloseTimer);_ssCloseTimer=null;setTimeout(()=>ssOpen(input, options, onChange, onAddNew),50); }, {passive:true});
-  input.addEventListener('input', () => ssOpen(input, options, onChange, onAddNew));
+  input.addEventListener('focus', () => ssOpen(input, options, onChange, onAddNew, false));
+  input.addEventListener('touchstart', (e) => { e.stopPropagation(); clearTimeout(_ssCloseTimer);_ssCloseTimer=null;setTimeout(()=>ssOpen(input, options, onChange, onAddNew, false),50); }, {passive:true});
+  input.addEventListener('input', () => ssOpen(input, options, onChange, onAddNew, true));
   input.addEventListener('blur', () => { _ssCloseTimer=setTimeout(ssClose, 300); });
   input.addEventListener('keydown', e => {
     if(e.key === 'Escape'){ ssClose(); input.blur(); return; }
