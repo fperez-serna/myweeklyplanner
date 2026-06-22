@@ -71,16 +71,15 @@ function clearCheckedSh(){
   saveShoppingDB();renderSh();
 }
 
-const GASTO_PALETTE=[
-  {bg:'#e8f0ef',color:'#2c5f5c'},{bg:'#f5e8eb',color:'#8f4652'},
-  {bg:'#fef3e2',color:'#8a5a00'},{bg:'#e8f0fe',color:'#1a56a0'},
-  {bg:'#e8f5e9',color:'#2e7d32'},{bg:'#f3e5f5',color:'#6a1b9a'},
-  {bg:'#e3f2fd',color:'#0d47a1'},{bg:'#fce4ec',color:'#880e4f'},
-];
 function getGastoColor(cat){
   if(GASTO_COLORS[cat])return GASTO_COLORS[cat];
   let h=0;for(let i=0;i<(cat||'').length;i++)h=(h*31+cat.charCodeAt(i))>>>0;
-  return GASTO_PALETTE[h%GASTO_PALETTE.length];
+  const opts=[
+    {bg:'var(--teal-l)',color:'var(--teal-d)'},
+    {bg:'var(--mauve-l)',color:'var(--mauve-d)'},
+    {bg:'var(--silk-l)',color:'var(--brown)'},
+  ];
+  return opts[h%opts.length];
 }
 const GASTO_COLORS = {
   'Restaurante':    {bg:'#e8f0ef',color:'#2c5f5c',icon:'utensils'},
