@@ -88,8 +88,17 @@ function shareFocus(){
 let budgetYear=new Date().getFullYear();
 let budgetMonth=new Date().getMonth();
 let annualData={income:[],expenses:[]}; // annual income/expenses
-let budgetData={income:[],groups:[]};
+let budgetData={income:[],groups:[],debts:[]};
 let cardPeriodSums={};
+
+async function loadBudgetDebts(){
+  if(!db||!currentUser)return;
+  try{
+    const snap=await userCol().doc('budget_config').get();
+    if(snap.exists){budgetData.debts=snap.data().debts||[];}
+    buildPagoSelect();
+  }catch(e){}
+}
 
 const MES_ES_B=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MES_EN_B=['January','February','March','April','May','June','July','August','September','October','November','December'];

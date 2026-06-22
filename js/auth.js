@@ -240,6 +240,7 @@ function signOut(){
         await loadPendingTasks();
         await loadShoppingDB();
         await loadAnnualData();
+        loadBudgetDebts();
         applyConfig(setupCfg);
         applyLang(setupCfg.lang||'es');
         subscribeDB();
