@@ -73,13 +73,7 @@ function clearCheckedSh(){
 
 function getGastoColor(cat){
   if(GASTO_COLORS[cat])return GASTO_COLORS[cat];
-  let h=0;for(let i=0;i<(cat||'').length;i++)h=(h*31+cat.charCodeAt(i))>>>0;
-  const opts=[
-    {bg:'var(--teal-l)',color:'var(--teal-d)'},
-    {bg:'var(--mauve-l)',color:'var(--mauve-d)'},
-    {bg:'var(--silk-l)',color:'var(--brown)'},
-  ];
-  return opts[h%opts.length];
+  return {bg:'var(--teal-l)',color:'var(--teal-d)'};
 }
 const GASTO_COLORS = {
   'Restaurante':    {bg:'#e8f0ef',color:'#2c5f5c',icon:'utensils'},
