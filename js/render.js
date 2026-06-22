@@ -105,7 +105,7 @@ function renderTasks(di){
   if(fc){
     const hasCat=allTasks.some(t=>t.cat);
     if(hasCat){
-      const cats=['all','personal','casa','trabajo'];
+      const cats=['all','personal','casa','trabajo','familia','social','otro'];
       fc.innerHTML=cats.map(c=>{
         const active=taskCatFilter===c;const col=CATS[c]?.color||'';
         const lbl=c==='all'?(isEn()?'All':'Todos'):CATS[c].label;
