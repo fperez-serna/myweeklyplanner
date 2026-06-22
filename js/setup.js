@@ -528,6 +528,8 @@ function translateSetup(lang){
 function toggleCfg(el,key){
   el.classList.toggle('active');
   setupCfg.features[key]=el.classList.contains('active');
+  applyConfig(setupCfg);
+  saveConfigToFirebase();
 }
 
 
