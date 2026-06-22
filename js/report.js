@@ -64,6 +64,7 @@ async function loadReportData(){
     });
     reportData=await Promise.all(promises);
     // Also load income for this month from budget_actual
+    reportIncome=0;
     try{
       const monthKey='budget_actual_'+reportYear+'_'+String(reportMonth+1).padStart(2,'0');
       const snap=await userCol().doc(monthKey).get();

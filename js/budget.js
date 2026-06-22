@@ -1195,27 +1195,29 @@ async function budgetAddGroup(){
   loadBudgetData();
 }
 
-function budgetChangeRubro(gi,si,val){
+async function budgetChangeRubro(gi,si,val){
   if(!budgetData.groups[gi]||!budgetData.groups[gi].subs[si])return;
   budgetData.groups[gi].subs[si].rubro=val;
-  saveBudgetData(); // use full save to persist rubro
+  await saveBudgetData();
 }
 
-function budgetMoveSub(gi,si,dir){
+async function budgetMoveSub(gi,si,dir){
   const subs=budgetData.groups[gi].subs;
   const ni=si+dir;
   if(ni<0||ni>=subs.length)return;
   [subs[si],subs[ni]]=[subs[ni],subs[si]];
-  saveBudgetConfig();
-  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'Could not load budget data':'No se pudo cargar el presupuesto');});
+  await saveBudgetConfig();
+  const d=await loadMonthGastos();
+  renderBudget(d);
 }
 
-function budgetMoveGroup(gi,dir){
+async function budgetMoveGroup(gi,dir){
   const newIdx=gi+dir;
   if(newIdx<0||newIdx>=budgetData.groups.length)return;
   [budgetData.groups[gi],budgetData.groups[newIdx]]=[budgetData.groups[newIdx],budgetData.groups[gi]];
-  saveBudgetConfig();
-  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'Could not load budget data':'No se pudo cargar el presupuesto');});
+  await saveBudgetConfig();
+  const d=await loadMonthGastos();
+  renderBudget(d);
 }
 
 async function budgetDelSub(gi,si){
@@ -1283,7 +1285,7 @@ function budgetEditSub(gi,si,field,el){
 async function budgetDelIncome(i){
   budgetData.income.splice(i,1);
   await saveBudgetData();
-  loadBudgetData();
+  await loadBudgetData();
 }
 
 async function budgetAddIncome(){
@@ -1296,7 +1298,7 @@ async function budgetAddIncome(){
   }
   budgetData.income.push({desc,amt});
   await saveBudgetData();
-  loadBudgetData();
+  await loadBudgetData();
 }
 
 async function budgetAddSub(gi){
@@ -1318,7 +1320,7 @@ async function budgetAddSub(gi){
   if(actualEl)actualEl.value='';
   if(rubroEl)rubroEl.value='';
   await saveBudgetData();
-  loadBudgetData();
+  await loadBudgetData();
 }
 
 async function budgetDelGroup(gi){
@@ -1637,7 +1639,7 @@ function budgetEditDebt(di){
   if(debt.tasaTipo)setTimeout(debtCalcUpdate,50);
 }
 
-function budgetSaveDebt(di){
+async function budgetSaveDebt(di){
   const nombreEl=document.getElementById('d-nombre');
   const saldoEl=document.getElementById('d-saldo');
   const nombre=nombreEl.value.trim();
@@ -1681,28 +1683,32 @@ function budgetSaveDebt(di){
     const existing=budgetData.debts[di];
     debt.id=existing.id;
     debt.abono=existing.abono||0;
-    debt.saldoInicialMes=saldo!==existing.saldo?saldo:(existing.saldoInicialMes||saldo);
+    debt.saldoInicialMes=existing.saldoInicialMes||saldo;
     budgetData.debts[di]=debt;
   }
   document.getElementById('debt-modal').remove();
-  saveBudgetConfig();
-  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'Could not load budget data':'No se pudo cargar el presupuesto');});
+  await saveBudgetConfig();
+  const d=await loadMonthGastos();
+  renderBudget(d);
 }
 
-function budgetDelDebt(di){
+async function budgetDelDebt(di){
   if(!confirm(!isEn()?'¿Eliminar esta deuda?':'Delete this debt?'))return;
+  if(!budgetData.debts||!budgetData.debts[di])return;
   budgetData.debts.splice(di,1);
-  saveBudgetConfig();
-  loadMonthGastos().then(d=>renderBudget(d)).catch(e=>{console.error('loadMonthGastos error:',e);showToast(isEn()?'Could not load budget data':'No se pudo cargar el presupuesto');});
+  await saveBudgetConfig();
+  const d=await loadMonthGastos();
+  renderBudget(d);
 }
 
-function debtToggleSaldoOverride(di){
+async function debtToggleSaldoOverride(di){
+  if(!budgetData.debts||!budgetData.debts[di])return;
   const debt=budgetData.debts[di];
   if(debt.saldoManualOverride){
-    // Reset to auto
     delete debt.saldoManualOverride;
-    saveBudgetConfig();
-    loadMonthGastos().then(d=>renderBudget(d));
+    await saveBudgetConfig();
+    const d=await loadMonthGastos();
+    renderBudget(d);
     return;
   }
   // Switch to manual — inline edit
@@ -1734,6 +1740,7 @@ function debtToggleSaldoOverride(di){
 }
 
 function debtEditAbono(di,cardEl){
+  if(!budgetData.debts||!budgetData.debts[di])return;
   const debt=budgetData.debts[di];
   const es=!isEn();
   const isTarjeta=debt.tipo==='tarjeta';
@@ -1746,7 +1753,9 @@ function debtEditAbono(di,cardEl){
   input.style.cssText='width:80px;font-size:13px;font-weight:500;color:var(--teal);background:transparent;border:none;border-bottom:1.5px solid var(--teal);outline:none;padding:0;';
   valEl.replaceWith(input);
   input.focus();input.select();
+  let _saving=false;
   async function save(){
+    if(_saving)return;_saving=true;
     const val=parseFloat(input.value)||0;
     if(isTarjeta){
       if(debt.saldoInicialMes===undefined)debt.saldoInicialMes=debt.saldo||val;
