@@ -256,7 +256,7 @@ function renderFocus(di){
 
 function makeBubble(inp,num){
   const v=inp.value.trim();
-  if(!v){flashInvalid(inp);return;}
+  if(!v)return;
   const di=dayIdx();
   if(!weekData.focus)weekData.focus={};
   if(!weekData.focus[di])weekData.focus[di]={};
