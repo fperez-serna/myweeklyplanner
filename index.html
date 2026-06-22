@@ -425,10 +425,16 @@
         <button onclick="shareTasks()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:var(--text3);" title="Compartir"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
       </div>
       <div id="ch" class="ch" style="display:none"></div>
+      <div id="cat-filters" class="cat-filters"></div>
       <div id="task-list"></div>
       <div class="add-row">
         <input type="text" id="task-in" placeholder="Agregar pendiente..." onkeydown="if(event.key==='Enter')addTask()">
         <button id="btn-add-task" onclick="addTask()">+ Agregar</button>
+      </div>
+      <div class="cat-sel" id="cat-sel">
+        <button data-cat="personal" onclick="setNewCat('personal')">Personal</button>
+        <button data-cat="casa" onclick="setNewCat('casa')">Casa</button>
+        <button data-cat="trabajo" onclick="setNewCat('trabajo')">Trabajo</button>
       </div>
     </div>
     <div class="col">

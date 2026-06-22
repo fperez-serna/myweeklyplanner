@@ -59,6 +59,13 @@ body{background:#f0ebe6;padding:1.5rem;padding-bottom:130px;font-family:-apple-s
 .task-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);}
 .task-item:last-child{border-bottom:none;}
 .task-item.carried{background:var(--silk-l);border-radius:8px;padding-left:6px;}
+.cat-bar{width:3px;border-radius:3px;flex-shrink:0;align-self:stretch;min-height:18px;}
+.task-cat-lbl{font-size:10px;color:var(--text3);margin-top:2px;line-height:1;}
+.cat-filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;}
+.cat-fbtn{font-size:10px;padding:2px 9px;border-radius:99px;border:0.5px solid var(--border);background:none;color:var(--text3);cursor:pointer;transition:all .15s;}
+.cat-fbtn.active{color:#fff;}
+.cat-sel{display:flex;gap:4px;margin-top:5px;}
+.cat-sel button{font-size:11px;padding:2px 9px;border-radius:99px;border:0.5px solid var(--border);background:none;color:var(--text3);cursor:pointer;transition:all .15s;}
 .cbadge{font-size:10px;color:var(--mauve);margin-left:6px;margin-right:6px;flex-shrink:0;padding:1px 6px;background:var(--mauve-l);border-radius:99px;}
 .cb{width:15px;height:15px;border:0.5px solid var(--mauve);border-radius:3px;flex-shrink:0;margin-top:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .cb.done{background:var(--teal);border-color:var(--teal);}
