@@ -14,6 +14,11 @@ const HE={Meditar:'',Leer:'',Stretching:'',Escribir:'',Otro:''};
 const DW={0:{wo1:'',wo2:'',ha1:'',ha2:''},1:{wo1:'',wo2:'',ha1:'',ha2:''},2:{wo1:'',wo2:'',ha1:'',ha2:''},3:{wo1:'',wo2:'',ha1:'',ha2:''},4:{wo1:'',wo2:'',ha1:'',ha2:''},5:{wo1:'',wo2:'',ha1:'',ha2:''},6:{wo1:'',wo2:'',ha1:'',ha2:''}};
 const GCAL_ID='768734489364-vtacuutjbop0h19kj85qgoeodgd4dseq.apps.googleusercontent.com';
 
+// ── CATEGORIES ─────────────────────────────
+const CATS={personal:{label:'Personal',color:'#5B9BD5'},casa:{label:'Casa',color:'#4CAF82'},trabajo:{label:'Trabajo',color:'#D4873C'}};
+let taskCatFilter='all';
+let taskNewCat='';
+
 // ── STATE ──────────────────────────────────
 const today=new Date();today.setHours(0,0,0,0);
 let activeDate=new Date(today);
@@ -61,7 +66,7 @@ function tasksForDay(di){
   const dayDate=weekDays[di];
   const carryTasks=pendingTasks
     .filter(p=>!currentWeekIds.has(p.id)&&p.addedDate<=dk(dayDate)&&!p.deleted)
-    .map(p=>({id:p.id,text:p.text,addedOnDay:-1,fromPrevWeek:true,doneOnDay:p.done?0:undefined}));
+    .map(p=>({id:p.id,text:p.text,addedOnDay:-1,fromPrevWeek:true,doneOnDay:p.done?0:undefined,...(p.cat?{cat:p.cat}:{})}));
   return [...carryTasks,...weekTasks];
 }
 function focusForDay(di){

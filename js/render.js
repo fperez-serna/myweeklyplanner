@@ -99,7 +99,21 @@ function renderDay(){
 
 function renderTasks(di){
   const list=document.getElementById('task-list');list.innerHTML='';
-  const tasks=tasksForDay(di);
+  const allTasks=tasksForDay(di);
+  // Category filter chips
+  const fc=document.getElementById('cat-filters');
+  if(fc){
+    const hasCat=allTasks.some(t=>t.cat);
+    if(hasCat){
+      const cats=['all','personal','casa','trabajo'];
+      fc.innerHTML=cats.map(c=>{
+        const active=taskCatFilter===c;const col=CATS[c]?.color||'';
+        const lbl=c==='all'?(isEn()?'All':'Todos'):CATS[c].label;
+        return '<button class="cat-fbtn'+(active?' active':'')+'" onclick="setCatFilter(\''+c+'\')" style="'+(active?(c==='all'?'background:var(--text2);color:#fff;border-color:var(--text2)':'background:'+col+';color:#fff;border-color:'+col):(c!=='all'?'border-color:'+col+';color:'+col:''))+'">'+lbl+'</button>';
+      }).join('');
+    }else{fc.innerHTML='';taskCatFilter='all';}
+  }
+  const tasks=taskCatFilter==='all'?allTasks:allTasks.filter(t=>t.cat===taskCatFilter);
   const carried=tasks.filter(t=>t.addedOnDay<di);
   const undoneCarried=carried.filter(t=>t.doneOnDay===undefined);
   const ch=document.getElementById('ch');
@@ -111,13 +125,17 @@ function renderTasks(di){
     const isDone=t.doneOnDay!==undefined;const isCar=t.addedOnDay<di;
     const d=document.createElement('div');d.className='task-item'+(isCar?' carried':'');
     const tid=t.id;
+    const catColor=t.cat?CATS[t.cat]?.color:'';
+    const catBar=catColor?'<div class="cat-bar" style="background:'+catColor+'"></div>':'';
+    const catLbl=t.cat&&!isDone?'<div class="task-cat-lbl" style="color:'+catColor+'">'+CATS[t.cat].label+'</div>':'';
     const allIdx=undoneDisplay.findIndex(tt=>tt.id===t.id);
     const arrows=isDone?'<div style="width:18px;flex-shrink:0;"></div>':
       '<div style="display:flex;flex-direction:column;gap:0;flex-shrink:0;">'+
         '<button onclick="moveTask(this.dataset.id,-1)" data-id="'+tid+'" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1.2;opacity:'+(allIdx===0?'.2':'1')+(allIdx===0?'" disabled':'"')+'>▲</button>'+
         '<button onclick="moveTask(this.dataset.id,1)" data-id="'+tid+'" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1.2;opacity:'+(allIdx===undoneDisplay.length-1?'.2':'1')+(allIdx===undoneDisplay.length-1?'" disabled':'"')+'>▼</button>'+
       '</div>';
-    d.innerHTML=arrows+'<div class="cb'+(isDone?' done':'')+'" data-id="'+t.id+'" onclick="toggleTask(this)"><svg class="ck" viewBox="0 0 8 8"><polyline points="1,4 3,6 7,2" fill="none" stroke="white" stroke-width="1.5"/></svg></div><span class="tt'+(isDone?' done':'')+'" contenteditable="true" spellcheck="false" data-id="'+t.id+'" onblur="updateTaskText(this)">'+t.text+'</span>'+(isCar&&!isDone?'<span class="cbadge">anterior</span>':'')+'<button class="dx" data-id="'+t.id+'" onclick="deleteTask(this)">×</button>';
+    const textWrap='<div style="flex:1;min-width:0;"><span class="tt'+(isDone?' done':'')+'" contenteditable="true" spellcheck="false" data-id="'+t.id+'" onblur="updateTaskText(this)">'+t.text+'</span>'+(isCar&&!isDone?'<span class="cbadge">anterior</span>':'')+catLbl+'</div>';
+    d.innerHTML=arrows+catBar+'<div class="cb'+(isDone?' done':'')+'" data-id="'+t.id+'" onclick="toggleTask(this)"><svg class="ck" viewBox="0 0 8 8"><polyline points="1,4 3,6 7,2" fill="none" stroke="white" stroke-width="1.5"/></svg></div>'+textWrap+'<button class="dx" data-id="'+t.id+'" onclick="deleteTask(this)">×</button>';
     list.appendChild(d);
   });
 }
@@ -140,7 +158,7 @@ function toggleTask(el){
       delete t.doneOnDay;
       // Restore to pending if undone
       if(pt===undefined){
-        addPendingTask(id,t.text,dk(weekDays[t.addedOnDay]||activeDate));
+        addPendingTask(id,t.text,dk(weekDays[t.addedOnDay]||activeDate),t.cat||'');
       }else if(pt.done){
         pt.done=false;
         delete pt.doneDate;
@@ -164,9 +182,13 @@ function toggleTask(el){
   renderTasks(di);updateProg(di);buildNav();buildOv();
 }
 function updateTaskText(el){
-  const id=el.dataset.id;
+  const id=el.dataset.id;const newText=el.textContent.trim();
   const t=(weekData.tasks||[]).find(t=>t.id===id);
-  if(t&&el.textContent.trim()){t.text=el.textContent.trim();saveDB();}
+  if(t&&newText){
+    t.text=newText;saveDB();
+    const pt=pendingTasks.find(p=>p.id===id);
+    if(pt){pt.text=newText;savePendingTasks();}
+  }
 }
 function deleteTask(el){
   const id=el.dataset.id;const di=dayIdx();
@@ -204,13 +226,26 @@ function flashInvalid(el){
   setTimeout(()=>{el.style.borderColor='';el.style.background='';},2000);
 }
 
+function setNewCat(cat){
+  taskNewCat=taskNewCat===cat?'':cat;
+  document.querySelectorAll('#cat-sel button').forEach(b=>{
+    const bc=b.dataset.cat;const active=taskNewCat===bc;const col=CATS[bc]?.color||'';
+    b.style.background=active?col:'';b.style.color=active?'#fff':'';b.style.borderColor=active?col:'var(--border)';
+  });
+}
+function setCatFilter(cat){
+  taskCatFilter=cat;renderTasks(dayIdx());
+}
 function addTask(){
   const inp=document.getElementById('task-in');const v=inp.value.trim();if(!v){flashInvalid(inp);return;}
   const di=dayIdx();if(!weekData.tasks)weekData.tasks=[];
   const id='t'+Date.now();
-  weekData.tasks.push({id,text:v,addedOnDay:di});
+  const task={id,text:v,addedOnDay:di};if(taskNewCat)task.cat=taskNewCat;
+  weekData.tasks.push(task);
   saveDB();
-  addPendingTask(id, v, dk(activeDate));
+  addPendingTask(id, v, dk(activeDate), taskNewCat);
+  taskNewCat='';
+  document.querySelectorAll('#cat-sel button').forEach(b=>{b.style.background='';b.style.color='';b.style.borderColor='var(--border)';});
   renderTasks(di);buildNav();inp.value='';
 }
 

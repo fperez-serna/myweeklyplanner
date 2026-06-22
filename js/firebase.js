@@ -122,11 +122,10 @@ function subscribeConfig(){
 function subscribeDB(){
   if(unsub)unsub();
   if(!db)return;
-  unsub=userCol().doc(wid()).onSnapshot(async snap=>{
+  unsub=userCol().doc(wid()).onSnapshot(snap=>{
     try{
       if(snap.exists){
         weekData=snap.data();
-        await loadPendingTasks();
         renderDay();
       }
     }catch(e){console.error('onSnapshot week handler error:',e);}
@@ -153,9 +152,11 @@ async function savePendingTasks(){
   catch(e){console.error('Pending save:',e);}
 }
 
-function addPendingTask(id, text, dateStr){
+function addPendingTask(id, text, dateStr, cat=''){
   pendingTasks=pendingTasks.filter(t=>t.id!==id);
-  pendingTasks.push({id, text, addedDate:dateStr});
+  const entry={id, text, addedDate:dateStr};
+  if(cat)entry.cat=cat;
+  pendingTasks.push(entry);
   savePendingTasks();
 }
 
