@@ -377,6 +377,7 @@ function resetSmartSelects(){
 
 // ── SMART SELECT COMPONENT ─────────────────────────────────────────
 let _ssOpenId = null;
+let _ssCloseTimer = null;
 
 function ssClose(){
   const existing = document.getElementById('ss-dropdown-active');
@@ -385,6 +386,8 @@ function ssClose(){
 }
 
 function ssOpen(inputEl, options, onChange, onAddNew){
+  clearTimeout(_ssCloseTimer);
+  _ssCloseTimer = null;
   ssClose();
   const id = 'ss-dropdown-active';
   const rect = inputEl.getBoundingClientRect();
@@ -475,9 +478,9 @@ function createSmartSelect({id, options, value='', placeholder='—', onChange, 
   arrow.addEventListener('mousedown', e => { e.preventDefault(); input.focus(); });
 
   input.addEventListener('focus', () => ssOpen(input, options, onChange, onAddNew));
-  input.addEventListener('touchstart', (e) => { e.stopPropagation(); setTimeout(()=>ssOpen(input, options, onChange, onAddNew),50); }, {passive:true});
+  input.addEventListener('touchstart', (e) => { e.stopPropagation(); clearTimeout(_ssCloseTimer);_ssCloseTimer=null;setTimeout(()=>ssOpen(input, options, onChange, onAddNew),50); }, {passive:true});
   input.addEventListener('input', () => ssOpen(input, options, onChange, onAddNew));
-  input.addEventListener('blur', () => setTimeout(ssClose, 300));
+  input.addEventListener('blur', () => { _ssCloseTimer=setTimeout(ssClose, 300); });
   input.addEventListener('keydown', e => {
     if(e.key === 'Escape'){ ssClose(); input.blur(); return; }
     if(e.key === 'Enter'){
