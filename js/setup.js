@@ -647,6 +647,8 @@ function openSettings(){
     if(el)el.classList.toggle('active',(cfg.features||{})[key]!==false);
   });
   initSetupChips();
+  const wb=document.getElementById('welcome-banner');
+  if(wb)wb.style.display='none';
   document.getElementById('setup-screen').style.display='block';
 }
 
@@ -655,9 +657,11 @@ function initApp(){
   if(typeof QS!=='undefined')shuffleArr(QS);
   const saved=localStorage.getItem('wp_config');
   if(!saved){
-    // First time — show setup
+    // First time — show setup with welcome banner
     initSetupChips();
     document.getElementById('setup-screen').style.display='block';
+    const wb=document.getElementById('welcome-banner');
+    if(wb)wb.style.display='block';
   } else {
     const cfg=JSON.parse(saved);
     setupCfg={
