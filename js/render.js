@@ -354,6 +354,7 @@ function renderEvts(di){
     if(ev.src==='manual')del='<button class="ev-del" data-idx="'+ev.idx+'" data-di="'+di+'" onclick="delManualEv(this)">×</button>';
     else if(ev.src==='gcal'&&ev.gcalId)del='<button class="ev-del" data-gid="'+ev.gcalId+'" onclick="delGCalEv(this)">×</button>';
     const isManual=ev.src==='manual';
+    const hasGcal=!!(ev.gcalId);
     let timeDisplay=ev.time;
     if(ev.durMins>0&&ev.time&&ev.time!=='Todo el día'&&ev.time!=='All day'){
       const p=ev.time.includes('PM');const pts=ev.time.replace(/AM|PM/,'').trim().split(':');
@@ -364,18 +365,40 @@ function renderEvts(di){
       const eap=eh>=12?'PM':'AM';const eh12=eh===0?12:eh>12?eh-12:eh;
       timeDisplay=ev.time+' – '+eh12+':'+String(em).padStart(2,'0')+' '+eap;
     }
-    d.innerHTML='<div class="ev-time">'+timeDisplay+'</div><div class="ev-dot"></div><div class="ev-title"'+(isManual?' contenteditable="true" spellcheck="false" data-idx="'+ev.idx+'" onblur="updateEvText(this)"':'')+'>'+ev.title+'</div>'+del;
+    const editable=isManual||hasGcal;
+    let evAttrs=editable?' contenteditable="true" spellcheck="false" onblur="updateEvText(this)"':'';
+    if(isManual)evAttrs+=' data-idx="'+ev.idx+'"';
+    if(hasGcal)evAttrs+=' data-gcalid="'+ev.gcalId+'"';
+    if(!isManual&&hasGcal)evAttrs+=' data-di="'+di+'"';
+    d.innerHTML='<div class="ev-time">'+timeDisplay+'</div><div class="ev-dot"></div><div class="ev-title"'+evAttrs+'>'+ev.title+'</div>'+del;
     list.appendChild(d);
   });
 }
 
 function updateEvText(el){
-  const idx=parseInt(el.dataset.idx);
+  const newTitle=el.textContent.trim();
+  if(!newTitle){el.textContent=el.dataset.gcalid?el.textContent:el.textContent;return;}
   const di=dayIdx();
-  if(weekData.events&&weekData.events[di]&&weekData.events[di][idx]&&el.textContent.trim()){
-    weekData.events[di][idx].title=el.textContent.trim();
+  const idx=el.dataset.idx!==undefined?parseInt(el.dataset.idx):-1;
+  const gcalId=el.dataset.gcalid||'';
+  if(idx>=0&&weekData.events&&weekData.events[di]&&weekData.events[di][idx]){
+    weekData.events[di][idx].title=newTitle;
     saveDB();
   }
+  if(gcalId)patchGCalEv(gcalId,newTitle);
+}
+async function patchGCalEv(gcalId,title){
+  if(!gcalToken||!gcalId)return;
+  try{
+    const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/'+gcalId,{
+      method:'PATCH',
+      headers:{Authorization:'Bearer '+gcalToken,'Content-Type':'application/json'},
+      body:JSON.stringify({summary:title})
+    });
+    if(r.status===401){gcalToken=null;localStorage.removeItem('gct');localStorage.removeItem('gct_exp');showToast(isEn()?'Reconnect Google Calendar to sync':'Reconecta Google Calendar para sincronizar');return;}
+    if(!r.ok){console.error('GCal patch failed:',r.status);return;}
+    setTimeout(()=>fetchGCal(),1000);
+  }catch(e){console.error('patchGCalEv error:',e);}
 }
 function delManualEv(el){
   const idx=parseInt(el.dataset.idx);const di=parseInt(el.dataset.di);
@@ -450,10 +473,11 @@ function addEv(){
   }
   if(!weekData.events)weekData.events={};
   if(!weekData.events[tdi])weekData.events[tdi]=[];
-  weekData.events[tdi].push({time:h+':'+m+' '+ap,title:evTitle,durMins});
+  const evObj={time:h+':'+m+' '+ap,title:evTitle,durMins};
+  weekData.events[tdi].push(evObj);
   saveDB();
   if(gcalToken&&targetDate){
-    createGCalEv(evTitle,targetDate,h,m,ap,durMins);
+    createGCalEv(evTitle,targetDate,h,m,ap,durMins).then(id=>{if(id){evObj.gcalId=id;saveDB();}});
   }
   const di=dayIdx();renderEvts(di);buildNav();buildOv();titleIn.value='';
   if(tdi!==di){

@@ -156,13 +156,11 @@ async function createGCalEv(title,date,hour,min,ampm,durMins=60){
       }
       return;
     }
-    if(!r.ok){
-      console.error('GCal create failed:',r.status, await r.text());
-      return;
-    }
-    console.log('✅ GCal event created:', title);
+    if(!r.ok){console.error('GCal create failed:',r.status,await r.text());return null;}
+    const created=await r.json();
     setTimeout(()=>fetchGCal(),1000);
-  }catch(e){console.error('createGCalEv error:',e);}
+    return created.id||null;
+  }catch(e){console.error('createGCalEv error:',e);return null;}
 }
 
 function pinGCalEvent(dayIndex, ev){
