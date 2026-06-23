@@ -767,8 +767,8 @@ function renderBudget(dashboardTotals,forceExpand=false){
       const catOpts2=cats.map(c=>`<option value="${c}" ${c===sub.rubro?'selected':''}>${c}</option>`).join('');
       const pct=sub.presup>0?Math.min(100,Math.round((sub.actual/sub.presup)*100)):0;
       const diff=sub.presup-sub.actual;
-      html+=`<div class="budget-sub-row" style="grid-template-columns:20px 1fr 68px 68px 160px 20px 20px;">
-        <div></div>
+      html+=`<div class="budget-sub-row" data-gi="${gi}" data-si="${si}" style="grid-template-columns:20px 1fr 68px 68px 160px 20px 20px;">
+        <div class="drag-handle budget-drag-handle" data-gi="${gi}" data-si="${si}"><svg width="12" height="10" viewBox="0 0 12 10" fill="currentColor"><rect y="0" width="12" height="1.5" rx=".75"/><rect y="4" width="12" height="1.5" rx=".75"/><rect y="8" width="12" height="1.5" rx=".75"/></svg></div>
         <div style="min-width:0;overflow:hidden;">
           <div class="budget-sub-name ${cls}" onclick="budgetEditSubName(${gi},${si},this)" style="cursor:pointer;" title="${es?'Clic para editar':'Click to edit'}">${sub.name}</div>
           <div class="budget-mini-bar"><div class="budget-mini-fill" style="width:${pct}%;background:${diff>=0?'var(--teal)':'#c0392b'};"></div></div>
@@ -776,10 +776,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
         <div class="budget-amt editable" onclick="budgetEditSub(${gi},${si},'presup',this)">${fmt(sub.presup)}</div>
         <div class="budget-amt ${cls} editable" onclick="budgetEditSub(${gi},${si},'actual',this)">${fmt(sub.actual)}</div>
         <div class="ss-budget-rubro" data-gi="${gi}" data-si="${si}" data-val="${sub.rubro||''}"></div>
-        <div class="budget-sub-arrows" style="display:flex;flex-direction:column;gap:0px;">
-          <button onclick="budgetMoveSub(${gi},${si},-1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1;${si===0?'opacity:.25;pointer-events:none;':''}" title="Subir">▲</button>
-          <button onclick="budgetMoveSub(${gi},${si},1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1;${si===group.subs.length-1?'opacity:.25;pointer-events:none;':''}" title="Bajar">▼</button>
-        </div>
+        <div></div>
         <button onclick="budgetDelSub(${gi},${si})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0;line-height:1;">×</button>
       </div>
       <!-- Mobile layout -->
@@ -1133,8 +1130,9 @@ function renderBudget(dashboardTotals,forceExpand=false){
   if(cardsEl)cardsEl.innerHTML=mobileCards;
   // Init budget SmartSelects
   initBudgetSmartSelects(cats);
+  initBudgetDragDrop();
 
-  // Add enter key listeners
+  // Add enter key listeners — runs AFTER initBudgetDragDrop
   setTimeout(()=>{
     const desc=document.getElementById('budget-inc-desc');
     const amt=document.getElementById('budget-inc-amt');
@@ -2008,3 +2006,68 @@ async function generateAnnualReport(){
 // ── END ANNUAL SECTION ──────────────────────────────────
 
 
+
+// ── BUDGET DRAG & DROP ──────────────────────
+let _budgetDragGi=null,_budgetDragSi=null;
+
+function initBudgetDragDrop(){
+  document.querySelectorAll('.budget-drag-handle').forEach(handle=>{
+    const gi=parseInt(handle.dataset.gi);
+    const si=parseInt(handle.dataset.si);
+    const row=handle.closest('.budget-sub-row');
+    if(!row)return;
+    handle.draggable=true;
+    handle.addEventListener('dragstart',e=>{
+      _budgetDragGi=gi;_budgetDragSi=si;
+      e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','');
+      row.classList.add('is-dragging');
+    });
+    handle.addEventListener('dragend',()=>{
+      row.classList.remove('is-dragging');
+      document.querySelectorAll('.budget-sub-row.drag-over').forEach(el=>el.classList.remove('drag-over'));
+    });
+    row.addEventListener('dragover',e=>{e.preventDefault();row.classList.add('drag-over');});
+    row.addEventListener('dragleave',()=>row.classList.remove('drag-over'));
+    row.addEventListener('drop',e=>{
+      e.preventDefault();row.classList.remove('drag-over');
+      const dstSi=parseInt(row.dataset.si);const dstGi=parseInt(row.dataset.gi);
+      if(_budgetDragGi===dstGi&&_budgetDragSi!==dstSi)reorderBudgetSub(dstGi,_budgetDragSi,dstSi);
+    });
+    // Touch
+    let _tc=null,_lastRow=null;
+    handle.addEventListener('touchstart',e=>{
+      _budgetDragGi=gi;_budgetDragSi=si;
+      const t=e.touches[0];
+      _tc=row.cloneNode(true);
+      _tc.style.cssText='position:fixed;opacity:.75;pointer-events:none;z-index:99999;width:'+row.offsetWidth+'px;left:'+(t.clientX-20)+'px;top:'+(t.clientY-20)+'px;background:var(--bg);box-shadow:0 4px 16px rgba(0,0,0,.18);';
+      document.body.appendChild(_tc);row.style.opacity='.4';
+    },{passive:true});
+    handle.addEventListener('touchmove',e=>{
+      if(!_tc)return;const t=e.touches[0];
+      _tc.style.left=(t.clientX-20)+'px';_tc.style.top=(t.clientY-20)+'px';
+      _tc.style.display='none';const el=document.elementFromPoint(t.clientX,t.clientY);_tc.style.display='';
+      document.querySelectorAll('.budget-sub-row.drag-over').forEach(r=>r.classList.remove('drag-over'));
+      _lastRow=el?.closest('.budget-sub-row[data-gi]')||null;
+      if(_lastRow&&_lastRow!==row)_lastRow.classList.add('drag-over');
+    },{passive:true});
+    handle.addEventListener('touchend',()=>{
+      _tc?.remove();_tc=null;row.style.opacity='';
+      document.querySelectorAll('.budget-sub-row.drag-over').forEach(r=>r.classList.remove('drag-over'));
+      if(_lastRow){
+        const dstGi=parseInt(_lastRow.dataset.gi);const dstSi=parseInt(_lastRow.dataset.si);
+        if(dstGi===_budgetDragGi&&dstSi!==_budgetDragSi)reorderBudgetSub(dstGi,_budgetDragSi,dstSi);
+      }
+      _lastRow=null;
+    });
+  });
+}
+
+async function reorderBudgetSub(gi,srcSi,dstSi){
+  const subs=budgetData.groups[gi]?.subs;
+  if(!subs||srcSi<0||dstSi<0||srcSi>=subs.length||dstSi>=subs.length)return;
+  const[item]=subs.splice(srcSi,1);
+  subs.splice(dstSi,0,item);
+  await saveBudgetConfig();
+  const d=await loadMonthGastos();
+  renderBudget(d);
+}

@@ -349,3 +349,11 @@ body{padding:.75rem;}
 .tour-dot.active{background:var(--mauve);}
 #tour-skip{background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;padding:0;}
 #tour-next{background:var(--mauve);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:500;cursor:pointer;}
+
+/* ── DRAG & DROP ─────────────────────────── */
+.drag-handle{cursor:grab;color:var(--text3);flex-shrink:0;display:flex;align-items:center;padding:0 4px;opacity:.5;transition:opacity .15s;}
+.drag-handle:hover{opacity:1;}
+.drag-handle:active{cursor:grabbing;}
+.task-item.is-dragging,.budget-sub-row.is-dragging{opacity:.35;}
+.task-item.drag-over{box-shadow:0 -2px 0 var(--mauve);}
+.budget-sub-row.drag-over{box-shadow:0 -2px 0 var(--mauve);}

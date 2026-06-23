@@ -1,4 +1,6 @@
 // ── RENDER ─────────────────────────────────
+const _dragHandleSVG='<svg width="12" height="10" viewBox="0 0 12 10" fill="currentColor"><rect y="0" width="12" height="1.5" rx=".75"/><rect y="4" width="12" height="1.5" rx=".75"/><rect y="8" width="12" height="1.5" rx=".75"/></svg>';
+let _dragSrcId=null;
 function setWeekRange(){
   
   const wr=isEn()
@@ -129,16 +131,74 @@ function renderTasks(di){
     const catColor=t.cat?CATS[t.cat]?.color:'';
     const catBar=catColor?'<div class="cat-bar" style="background:'+catColor+'"></div>':'';
     const catLbl=t.cat&&!isDone?'<div class="task-cat-lbl" style="color:'+catColor+'">'+CATS[t.cat].label+'</div>':'';
-    const allIdx=undoneDisplay.findIndex(tt=>tt.id===t.id);
-    const arrows=isDone?'<div style="width:18px;flex-shrink:0;"></div>':
-      '<div style="display:flex;flex-direction:column;gap:0;flex-shrink:0;">'+
-        '<button onclick="moveTask(this.dataset.id,-1)" data-id="'+tid+'" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1.2;opacity:'+(allIdx===0?'.2':'1')+(allIdx===0?'" disabled':'"')+'>▲</button>'+
-        '<button onclick="moveTask(this.dataset.id,1)" data-id="'+tid+'" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:9px;padding:0;line-height:1.2;opacity:'+(allIdx===undoneDisplay.length-1?'.2':'1')+(allIdx===undoneDisplay.length-1?'" disabled':'"')+'>▼</button>'+
-      '</div>';
+    const handleEl=isDone?'<div style="width:20px;flex-shrink:0;"></div>':'<div class="drag-handle">'+_dragHandleSVG+'</div>';
     const textWrap='<div style="flex:1;min-width:0;"><span class="tt'+(isDone?' done':'')+'" contenteditable="true" spellcheck="false" data-id="'+t.id+'" onblur="updateTaskText(this)">'+t.text+'</span>'+(isCar&&!isDone?'<span class="cbadge">anterior</span>':'')+catLbl+'</div>';
-    d.innerHTML=arrows+catBar+'<div class="cb'+(isDone?' done':'')+'" data-id="'+t.id+'" onclick="toggleTask(this)"><svg class="ck" viewBox="0 0 8 8"><polyline points="1,4 3,6 7,2" fill="none" stroke="white" stroke-width="1.5"/></svg></div>'+textWrap+'<button class="dx" data-id="'+t.id+'" onclick="deleteTask(this)">×</button>';
+    d.setAttribute('data-task-id',t.id);
+    d.innerHTML=handleEl+catBar+'<div class="cb'+(isDone?' done':'')+'" data-id="'+t.id+'" onclick="toggleTask(this)"><svg class="ck" viewBox="0 0 8 8"><polyline points="1,4 3,6 7,2" fill="none" stroke="white" stroke-width="1.5"/></svg></div>'+textWrap+'<button class="dx" data-id="'+t.id+'" onclick="deleteTask(this)">×</button>';
+    // Drag & drop (undone tasks only)
+    if(!isDone){
+      const handle=d.querySelector('.drag-handle');
+      _setupTaskDrag(handle,d,t.id,di);
+    }
     list.appendChild(d);
   });
+}
+
+function _setupTaskDrag(handle,item,id,di){
+  handle.draggable=true;
+  handle.addEventListener('dragstart',e=>{
+    _dragSrcId=id;e.dataTransfer.effectAllowed='move';
+    e.dataTransfer.setData('text/plain','');
+    item.classList.add('is-dragging');
+  });
+  handle.addEventListener('dragend',()=>{
+    item.classList.remove('is-dragging');
+    document.querySelectorAll('.task-item.drag-over').forEach(el=>el.classList.remove('drag-over'));
+  });
+  item.addEventListener('dragover',e=>{e.preventDefault();item.classList.add('drag-over');});
+  item.addEventListener('dragleave',()=>item.classList.remove('drag-over'));
+  item.addEventListener('drop',e=>{
+    e.preventDefault();item.classList.remove('drag-over');
+    if(_dragSrcId&&_dragSrcId!==id)reorderTask(_dragSrcId,id,di);
+  });
+  // Touch
+  let _tc=null,_lastTarget=null;
+  handle.addEventListener('touchstart',e=>{
+    _dragSrcId=id;
+    const t=e.touches[0];
+    _tc=item.cloneNode(true);
+    _tc.style.cssText='position:fixed;opacity:.75;pointer-events:none;z-index:99999;width:'+item.offsetWidth+'px;left:'+(t.clientX-20)+'px;top:'+(t.clientY-20)+'px;background:var(--bg);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.18);';
+    document.body.appendChild(_tc);item.style.opacity='.4';
+  },{passive:true});
+  handle.addEventListener('touchmove',e=>{
+    if(!_tc)return;const t=e.touches[0];
+    _tc.style.left=(t.clientX-20)+'px';_tc.style.top=(t.clientY-20)+'px';
+    _tc.style.display='none';const el=document.elementFromPoint(t.clientX,t.clientY);_tc.style.display='';
+    document.querySelectorAll('.task-item.drag-over').forEach(el=>el.classList.remove('drag-over'));
+    _lastTarget=el?.closest('.task-item[data-task-id]')||null;
+    if(_lastTarget&&_lastTarget!==item)_lastTarget.classList.add('drag-over');
+  },{passive:true});
+  handle.addEventListener('touchend',()=>{
+    _tc?.remove();_tc=null;item.style.opacity='';
+    document.querySelectorAll('.task-item.drag-over').forEach(el=>el.classList.remove('drag-over'));
+    const dstId=_lastTarget?.dataset.taskId;
+    if(dstId&&dstId!==id)reorderTask(id,dstId,di);
+    _lastTarget=null;_dragSrcId=null;
+  });
+}
+
+function reorderTask(srcId,dstId,di){
+  if(!weekData.tasks)weekData.tasks=[];
+  const all=weekData.tasks;
+  const visible=tasksForDay(di).filter(t=>t.doneOnDay===undefined);
+  const toImport=visible.filter(t=>t.fromPrevWeek&&!all.find(wt=>wt.id===t.id));
+  [...toImport].reverse().forEach(t=>all.unshift({id:t.id,text:t.text,addedOnDay:-1,...(t.cat?{cat:t.cat}:{})}));
+  const srcIdx=all.findIndex(t=>t.id===srcId);
+  if(srcIdx===-1)return;
+  const [item]=all.splice(srcIdx,1);
+  const dstIdx=all.findIndex(t=>t.id===dstId);
+  if(dstIdx===-1){all.push(item);}else{all.splice(dstIdx,0,item);}
+  saveDB();renderTasks(di);
 }
 
 function updateProg(di){
