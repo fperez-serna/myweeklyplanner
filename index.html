@@ -356,7 +356,10 @@
 <div class="db">
   <div class="row r3h">
     <div class="card card-teal">
-      <div class="lbl" id="location-lbl">Obteniendo ubicación...</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div class="lbl" id="location-lbl" style="margin-bottom:0;">Obteniendo ubicación...</div>
+        <button onclick="resetLocation()" style="font-size:9px;color:rgba(255,255,255,.6);background:none;border:none;cursor:pointer;padding:0;text-decoration:underline;line-height:1;">actualizar</button>
+      </div>
       <div id="location-input-wrap" style="display:none;margin-top:6px;">
         <input type="text" id="location-input" placeholder="Escribe tu ciudad..." style="font-size:12px;padding:4px 8px;border:0.5px solid rgba(255,255,255,.5);border-radius:8px;background:rgba(255,255,255,.2);color:#fff;width:100%;outline:none;" onkeydown="if(event.key==='Enter')searchCity()"/>
         <button onclick="searchCity()" style="font-size:11px;margin-top:4px;padding:3px 10px;border:0.5px solid rgba(255,255,255,.5);border-radius:8px;background:rgba(255,255,255,.2);color:#fff;cursor:pointer;">Buscar</button>

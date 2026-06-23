@@ -241,6 +241,13 @@ async function fetchWeather(){
   }
 }
 
+function resetLocation(){
+  localStorage.removeItem('weather_lat');
+  localStorage.removeItem('weather_lon');
+  localStorage.removeItem('weather_city');
+  showLocationInput();
+  document.getElementById('location-input')?.focus();
+}
 function showLocationInput(){
   document.getElementById('location-lbl').textContent='¿Dónde estás?';
   document.getElementById('location-input-wrap').style.display='block';
