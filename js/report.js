@@ -99,8 +99,10 @@ function renderReport(){
     }
     const weekCount=Math.ceil(daysInMonth/7);
     const avgWeekly=weekCount>0?(monthTotal/weekCount):0;
+    const sortedCats=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
+    const topCat=sortedCats[0]||null;
     html+=`<div class="report-section">
-      <div class="report-sec-title">${isEn()?'💸 Income & Expenses':'💸 Ingresos y Gastos'}</div>
+      <div class="report-sec-title"><i data-lucide="receipt" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:5px;"></i>${isEn()?'Income & Expenses':'Ingresos y Gastos'}</div>
       ${reportIncome>0?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
         <div class="rstat" style="background:#e8f0ef;"><div class="rstat-val" style="color:var(--teal);">$${reportIncome.toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Income':'Ingresos'}</div></div>
         <div class="rstat"><div class="rstat-val" style="color:#c0392b;">$${monthTotal.toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Expenses':'Gastos'}</div></div>
@@ -110,10 +112,10 @@ function renderReport(){
         <div class="rstat"><div class="rstat-val">$${monthTotal.toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Month total':'Total del mes'}</div></div>
         <div class="rstat"><div class="rstat-val">$${Math.round(avgWeekly).toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Weekly avg':'Promedio semanal'}</div></div>
         ${maxDay?`<div class="rstat"><div class="rstat-val">${(()=>{const d=new Date(reportYear,reportMonth,maxDay);return(isEn()?['Mon','Tue','Wed','Thu','Fri','Sat','Sun']:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'])[(d.getDay()+6)%7]+' '+maxDay;})()} </div><div class="rstat-lbl">${isEn()?'Most expensive day':'Día más caro'} $${maxDayAmt.toLocaleString()}</div></div>`:''}
-        ${Object.keys(catTotals).length?`<div class="rstat"><div class="rstat-val" style="font-size:12px;font-weight:600;">${Object.entries(catTotals).sort((a,b)=>b[1]-a[1])[0][0]}</div><div class="rstat-lbl">${isEn()?'Top category':'Categoría top'} $${Object.entries(catTotals).sort((a,b)=>b[1]-a[1])[0][1].toLocaleString()}</div></div>`:''}
+        ${topCat?`<div class="rstat"><div class="rstat-val" style="font-size:12px;font-weight:600;">${topCat[0]}</div><div class="rstat-lbl">${isEn()?'Top category':'Categoría top'} $${topCat[1].toLocaleString()}</div></div>`:''}
       </div>`;
-    if(Object.keys(catTotals).length){
-      const sorted=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
+    if(sortedCats.length){
+      const sorted=sortedCats;
       const max=sorted[0][1];
       html+=`<div style="margin-top:8px;">`;
       sorted.forEach(([cat,amt])=>{
@@ -138,10 +140,10 @@ function renderReport(){
         if(wo.ha2)haCounts[wo.ha2]=(haCounts[wo.ha2]||0)+1;
       } else {curStreak=0;}
     }
-    const topWo=Object.entries(woCounts).sort((a,b)=>b[1]-a[1])[0];
-    const topHa=Object.entries(haCounts).sort((a,b)=>b[1]-a[1])[0];
+    const topWo=Object.entries(woCounts).sort((a,b)=>b[1]-a[1])[0]||null;
+    const topHa=Object.entries(haCounts).sort((a,b)=>b[1]-a[1])[0]||null;
     html+=`<div class="report-section">
-      <div class="report-sec-title">${isEn()?'💪 Workouts & Habits':'💪 Workouts & Hábitos'}</div>
+      <div class="report-sec-title"><i data-lucide="dumbbell" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:5px;"></i>${isEn()?'Workouts & Habits':'Workouts & Hábitos'}</div>
       <div class="report-stat-grid">
         <div class="rstat"><div class="rstat-val">${activeDays}/${daysInMonth}</div><div class="rstat-lbl">${isEn()?'Active days':'Días activos'}</div></div>
         <div class="rstat"><div class="rstat-val">${maxStreak}</div><div class="rstat-lbl">${isEn()?'Best streak':'Racha máxima'}</div></div>
@@ -183,7 +185,7 @@ function renderReport(){
     const focusPct=focusTotal>0?Math.round((focusDone/focusTotal)*100):0;
     const taskPct=tasksTotal>0?Math.round((tasksDone/tasksTotal)*100):0;
     html+=`<div class="report-section">
-      <div class="report-sec-title">${isEn()?'🎯 Productivity':'🎯 Productividad'}</div>
+      <div class="report-sec-title"><i data-lucide="target" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:5px;"></i>${isEn()?'Productivity':'Productividad'}</div>
       <div class="report-stat-grid">
         <div class="rstat"><div class="rstat-val">${focusPct}%</div><div class="rstat-lbl">${isEn()?'Focus completed':'Enfoques completados'}</div></div>
         <div class="rstat"><div class="rstat-val">${taskPct}%</div><div class="rstat-lbl">${isEn()?'Tasks done':'Pendientes resueltos'}</div></div>
@@ -198,6 +200,7 @@ function renderReport(){
   }
   if(!html)html=`<div style="text-align:center;color:var(--text3);padding:2rem;font-size:14px;">${isEn()?'Select at least one section above':'Selecciona al menos una sección arriba'}</div>`;
   container.innerHTML=html;
+  if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 function initBudgetSmartSelects(cats){
