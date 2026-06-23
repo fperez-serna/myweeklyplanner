@@ -753,7 +753,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
         </div>
       </div>
       <div id="grp-${gi}" style="display:${budgetCollapsedGroups.has(gi)?'none':'block'};">
-        <div class="budget-col-hds" style="grid-template-columns:20px 1fr 68px 68px 130px 20px 20px;">
+        <div class="budget-col-hds" style="grid-template-columns:20px 1fr 68px 68px 160px 20px 20px;">
           <div class="budget-col-h"></div>
           <div class="budget-col-h" style="text-align:left;">${es?'Subcategoría':'Subcategory'}</div>
           <div class="budget-col-h">${es?'Presup.':'Budget'}</div>
@@ -767,7 +767,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
       const catOpts2=cats.map(c=>`<option value="${c}" ${c===sub.rubro?'selected':''}>${c}</option>`).join('');
       const pct=sub.presup>0?Math.min(100,Math.round((sub.actual/sub.presup)*100)):0;
       const diff=sub.presup-sub.actual;
-      html+=`<div class="budget-sub-row" style="grid-template-columns:20px 1fr 68px 68px 130px 20px 20px;">
+      html+=`<div class="budget-sub-row" style="grid-template-columns:20px 1fr 68px 68px 160px 20px 20px;">
         <div></div>
         <div style="min-width:0;overflow:hidden;">
           <div class="budget-sub-name ${cls}" onclick="budgetEditSubName(${gi},${si},this)" style="cursor:pointer;" title="${es?'Clic para editar':'Click to edit'}">${sub.name}</div>
