@@ -55,22 +55,23 @@ async function loadReportData(){
   d.setDate(d.getDate()-(dow===0?6:dow-1));
   while(d<=lastDay){weekStarts.push(new Date(d));d.setDate(d.getDate()+7);}
   reportData=[];
-  if(db){
-    const promises=weekStarts.map(ws=>{
-      const key='week_'+dk(ws);
-      return userCol().doc(key).get()
-        .then(snap=>({key,weekStart:new Date(ws),data:snap.exists?snap.data():null}))
-        .catch(()=>({key,weekStart:new Date(ws),data:null}));
-    });
-    reportData=await Promise.all(promises);
-    // Also load income for this month from budget_actual
-    reportIncome=0;
-    try{
-      const monthKey='budget_actual_'+reportYear+'_'+String(reportMonth+1).padStart(2,'0');
-      const snap=await userCol().doc(monthKey).get();
-      reportIncome=snap.exists?(snap.data().income||[]).reduce((s,i)=>s+(i.amt||0),0):0;
-    }catch(e){reportIncome=0;}
+  if(!db||!currentUser){
+    document.getElementById('report-content').innerHTML='<div style="text-align:center;color:var(--text3);padding:2rem;font-size:14px;">'+(isEn()?'Sign in to view your report':'Inicia sesión para ver tu reporte')+'</div>';
+    return;
   }
+  const promises=weekStarts.map(ws=>{
+    const key='week_'+dk(ws);
+    return userCol().doc(key).get()
+      .then(snap=>({key,weekStart:new Date(ws),data:snap.exists?snap.data():null}))
+      .catch(()=>({key,weekStart:new Date(ws),data:null}));
+  });
+  reportData=await Promise.all(promises);
+  // Load income from budget_config (moved from budget_actual)
+  reportIncome=0;
+  try{
+    const snap=await userCol().doc('budget_config').get();
+    reportIncome=snap.exists?((snap.data().income||[]).reduce((s,i)=>s+(i.amt||0),0)):0;
+  }catch(e){reportIncome=0;}
   renderReport();
 }
 
@@ -174,7 +175,7 @@ function renderReport(){
       const f=(entry.data.focus&&entry.data.focus[entry.di])||{};
       const fd=entry.data.focusDone||{};
       const fTotal=Object.values(f).filter(Boolean).length;
-      const fDone=[1,2,3].filter(n=>fd[entry.di+'_'+n]!==undefined).length;
+      const fDone=[1,2,3].filter(n=>fd[entry.di+'_'+n]!==undefined||fd[String(entry.di)+'_'+String(n)]!==undefined).length;
       focusTotal+=fTotal;focusDone+=Math.min(fDone,fTotal);
       const tasks=(entry.data.tasks||[]).filter(t=>t.addedOnDay===entry.di);
       const done=tasks.filter(t=>t.doneOnDay!==undefined).length;
