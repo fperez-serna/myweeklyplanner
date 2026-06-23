@@ -1,4 +1,5 @@
 // ── QUICK GASTO WIDGET ─────────────────────
+let _weatherInterval=null;
 function launchFullApp(){
   document.querySelector('.db').style.display='';
   document.getElementById('settings-btn-wrap').style.display='flex';
@@ -9,7 +10,8 @@ function launchFullApp(){
   renderDay();
   buildCalendar();
   setTimeout(()=>{showQ(QS[qcur]);fetchWeather();},200);
-  setInterval(fetchWeather, 10*60*1000);
+  if(_weatherInterval)clearInterval(_weatherInterval);
+  _weatherInterval=setInterval(fetchWeather, 10*60*1000);
   renderSh();
 }
 
@@ -101,9 +103,10 @@ function quickGastoAdd(){
     confirm.style.display='block';
     setTimeout(()=>confirm.style.display='none',2000);
   }
-  document.getElementById('qg-desc').value='';
-  document.getElementById('qg-monto').value='';
-  document.getElementById('qg-desc')?.focus();
+  const qgDesc=document.getElementById('qg-desc');
+  const qgMonto=document.getElementById('qg-monto');
+  if(qgDesc){qgDesc.value='';qgDesc.focus();}
+  if(qgMonto)qgMonto.value='';
 }
 
 function quickGastoGoFull(fromBtn=true){
@@ -164,7 +167,9 @@ async function forgotPassword(){
   }catch(e){alert(isEn()?'Error sending email':'Error al enviar el email');}
 }
 
-function signOut(){
+async function signOut(){
+  showToast(isEn()?'Saving...':'Guardando...');
+  await flushPendingSaves();
   auth.signOut().then(()=>{
     currentUser=null;
     const wall=document.getElementById('payment-wall');

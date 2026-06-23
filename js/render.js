@@ -461,7 +461,8 @@ function addEv(){
         if(!data.events[targetTdi])data.events[targetTdi]=[];
         data.events[targetTdi].push({time:h+':'+m+' '+ap,title:evTitle,durMins});
         return userCol().doc(targetWid).set(data);
-      }).catch(e=>{console.error('Error saving event to other week:',e);showToast(isEn()?'Could not save event, try again':'No se pudo guardar el evento, intenta de nuevo');});
+      }).then(()=>{showToast(isEn()?'Event saved ✓':'Evento guardado ✓');})
+        .catch(e=>{console.error('Error saving event to other week:',e);showToast(isEn()?'Could not save event, try again':'No se pudo guardar el evento, intenta de nuevo');});
     }
     if(gcalToken)createGCalEv(evTitle,targetDate,h,m,ap,durMins);
     titleIn.value='';

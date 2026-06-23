@@ -30,9 +30,20 @@ async function saveDB(){
   // Debounce — espera 500ms antes de guardar para agrupar cambios rápidos
   clearTimeout(_saveDBTimer);
   _saveDBTimer=setTimeout(async()=>{
+    if(!db||!currentUser)return;
     try{await userCol().doc(wid()).set(weekData);showSync();}
     catch(e){console.error('Save error:',e);if(e.code!=='unavailable')showToast(isEn()?'Could not save. Check your connection.':'No se pudo guardar. Verifica tu conexión.');}
   },500);
+}
+
+async function flushPendingSaves(){
+  if(!_saveDBTimer)return;
+  clearTimeout(_saveDBTimer);
+  _saveDBTimer=null;
+  if(db&&currentUser&&weekData){
+    try{await userCol().doc(wid()).set(weekData);}
+    catch(e){console.error('Flush save error:',e);}
+  }
 }
 
 let _shSaving=false;
@@ -80,9 +91,11 @@ async function loadShoppingDB(){
   }catch(e){console.log('Shopping fresh');}
 }
 
+let _unsubShopping=null;
 function subscribeShoppingDB(){
+  if(_unsubShopping)_unsubShopping();
   if(!db)return;
-  userCol().doc('shopping').onSnapshot(snap=>{
+  _unsubShopping=userCol().doc('shopping').onSnapshot(snap=>{
     try{
       if(_shSaving)return;
       if(snap.exists){
