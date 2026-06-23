@@ -253,6 +253,7 @@ async function signOut(){
         setTimeout(()=>autoBackup(),3000);
         subscribeShoppingDB();
         subscribeConfig();
+        setTimeout(()=>startTour(),800);
       }catch(e){
         console.warn('Firebase error:',e);
       }

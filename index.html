@@ -411,18 +411,18 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="card-week-nav">
     <div class="sec">Semana — click para navegar</div>
     <div class="wk-nav" id="wk-nav"></div>
   </div>
 
-  <div class="card">
+  <div class="card" id="card-overview">
     <div class="sec">Overview semanal</div>
     <div class="wkov" id="wkov"></div>
   </div>
 
   <div class="row r2">
-    <div class="card">
+    <div class="card" id="card-tasks">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div class="sec">Pendientes</div>
         <button onclick="shareTasks()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:var(--text3);" title="Compartir"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
@@ -444,7 +444,7 @@
       </div>
     </div>
     <div class="col">
-      <div class="card">
+      <div class="card" id="card-focus">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div class="sec">Enfoque del día</div>
           <button onclick="shareFocus()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:var(--text3);" title="Compartir"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
@@ -484,7 +484,7 @@
         <div id="gcal-pin-hint" style="display:none;margin-top:6px;font-size:11px;padding:6px 10px;border-radius:8px;background:var(--teal-l);color:var(--teal-d);border:0.5px solid var(--teal);">Toca cualquier evento del overview para anclarlo a tu planner. Se queda guardado aunque desconectes el calendario.</div>
         <div class="snote" id="gcal-snote" style="margin-top:4px;color:var(--text3);font-style:italic;">*Por seguridad, tu calendario no puede permanecer conectado. Conéctate cuando quieras que tus eventos se reflejen aquí y cuando quieras que tus eventos de aquí se guarden en tu Google Calendar.</div>
       </div>
-      <div class="card">
+      <div class="card" id="card-workout">
         <div class="sec">Workout</div>
         <div class="dr-row"><div class="dr-lbl">1</div><select class="dr-sel" id="wo1" onchange="saveWorkout()"><option value="">—</option><option>Rest</option><option>Tennis</option><option>Pilates</option><option>Gym</option><option>E. Club</option><option>Swimming</option><option>Yoga</option><option>Box</option><option>Free Diving</option><option>Climbing</option><option>Otro</option></select></div>
         <div class="dr-row"><div class="dr-lbl">2</div><select class="dr-sel" id="wo2" onchange="saveWorkout()"><option value="">—</option><option>Rest</option><option>Tennis</option><option>Pilates</option><option>Gym</option><option>E. Club</option><option>Swimming</option><option>Yoga</option><option>Box</option><option>Free Diving</option><option>Climbing</option><option>Otro</option></select></div>
@@ -499,7 +499,7 @@
   <!-- GASTOS -->
   <div id="wk-nav-mini" style="display:flex;justify-content:space-between;background:var(--bg);border-radius:12px;padding:8px 4px;margin-bottom:8px;"></div>
 
-  <div class="card">
+  <div class="card" id="card-gastos">
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div class="sec" id="gastos-title">Gastos del día</div>
       <button onclick="shareGastos()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:var(--text3);" title="Compartir"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
@@ -609,6 +609,24 @@
 
 <div class="sync-badge" id="sync-badge">Guardado ✓</div>
 
+<!-- TOUR OVERLAY -->
+<div id="tour-overlay" style="display:none;position:fixed;inset:0;z-index:99995;">
+  <svg id="tour-svg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:all;">
+    <path id="tour-path" fill="rgba(0,0,0,0.72)" fill-rule="evenodd"/>
+  </svg>
+  <div id="tour-tooltip">
+    <div id="tour-title"></div>
+    <div id="tour-desc"></div>
+    <div id="tour-footer">
+      <div id="tour-dots"></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button onclick="endTour()" id="tour-skip"></button>
+        <button onclick="nextTourStep()" id="tour-next"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Report export libs -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Report export libs -->
@@ -633,5 +651,6 @@
 <script src="js/budget.js"></script>
 <script src="js/report.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/tour.js"></script>
 </body>
 </html>
