@@ -124,21 +124,17 @@ function showBudgetTourStep(idx){
     const footer=document.getElementById('tour-footer');
     if(step.budgetEnd){
       footer.innerHTML=`
-        <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
-          <button onclick="endBudgetTour();" style="padding:10px;border-radius:9px;background:var(--mauve);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer;">${es?'¡Listo! Explorar el app':'Done! Explore the app'}</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+          <button onclick="backToDashboardTour()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0;line-height:1;">←</button>
+          <button onclick="endBudgetTour();" style="padding:8px 16px;border-radius:9px;background:var(--mauve);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer;">${es?'¡Listo!':'Done!'}</button>
         </div>`;
     } else {
-      const isLast=idx===BUDGET_TOUR_STEPS.length-1;
       footer.innerHTML=`
-        <div id="tour-dots"></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button onclick="endBudgetTour()" id="tour-skip"></button>
-          <button onclick="nextBudgetTourStep()" id="tour-next"></button>
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+          <button onclick="backToDashboardTour()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0;line-height:1;">←</button>
+          <span style="font-size:11px;color:var(--text3);">${idx+1} / ${BUDGET_TOUR_STEPS.length}</span>
+          <button onclick="nextBudgetTourStep()" style="background:var(--mauve);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:500;cursor:pointer;">${es?'Siguiente →':'Next →'}</button>
         </div>`;
-      document.getElementById('tour-skip').textContent=es?'Saltar':'Skip';
-      document.getElementById('tour-next').textContent=es?'Siguiente →':'Next →';
-      document.getElementById('tour-dots').innerHTML=
-        BUDGET_TOUR_STEPS.map((_,i)=>`<span class="tour-dot${i===idx?' active':''}"></span>`).join('');
     }
 
     const tt=document.getElementById('tour-tooltip');
@@ -146,12 +142,12 @@ function showBudgetTourStep(idx){
     if(isMobile){
       tt.style.cssText='position:fixed;bottom:24px;left:16px;right:16px;width:auto;';
     } else {
-      tt.style.position='fixed';tt.style.width='290px';
+      tt.style.position='fixed';tt.style.width='320px';
       tt.style.left='';tt.style.right='';tt.style.bottom='';
       const ttH=tt.offsetHeight||140;
       const below=rect.bottom+pad+12+ttH<vh;
       tt.style.top=below?(rect.bottom+pad+8)+'px':Math.max(8,rect.top-pad-ttH-8)+'px';
-      tt.style.left=Math.max(12,Math.min(vw-302,rect.left))+'px';
+      tt.style.left=Math.max(12,Math.min(vw-332,rect.left))+'px';
     }
   },350);
 }
@@ -166,6 +162,16 @@ function endBudgetTour(){
   const overlay=document.getElementById('tour-overlay');
   if(overlay)overlay.style.display='none';
   localStorage.setItem('wp_tour_done','1');
+}
+
+function backToDashboardTour(){
+  const modal=document.getElementById('budget-modal');
+  if(modal){modal.style.display='none';document.body.style.overflow='';}
+  _tourStep=TOUR_STEPS.length-1;
+  const overlay=document.getElementById('tour-overlay');
+  if(!overlay)return;
+  overlay.style.display='block';
+  showTourStep(TOUR_STEPS.length-1);
 }
 
 function startTour(){

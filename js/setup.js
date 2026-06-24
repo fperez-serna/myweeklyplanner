@@ -527,6 +527,17 @@ function translateSetup(lang){
   // Save button
   const saveBtn=document.querySelector('#setup-screen button[onclick="saveSetup()"]');
   if(saveBtn)saveBtn.textContent=t.btn;
+  // Tour button
+  const tourBtn=document.querySelector('[onclick="launchTourFromSettings()"]');
+  if(tourBtn)tourBtn.textContent=lang==='en'?'View app tour':'Ver tour del app';
+  // Welcome banner
+  const en=lang==='en';
+  const set2=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set2('wb-title',en?'Welcome to Weekly Planner!':'¡Bienvenido a Weekly Planner!');
+  set2('wb-desc',en?'Customize your app first, or take the interactive tour to discover it in 2 minutes.':'Puedes personalizar tu app primero, o hacer el tour interactivo para conocerla en 2 minutos.');
+  set2('wb-tour-btn',en?'Start the tour':'Empezar el tour');
+  set2('wb-skip-btn',en?'I\'ll explore on my own':'Aprendo solo/a');
+  set2('wb-note',en?'You can always return to the tour from Settings':'Siempre puedes regresar al tour desde Ajustes');
   // Currency options
   const currSel=document.getElementById('cfg-currency');
   if(currSel){
