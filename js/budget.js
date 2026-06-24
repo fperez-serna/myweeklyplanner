@@ -692,8 +692,8 @@ function renderBudget(dashboardTotals,forceExpand=false){
 
   let html=`
   <!-- INGRESOS -->
-  <div class="budget-sec-title">${es?'Ingresos':'Income'}</div>
-  <div class="budget-income-box">
+  <div class="budget-sec-title" id="budget-income-title">${es?'Ingresos':'Income'}</div>
+  <div class="budget-income-box" id="budget-income-section">
     <div class="budget-income-header">
       <div>
         <div class="budget-income-lbl">${es?'Total ingresos':'Total income'}</div>
@@ -721,17 +721,18 @@ function renderBudget(dashboardTotals,forceExpand=false){
   </div>
 
   <!-- STATS -->
-  <div class="budget-stats">
+  <div class="budget-stats" id="budget-stats-section">
     <div class="budget-stat"><div class="budget-stat-val">${fmt(totalIncome)}</div><div class="budget-stat-lbl">${es?'Total ingresos':'Total income'}</div></div>
     <div class="budget-stat"><div class="budget-stat-val">${fmt(totalDash)}</div><div class="budget-stat-lbl">${es?'Total gastos dashboard':'Total dashboard expenses'}</div></div>
     <div class="budget-stat"><div class="budget-stat-val ${disponible>=0?'green':'red'}">${fmt(disponible)}</div><div class="budget-stat-lbl">${es?'Disponible':'Available'}</div></div>
     <div class="budget-stat"><div class="budget-stat-val">${fmt(totalPresup)}</div><div class="budget-stat-lbl">${es?'Presupuestado':'Budgeted'}</div></div>
-    <div class="budget-stat"><div class="budget-stat-val">${fmt(totalManual)}</div><div class="budget-stat-lbl">${es?'Actual — ingreso manual':'Actual — manual entry'}</div></div>
+    <div class="budget-stat"><div class="budget-stat-val">${fmt(totalManual)}</div><div class="budget-stat-lbl">${es?'Real — capturado':'Real — captured'}</div></div>
     <div class="budget-stat"><div class="budget-stat-val ${sinPresup>=0?'green':'red'}">${fmt(sinPresup)}</div><div class="budget-stat-lbl">${es?'Sin presupuestar':'Unbudgeted'}</div></div>
     ${totalAbonos>0?`<div class="budget-stat"><div class="budget-stat-val red">${fmt(totalAbonos)}</div><div class="budget-stat-lbl">${es?'💳 Abonos deudas':'💳 Debt payments'}</div></div>`:''}
   </div>
 
   <!-- GROUPS -->
+  <div id="budget-groups-section">
   <div class="budget-sec-title">${es?'Gastos planeados':'Planned expenses'}</div>`;
 
   budgetData.groups.forEach((group,gi)=>{
@@ -757,7 +758,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
           <div class="budget-col-h"></div>
           <div class="budget-col-h" style="text-align:left;">${es?'Subcategoría':'Subcategory'}</div>
           <div class="budget-col-h">${es?'Presup.':'Budget'}</div>
-          <div class="budget-col-h">${es?'Actual':'Actual'}</div>
+          <div class="budget-col-h">${es?'Real':'Actual'}</div>
           <div class="budget-col-h">${es?'Rubro':'Category'}</div>
           <div class="budget-col-h"></div>
         </div>`;
@@ -787,7 +788,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
           <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;">Presup.</span>
           <span class="budget-amt editable" onclick="budgetEditSub(${gi},${si},'presup',this)">${fmt(sub.presup)}</span>
           <span style="color:var(--border);text-align:center;">·</span>
-          <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;">Actual</span>
+          <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;">${es?'Real':'Actual'}</span>
           <span class="budget-amt ${cls} editable" onclick="budgetEditSub(${gi},${si},'actual',this)">${fmt(sub.actual)}</span>
           <div class="ss-budget-rubro-mobile" data-gi="${gi}" data-si="${si}" data-val="${sub.rubro||''}"></div>
           <button onclick="budgetDelSub(${gi},${si})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0;line-height:1;">×</button>
@@ -813,9 +814,10 @@ function renderBudget(dashboardTotals,forceExpand=false){
   html+=`<button class="budget-add-group-btn" onclick="budgetAddGroup()">+ ${es?'Agregar grupo':'Add group'}</button>`;
 
   // PRESTAMOS & DEUDAS SECTION
+  html+=`</div>`; // close budget-groups-section
   const debtOpen=budgetDebtOpen===undefined?true:budgetDebtOpen;
   html+=`<div class="budget-divider"></div>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;cursor:pointer;" onclick="toggleDebtSection()">
+  <div id="budget-debt-section" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;cursor:pointer;" onclick="toggleDebtSection()">
     <div class="debt-section-title" style="margin:0;"><i data-lucide="landmark" style="width:16px;height:16px;vertical-align:middle;display:inline-block;margin-right:6px;"></i>${es?'Crédito, Préstamos y Deudas':'Credit, Loans & Debts'}</div>
     <div style="display:flex;align-items:center;gap:8px;">
       <span style="font-size:11px;color:var(--text3);transition:transform .2s;display:inline-block;transform:${debtOpen?'rotate(0deg)':'rotate(-90deg)'}">▾</span>
@@ -965,7 +967,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
     <thead><tr>
       <th style="text-align:left;">${es?'Rubro':'Category'}</th>
       <th>${es?'Presupuesto':'Budget'}</th>
-      <th class="budget-hide-mobile">${es?'Actual — ingreso manual':'Actual — manual'}</th>
+      <th class="budget-hide-mobile">${es?'Real — capturado':'Actual — captured'}</th>
       <th>Dashboard</th>
       <th>${es?'Diferencia':'Difference'}</th>
       <th>${es?'Sin clasificar':'Unclassified'}</th>
@@ -1032,7 +1034,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
 
   <div class="budget-legend">
     <div class="budget-leg-row"><div class="budget-leg-lbl">${es?'Presupuesto':'Budget'}</div><div class="budget-leg-desc">${es?'Lo que planeaste gastar en cada rubro este mes.':'What you planned to spend per category this month.'}</div></div>
-    <div class="budget-leg-row"><div class="budget-leg-lbl">${es?'Actual':'Actual'}</div><div class="budget-leg-desc">${es?'Lo que tú mismo registraste como gastado en cada subcategoría — ingresado manualmente.':'What you manually entered as spent in each subcategory.'}</div></div>
+    <div class="budget-leg-row"><div class="budget-leg-lbl">${es?'Real':'Actual'}</div><div class="budget-leg-desc">${es?'Lo que tú mismo capturaste como gastado en cada subcategoría al final del mes.':'What you manually entered as spent in each subcategory at month end.'}</div></div>
     <div class="budget-leg-row"><div class="budget-leg-lbl">Dashboard</div><div class="budget-leg-desc">${es?'Los gastos reales registrados en tu Weekly Planner, jalados automáticamente.':'Real expenses recorded in your Weekly Planner, pulled automatically.'}</div></div>
     <div class="budget-leg-row"><div class="budget-leg-lbl">${es?'Diferencia':'Difference'}</div><div class="budget-leg-desc">${es?'Cuánto te alejaste de tu presupuesto — compara lo planeado contra tus gastos reales del dashboard.':'How far off your budget — planned vs real dashboard expenses.'}</div></div>
     <div class="budget-leg-row"><div class="budget-leg-lbl"><span class="budget-tag-sinc">${es?'Sin clasificar':'Unclassified'}</span></div><div class="budget-leg-desc">${es?'Gastos del dashboard que aún no has asignado a ninguna subcategoría de tu presupuesto.':'Dashboard expenses not yet assigned to any budget subcategory.'}</div></div>
