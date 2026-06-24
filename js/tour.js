@@ -88,8 +88,17 @@ function startBudgetTour(){
   _budgetTourStep=0;
   const overlay=document.getElementById('tour-overlay');
   if(!overlay)return;
-  overlay.style.display='block';
-  showBudgetTourStep(0);
+  let attempts=0;
+  const tryStart=()=>{
+    if(document.getElementById('budget-income-section')){
+      overlay.style.display='block';
+      showBudgetTourStep(0);
+    } else if(attempts<12){
+      attempts++;
+      setTimeout(tryStart,300);
+    }
+  };
+  tryStart();
 }
 
 function showBudgetTourStep(idx){
