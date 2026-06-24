@@ -46,12 +46,17 @@ function startTour(){
 }
 
 function startTourFromSetup(){
-  document.getElementById('welcome-banner').style.display='none';
+  const banner=document.getElementById('welcome-banner');
+  if(banner)banner.style.display='none';
   saveSetup();
+  localStorage.removeItem('wp_tour_done');
   setTimeout(()=>{
-    localStorage.removeItem('wp_tour_done');
-    startTour();
-  },600);
+    const overlay=document.getElementById('tour-overlay');
+    if(!overlay)return;
+    _tourStep=0;
+    overlay.style.display='block';
+    showTourStep(0);
+  },900);
 }
 
 function skipTourFromSetup(){
