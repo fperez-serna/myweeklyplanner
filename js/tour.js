@@ -142,3 +142,15 @@ function endTour(){
 function resetTour(){
   localStorage.removeItem('wp_tour_done');
 }
+
+function launchTourFromSettings(){
+  resetTour();
+  saveSetup();
+  setTimeout(()=>{
+    const o=document.getElementById('tour-overlay');
+    if(!o)return;
+    _tourStep=0;
+    o.style.display='block';
+    showTourStep(0);
+  },900);
+}
