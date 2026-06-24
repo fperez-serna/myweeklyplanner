@@ -722,12 +722,12 @@ function renderBudget(dashboardTotals,forceExpand=false){
 
   <!-- STATS -->
   <div class="budget-stats" id="budget-stats-section">
-    <div class="budget-stat"><div class="budget-stat-val">${fmt(totalIncome)}</div><div class="budget-stat-lbl">${es?'Total ingresos':'Total income'}</div></div>
-    <div class="budget-stat"><div class="budget-stat-val">${fmt(totalDash)}</div><div class="budget-stat-lbl">${es?'Total gastos dashboard':'Total dashboard expenses'}</div></div>
-    <div class="budget-stat"><div class="budget-stat-val ${disponible>=0?'green':'red'}">${fmt(disponible)}</div><div class="budget-stat-lbl">${es?'Disponible':'Available'}</div></div>
-    <div class="budget-stat"><div class="budget-stat-val">${fmt(totalPresup)}</div><div class="budget-stat-lbl">${es?'Presupuestado':'Budgeted'}</div></div>
-    <div class="budget-stat"><div class="budget-stat-val">${fmt(totalManual)}</div><div class="budget-stat-lbl">${es?'Real — capturado':'Real — captured'}</div></div>
-    <div class="budget-stat"><div class="budget-stat-val ${sinPresup>=0?'green':'red'}">${fmt(sinPresup)}</div><div class="budget-stat-lbl">${es?'Sin presupuestar':'Unbudgeted'}</div></div>
+    <div class="budget-stat" id="stat-total-ingresos"><div class="budget-stat-val">${fmt(totalIncome)}</div><div class="budget-stat-lbl">${es?'Total ingresos':'Total income'}</div></div>
+    <div class="budget-stat" id="stat-total-gastos"><div class="budget-stat-val">${fmt(totalDash)}</div><div class="budget-stat-lbl">${es?'Total gastos dashboard':'Total dashboard expenses'}</div></div>
+    <div class="budget-stat" id="stat-disponible"><div class="budget-stat-val ${disponible>=0?'green':'red'}">${fmt(disponible)}</div><div class="budget-stat-lbl">${es?'Disponible':'Available'}</div></div>
+    <div class="budget-stat" id="stat-presupuestado"><div class="budget-stat-val">${fmt(totalPresup)}</div><div class="budget-stat-lbl">${es?'Presupuestado':'Budgeted'}</div></div>
+    <div class="budget-stat" id="stat-real"><div class="budget-stat-val">${fmt(totalManual)}</div><div class="budget-stat-lbl">${es?'Real — capturado':'Real — captured'}</div></div>
+    <div class="budget-stat" id="stat-sin-presupuestar"><div class="budget-stat-val ${sinPresup>=0?'green':'red'}">${fmt(sinPresup)}</div><div class="budget-stat-lbl">${es?'Sin presupuestar':'Unbudgeted'}</div></div>
     ${totalAbonos>0?`<div class="budget-stat"><div class="budget-stat-val red">${fmt(totalAbonos)}</div><div class="budget-stat-lbl">${es?'💳 Abonos deudas':'💳 Debt payments'}</div></div>`:''}
   </div>
 
