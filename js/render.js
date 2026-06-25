@@ -41,15 +41,23 @@ function buildNav(){
 
 function buildOv(){
   const ov=document.getElementById('wkov');ov.innerHTML='';
+  // Parsear hora: todo el día → -1, formato válido → minutos, inválido → 9999 (al fondo)
+  const parseT=t=>{
+    if(!t||t==='Todo el día'||t==='All day')return -1;
+    const m=t.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if(!m)return 9999;
+    let h=parseInt(m[1]);const mn=parseInt(m[2]);const ap=m[3].toUpperCase();
+    if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;
+    return h*60+mn;
+  };
   weekDays.forEach((d,i)=>{
     const isT=dk(d)===dk(today);
     const col=document.createElement('div');col.className='wcol';
     const n=document.createElement('div');n.className='wovn'+(isT?' today':'');n.textContent=DS[d.getDay()];col.appendChild(n);
     const w=dayWo(i);
+    // Orden: wo1 · ha1 · enfoques · eventos por hora · wo2 · ha2
     if(w.wo1){const t=document.createElement('div');t.className='wtag wwo';t.textContent=emoji(w.wo1,WE);col.appendChild(t);}
-    if(w.wo2){const t=document.createElement('div');t.className='wtag wwo';t.textContent=w.wo2;col.appendChild(t);}
     if(w.ha1){const t=document.createElement('div');t.className='wtag whb';t.textContent=w.ha1;col.appendChild(t);}
-    if(w.ha2){const t=document.createElement('div');t.className='wtag whb';t.textContent=w.ha2;col.appendChild(t);}
     const df=focusForDay(i);
     const fd=weekData.focusDone||{};
     [1,2,3].forEach(n=>{
@@ -64,14 +72,10 @@ function buildOv(){
     const gcalEvDay=gcalEvts[dk(d)]||[];
     const manualEvDay=dayEvts(i);
     const manualTitles=new Set(manualEvDay.map(e=>(e.title||'').toLowerCase()));
-    // Parsear hora para ordenar ("8:30 AM" → segundos, "Todo el día" → -1)
-    const parseT=t=>{if(!t||t==='Todo el día'||t==='All day')return-1;const m=t.match(/(\d+):(\d+)\s*(AM|PM)/i);if(!m)return-1;let h=parseInt(m[1]);const mn=parseInt(m[2]);const ap=m[3].toUpperCase();if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;return h*60+mn;};
-    const sortKey=e=>parseT(e.time); // ev.time siempre en hora local — más confiable que sort UTC
-    // Combinar: manual (siempre) + GCal no duplicados
     const allEvs=[
       ...manualEvDay.map(e=>({...e,_src:'manual'})),
       ...gcalEvDay.filter(e=>!manualTitles.has(e.title.toLowerCase())).map(e=>({...e,_src:'gcal'}))
-    ].sort((a,b)=>sortKey(a)-sortKey(b));
+    ].sort((a,b)=>parseT(a.time)-parseT(b.time));
     allEvs.forEach(ev=>{
       const t=document.createElement('div');
       const isPinned=!!ev.pinned;
@@ -82,6 +86,8 @@ function buildOv(){
       else if(isGcal){t.title='Click para guardar en el planner';t.onclick=()=>pinGCalEvent(i,ev);}
       col.appendChild(t);
     });
+    if(w.wo2){const t=document.createElement('div');t.className='wtag wwo';t.textContent=w.wo2;col.appendChild(t);}
+    if(w.ha2){const t=document.createElement('div');t.className='wtag whb';t.textContent=w.ha2;col.appendChild(t);}
     ov.appendChild(col);
   });
 }
@@ -267,14 +273,18 @@ function moveTask(id, dir){
   const idx=visible.findIndex(t=>t.id===id);
   const ni=idx+dir;
   if(idx===-1||ni<0||ni>=visible.length)return;
-  // Import prev-week tasks into weekData.tasks preserving their order
+  // Import carry-overs into weekData.tasks
   const toImport=visible.filter(t=>t.fromPrevWeek&&!allTasks.find(wt=>wt.id===t.id));
-  [...toImport].reverse().forEach(t=>allTasks.unshift({id:t.id,text:t.text,addedOnDay:-1}));
-  // Swap
-  const idxA=allTasks.findIndex(t=>t.id===visible[idx].id);
-  const idxB=allTasks.findIndex(t=>t.id===visible[ni].id);
-  if(idxA===-1||idxB===-1)return;
-  [allTasks[idxA],allTasks[idxB]]=[allTasks[idxB],allTasks[idxA]];
+  [...toImport].reverse().forEach(t=>allTasks.unshift({id:t.id,text:t.text,addedOnDay:-1,...(t.cat?{cat:t.cat}:{})}));
+  // Move by ID: remove from current position, insert before/after target
+  const targetId=visible[ni].id;
+  const srcIdx=allTasks.findIndex(t=>t.id===id);
+  if(srcIdx===-1)return;
+  const[item]=allTasks.splice(srcIdx,1);
+  const dstIdx=allTasks.findIndex(t=>t.id===targetId);
+  if(dstIdx===-1){allTasks.push(item);}
+  else if(dir<0){allTasks.splice(dstIdx,0,item);}
+  else{allTasks.splice(dstIdx+1,0,item);}
   saveDB();
   renderTasks(di);
 }
