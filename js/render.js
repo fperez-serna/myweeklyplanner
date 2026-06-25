@@ -449,7 +449,7 @@ function renderEvts(di){
 
 function updateEvText(el){
   const newTitle=el.textContent.trim();
-  if(!newTitle){el.textContent=el.dataset.gcalid?el.textContent:el.textContent;return;}
+  if(!newTitle){renderEvts(dayIdx());return;}
   const di=dayIdx();
   const idx=el.dataset.idx!==undefined?parseInt(el.dataset.idx):-1;
   const gcalId=el.dataset.gcalid||'';

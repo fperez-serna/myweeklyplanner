@@ -48,7 +48,7 @@ function setGCalConnected(){
   const btn=document.getElementById('gcal-btn');
   btn.textContent='✓ Google Calendar';btn.classList.add('connected');
   const dis=document.getElementById('gcal-disconnect-btn');
-  if(dis)dis.style.display='';
+  if(dis)dis.style.display='block';
   const hint=document.getElementById('gcal-pin-hint');
   if(hint)hint.style.display='';
 }
@@ -58,8 +58,8 @@ function disconnectGCal(){
   const hint=document.getElementById('gcal-pin-hint');
   if(hint)hint.style.display='none';
   localStorage.removeItem('gct');
-  
   gcalEvts={};
+  deletedGCalIds.clear();
   const btn=document.getElementById('gcal-btn');
   btn.textContent=isEn()?'Connect Google Calendar':'Conectar Google Calendar';
   btn.classList.remove('connected');
@@ -116,7 +116,7 @@ async function fetchGCal(){
     const btn=document.getElementById('gcal-btn');
     if(btn){btn.textContent='Conectar Google Calendar';btn.classList.remove('connected');}
     const dis=document.getElementById('gcal-disconnect-btn');
-    if(dis)dis.style.display='';
+    if(dis)dis.style.display='block';
   }
 }
 
@@ -125,7 +125,8 @@ async function createGCalEv(title,date,hour,min,ampm,durMins=60){
   let h=parseInt(hour);
   if(ampm==='PM'&&h!==12)h+=12;if(ampm==='AM'&&h===12)h=0;
   const s=new Date(date+'T'+String(h).padStart(2,'0')+':'+min+':00');
-  const ev={summary:title,start:{dateTime:s.toISOString(),timeZone:'America/Merida'},end:{dateTime:new Date(s.getTime()+durMins*60000).toISOString(),timeZone:'America/Merida'}};
+  const userTZ=Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const ev={summary:title,start:{dateTime:s.toISOString(),timeZone:userTZ},end:{dateTime:new Date(s.getTime()+durMins*60000).toISOString(),timeZone:userTZ}};
   try{
     const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{
       method:'POST',
