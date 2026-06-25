@@ -1,5 +1,6 @@
 // ── GOOGLE CALENDAR ────────────────────────
 let _gcalInitRetries=0;
+let _pendingGCalEvent=null; // evento pendiente de crear tras refresh de token
 function initGCal(){
   if(typeof google==='undefined'){
     if(_gcalInitRetries++ < 20){setTimeout(initGCal,500);}
@@ -29,6 +30,14 @@ function initGCal(){
       localStorage.setItem('gct',gcalToken);
       setGCalConnected();
       fetchGCal();
+      // Reintentar evento pendiente si había uno cuando expiró el token
+      if(_pendingGCalEvent){
+        const p=_pendingGCalEvent;_pendingGCalEvent=null;
+        createGCalEv(p.title,p.date,p.hour,p.min,p.ampm,p.durMins).then(id=>{
+          if(id&&p.evObj){p.evObj.gcalId=id;saveDB();}
+          if(id)showToast(isEn()?'Event synced to Google Calendar ✓':'Evento sincronizado con Google Calendar ✓');
+        });
+      }
       // Programar refresh silencioso usando expires_in de Google (no el reloj local)
       const expiresIn=(res.expires_in||3600)*1000;
       const refreshIn=Math.max(0,expiresIn-5*60*1000); // 5 min antes de que expire
@@ -120,7 +129,7 @@ async function fetchGCal(){
   }
 }
 
-async function createGCalEv(title,date,hour,min,ampm,durMins=60){
+async function createGCalEv(title,date,hour,min,ampm,durMins=60,evObj=null){
   if(!gcalToken)return;
   let h=parseInt(hour);
   if(ampm==='PM'&&h!==12)h+=12;if(ampm==='AM'&&h===12)h=0;
@@ -134,13 +143,13 @@ async function createGCalEv(title,date,hour,min,ampm,durMins=60){
       body:JSON.stringify(ev)
     });
     if(r.status===401){
-      // Token expired - refresh and retry once
+      // Token expirado — guardar evento pendiente y refrescar token
       gcalToken=null;
       localStorage.removeItem('gct');
-      
+      _pendingGCalEvent={title,date,hour,min,ampm,durMins,evObj};
       if(tokenClient){
         tokenClient.requestAccessToken({prompt:''});
-        showToast(isEn()?'Reconnecting Google Calendar...':'Reconectando Google Calendar...');
+        showToast(isEn()?'Reconnecting — event will sync automatically':'Reconectando — el evento se sincronizará automáticamente');
       }
       return;
     }

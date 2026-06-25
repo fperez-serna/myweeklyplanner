@@ -550,7 +550,7 @@ function addEv(){
   weekData.events[tdi].push(evObj);
   saveDB();
   if(gcalToken&&targetDate){
-    createGCalEv(evTitle,targetDate,h,m,ap,durMins).then(id=>{if(id){evObj.gcalId=id;saveDB();}});
+    createGCalEv(evTitle,targetDate,h,m,ap,durMins,evObj).then(id=>{if(id){evObj.gcalId=id;saveDB();}});
   }
   const di=dayIdx();renderEvts(di);buildNav();buildOv();titleIn.value='';
   if(tdi!==di){
