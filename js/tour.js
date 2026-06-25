@@ -120,22 +120,19 @@ function showBudgetTourStep(idx){
     const es=typeof isEn==='function'?!isEn():true;
     document.getElementById('tour-title').textContent=es?step.title:step.titleEn;
     document.getElementById('tour-desc').textContent=es?step.desc:step.descEn;
+    const closeBtn=document.getElementById('tour-close');
+    if(closeBtn)closeBtn.style.display='block';
 
     const footer=document.getElementById('tour-footer');
-    if(step.budgetEnd){
-      footer.innerHTML=`
-        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
-          <button onclick="backToDashboardTour()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0;line-height:1;">←</button>
-          <button onclick="endBudgetTour();" style="padding:8px 16px;border-radius:9px;background:var(--mauve);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer;">${es?'¡Listo!':'Done!'}</button>
-        </div>`;
-    } else {
-      footer.innerHTML=`
-        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
-          <button onclick="backToDashboardTour()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0;line-height:1;">←</button>
-          <span style="font-size:11px;color:var(--text3);">${idx+1} / ${BUDGET_TOUR_STEPS.length}</span>
-          <button onclick="nextBudgetTourStep()" style="background:var(--mauve);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:500;cursor:pointer;">${es?'Siguiente →':'Next →'}</button>
-        </div>`;
-    }
+    const navRow=`<div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;">
+      <button onclick="prevBudgetTourStep()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0;line-height:1;">←</button>
+      <span style="font-size:11px;color:var(--text3);">${idx+1} / ${BUDGET_TOUR_STEPS.length}</span>
+      <button onclick="${step.budgetEnd?'endBudgetTour()':'nextBudgetTourStep()'}" style="background:var(--mauve);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:500;cursor:pointer;">${step.budgetEnd?(es?'¡Listo!':'Done!'):(es?'Siguiente →':'Next →')}</button>
+    </div>
+    <div style="text-align:center;">
+      <button onclick="backToDashboardTour()" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;padding:0;text-decoration:underline;">${es?'Saltar — ir a ¡Ya conoces el app!':'Skip — go to You know the app!'}</button>
+    </div>`;
+    footer.innerHTML=navRow;
 
     const tt=document.getElementById('tour-tooltip');
     const isMobile=vw<640;
@@ -156,6 +153,11 @@ function nextBudgetTourStep(){
   _budgetTourStep++;
   if(_budgetTourStep>=BUDGET_TOUR_STEPS.length)endBudgetTour();
   else showBudgetTourStep(_budgetTourStep);
+}
+
+function prevBudgetTourStep(){
+  if(_budgetTourStep>0){_budgetTourStep--;showBudgetTourStep(_budgetTourStep);}
+  else backToDashboardTour();
 }
 
 function endBudgetTour(){
@@ -228,6 +230,8 @@ function showTourStep(idx){
     const es=typeof isEn==='function'?!isEn():true;
     document.getElementById('tour-title').textContent=es?step.title:step.titleEn;
     document.getElementById('tour-desc').textContent=es?step.desc:step.descEn;
+    const closeBtn=document.getElementById('tour-close');
+    if(closeBtn)closeBtn.style.display='none';
 
     // Buttons
     const footer=document.getElementById('tour-footer');
