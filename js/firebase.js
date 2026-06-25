@@ -56,7 +56,7 @@ async function saveShoppingDB(){
   _shSaving=true;
   try{await userCol().doc('shopping').set({cats:shoppingItems});}
   catch(e){console.error('Shopping save:',e);}
-  setTimeout(()=>{_shSaving=false;},1500);
+  finally{setTimeout(()=>{_shSaving=false;},1500);}
 }
 
 async function loadShoppingDB(){
@@ -98,6 +98,8 @@ function subscribeShoppingDB(){
   _unsubShopping=userCol().doc('shopping').onSnapshot(snap=>{
     try{
       if(_shSaving)return;
+      // No reconstruir si el usuario está editando un item
+      if(document.activeElement?.classList.contains('sh-text'))return;
       if(snap.exists){
         const data=snap.data();
         const oldMap={super:'cat0',casa:'cat1',pers:'cat2',mama:'cat3',neg:'cat4',supermercado:'cat0'};

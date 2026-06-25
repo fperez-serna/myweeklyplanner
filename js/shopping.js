@@ -33,13 +33,13 @@ function renderSh(){
 }
 
 function togShCat(cat,i){
-  if(!shoppingItems[cat])return;
+  if(!shoppingItems[cat]||!shoppingItems[cat][i])return;
   shoppingItems[cat][i].done=!shoppingItems[cat][i].done;
   shoppingItems[cat].sort((a,b)=>(a.done?1:0)-(b.done?1:0));
   saveShoppingDB();renderSh();
 }
 function delShCat(cat,i){
-  if(!shoppingItems[cat])return;
+  if(!shoppingItems[cat]||i>=shoppingItems[cat].length)return;
   shoppingItems[cat]=shoppingItems[cat].filter((_,idx)=>idx!==i);
   saveShoppingDB();renderSh();
 }
@@ -54,7 +54,7 @@ function addShCat(cat){
   setTimeout(()=>{
     const newInp=document.getElementById('sh-'+cat+'-in');
     if(newInp){newInp.focus();newInp.scrollIntoView({behavior:'smooth',block:'center'});}
-  },100);
+  },200);
 }
 function updateShCat(el){
   const cat=el.dataset.cat;
