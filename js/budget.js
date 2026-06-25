@@ -111,6 +111,10 @@ function openBudget(){
   _budgetCollapseOnRender=true;
   document.getElementById('budget-modal').style.display='block';
   document.body.style.overflow='hidden';
+  // Mostrar datos cached inmediatamente mientras carga lo fresco
+  if(budgetData.groups&&budgetData.groups.length>0){
+    try{renderBudget(_lastDashboardTotals||{});}catch(e){}
+  }
   loadBudgetData();
 }
 
@@ -466,6 +470,7 @@ async function loadBudgetData(){
   if(nextBtn)nextBtn.style.opacity=(budgetYear===now.getFullYear()&&budgetMonth>=now.getMonth())?'0.3':'1';
 
   // Load budget config from Firebase
+  let parallelDash=null;
   if(db&&currentUser){
     try{
       const snap=await userCol().doc('budget_config').get();
@@ -478,15 +483,17 @@ async function loadBudgetData(){
         budgetData={income:[],groups:getDefaultGroups(),debts:[]};
       }
       await ensureIds();
-      // Load actuals for this specific month (separate doc)
+      // Paralelizar: actuals mes actual + mes anterior + gastos dashboard
       const monthKey='budget_actual_'+budgetYear+'_'+String(budgetMonth+1).padStart(2,'0');
-      const actualSnap=await userCol().doc(monthKey).get();
-      // Always load prev month so saldoInicialMes stays fresh even with retroactive edits
       const prevMonthIdx=budgetMonth===0?11:budgetMonth-1;
       const prevYearIdx=budgetMonth===0?budgetYear-1:budgetYear;
       const prevKey='budget_actual_'+prevYearIdx+'_'+String(prevMonthIdx+1).padStart(2,'0');
-      let prevActuals=null;
-      try{const ps=await userCol().doc(prevKey).get();if(ps.exists)prevActuals=ps.data();}catch(e){}
+      const [actualSnap,prevResult,parallelDash]=await Promise.all([
+        userCol().doc(monthKey).get(),
+        userCol().doc(prevKey).get().catch(()=>null),
+        loadMonthGastos().catch(()=>({}))
+      ]);
+      let prevActuals=prevResult?.exists?prevResult.data():null;
       if(actualSnap.exists){
         const monthActuals=actualSnap.data();
         // Apply monthly actuals to groups
@@ -535,9 +542,8 @@ async function loadBudgetData(){
     }catch(e){budgetData={income:[],groups:getDefaultGroups(),debts:[]};}
   }
 
-  // Load dashboard gastos for this month
-  let dashboardTotals={};
-  try{dashboardTotals=await loadMonthGastos();}catch(e){console.error('loadMonthGastos error:',e);}
+  // Usar gastos del mes ya cargados en paralelo (o recalcular si no disponibles)
+  const dashboardTotals=parallelDash||{};
   try{
     renderBudget(dashboardTotals);
   }catch(e){
