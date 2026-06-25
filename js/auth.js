@@ -42,7 +42,7 @@ function showQuickGasto(){
   // Métodos de pago (igual que el formulario principal)
   const pagoSel=b('qg-pago');
   if(pagoSel){
-    pagoSel.innerHTML=`<option value="Efectivo">${es?'Efectivo':'Cash'}</option><option value="Débito">${es?'Débito':'Debit'}</option>`;
+    pagoSel.innerHTML=`<option value="Efectivo">${es?'Efectivo':'Cash'}</option><option value="Débito">${es?'Débito':'Debit'}</option><option value="Transferencia">${es?'Transferencia':'Transfer'}</option>`;
     (budgetData?.debts||[]).filter(d=>d.tipo==='tarjeta').forEach(d=>{
       const opt=document.createElement('option');
       opt.value=d.nombre;opt.textContent=d.nombre;

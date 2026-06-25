@@ -713,7 +713,7 @@ function buildPagoSelect(){
   if(!sel)return;
   const es=!isEn();
   const prev=sel.value;
-  sel.innerHTML=`<option value="Efectivo">${es?'Efectivo':'Cash'}</option><option value="Débito"><i data-lucide="landmark" style="width:15px;height:15px;vertical-align:middle;display:inline-block;margin-right:6px;"></i>${es?'Débito':'Debit'}</option>`;
+  sel.innerHTML=`<option value="Efectivo">${es?'Efectivo':'Cash'}</option><option value="Débito">${es?'Débito':'Debit'}</option><option value="Transferencia">${es?'Transferencia':'Transfer'}</option>`;
   (budgetData.debts||[]).filter(d=>d.tipo==='tarjeta').forEach(d=>{
     const opt=document.createElement('option');
     opt.value=d.nombre;opt.textContent='💳 '+d.nombre;
