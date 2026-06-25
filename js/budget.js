@@ -90,6 +90,7 @@ let budgetMonth=new Date().getMonth();
 let annualData={income:[],expenses:[]}; // annual income/expenses
 let budgetData={income:[],groups:[],debts:[]};
 let cardPeriodSums={};
+let _lastDashboardTotals={};
 
 async function loadBudgetDebts(){
   if(!db||!currentUser)return;
@@ -320,50 +321,90 @@ function budgetExportExcel(){
   const monthLbl=document.getElementById('budget-month-lbl').textContent;
   const es=!isEn();
   const wb=XLSX.utils.book_new();
+  const fmt=n=>(Math.round(n)||0);
+  const addSheet=(wb,data,name,cols)=>{const ws=XLSX.utils.aoa_to_sheet(data);if(cols)ws['!cols']=cols;XLSX.utils.book_append_sheet(wb,ws,name);};
 
-  // Sheet 1: Ingresos
-  const incData=[[es?'Descripción':'Description',es?'Monto':'Amount']];
-  budgetData.income.forEach(i=>incData.push([i.desc,i.amt]));
+  // Totals
   const totalInc=budgetData.income.reduce((s,i)=>s+i.amt,0);
-  incData.push(['']);
-  incData.push([es?'TOTAL':'TOTAL',totalInc]);
-  const ws1=XLSX.utils.aoa_to_sheet(incData);
-  ws1['!cols']=[{wch:25},{wch:15}];
-  XLSX.utils.book_append_sheet(wb,ws1,es?'Ingresos':'Income');
+  const totalPresup=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.presup,0),0);
+  const totalManual=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.actual,0),0);
+  const totalAbonos=(budgetData.debts||[]).reduce((s,d)=>s+(d.abono||0),0);
+  const totalDash=Object.values(_lastDashboardTotals).reduce((s,v)=>s+v,0);
+  const disponible=totalInc-totalDash-totalAbonos;
+  const sinPresup=totalInc-totalPresup;
 
-  // Sheet 2: Presupuesto por grupo
-  const budData=[[es?'Grupo':'Group',es?'Subcategoría':'Subcategory',es?'Presupuesto':'Budget',es?'Actual':'Actual',es?'Rubro':'Category']];
+  // 1. Resumen del mes
+  const sumData=[
+    [es?'RESUMEN DEL MES':'MONTH SUMMARY',''],
+    [''],
+    [es?'Concepto':'Concept',es?'Monto':'Amount'],
+    [es?'Total ingresos':'Total income',fmt(totalInc)],
+    [es?'Gastos del dashboard':'Dashboard expenses',fmt(totalDash)],
+    [es?'Disponible':'Available',fmt(disponible)],
+    [es?'Presupuestado':'Budgeted',fmt(totalPresup)],
+    [es?'Real — capturado':'Real — captured',fmt(totalManual)],
+    [es?'Sin presupuestar':'Unbudgeted',fmt(sinPresup)],
+  ];
+  if(totalAbonos>0)sumData.push([es?'Abonos deudas':'Debt payments',fmt(totalAbonos)]);
+  addSheet(wb,sumData,es?'Resumen':'Summary',[{wch:28},{wch:15}]);
+
+  // 2. Ingresos
+  const incData=[[es?'Descripción':'Description',es?'Monto':'Amount']];
+  budgetData.income.forEach(i=>incData.push([i.desc,fmt(i.amt)]));
+  incData.push(['']);incData.push([es?'TOTAL':'TOTAL',fmt(totalInc)]);
+  addSheet(wb,incData,es?'Ingresos':'Income',[{wch:28},{wch:15}]);
+
+  // 3. Gastos planeados
+  const budData=[[es?'Grupo':'Group',es?'Subcategoría':'Subcategory',es?'Presupuesto':'Budget',es?'Real':'Actual',es?'Rubro':'Category']];
   budgetData.groups.forEach(g=>{
-    g.subs.forEach(sub=>{
-      budData.push([g.name,sub.name,sub.presup,sub.actual,sub.rubro||'—']);
-    });
-    const gPresup=g.subs.reduce((s,sub)=>s+sub.presup,0);
-    const gActual=g.subs.reduce((s,sub)=>s+sub.actual,0);
-    budData.push(['',es?'Subtotal':'Subtotal',gPresup,gActual,'']);
+    g.subs.forEach(sub=>budData.push([g.name,sub.name,fmt(sub.presup),fmt(sub.actual),sub.rubro||'—']));
+    const gP=g.subs.reduce((s,sub)=>s+sub.presup,0);
+    const gA=g.subs.reduce((s,sub)=>s+sub.actual,0);
+    budData.push(['',es?'Subtotal':'Subtotal',fmt(gP),fmt(gA),'']);
     budData.push(['']);
   });
-  const ws2=XLSX.utils.aoa_to_sheet(budData);
-  ws2['!cols']=[{wch:20},{wch:25},{wch:15},{wch:15},{wch:20}];
-  XLSX.utils.book_append_sheet(wb,ws2,es?'Presupuesto':'Budget');
+  addSheet(wb,budData,es?'Gastos planeados':'Planned expenses',[{wch:20},{wch:25},{wch:15},{wch:15},{wch:20}]);
 
-  // Sheet 3: Resumen por rubro (from dashboard)
-  const resData=[[es?'Rubro':'Category',es?'Presupuestado':'Budgeted',es?'Actual Manual':'Manual Actual','Dashboard',es?'Diferencia':'Difference',es?'Sin clasificar':'Unclassified']];
+  // 4. Resumen por rubro
   const rubroMap={};
-  budgetData.groups.forEach(g=>{
-    g.subs.forEach(sub=>{
-      if(!sub.rubro||sub.rubro==='—')return;
-      if(!rubroMap[sub.rubro])rubroMap[sub.rubro]={presup:0,manual:0};
-      rubroMap[sub.rubro].presup+=sub.presup;
-      rubroMap[sub.rubro].manual+=sub.actual;
-    });
+  budgetData.groups.forEach(g=>g.subs.forEach(sub=>{
+    if(!sub.rubro||sub.rubro==='—')return;
+    if(!rubroMap[sub.rubro])rubroMap[sub.rubro]={presup:0,manual:0};
+    rubroMap[sub.rubro].presup+=sub.presup;rubroMap[sub.rubro].manual+=sub.actual;
+  }));
+  const resData=[[es?'Rubro':'Category',es?'Presupuestado':'Budgeted',es?'Real':'Actual',es?'Dashboard':'Dashboard',es?'Diferencia':'Difference']];
+  Object.entries(rubroMap).forEach(([rubro,d])=>{
+    const dash=_lastDashboardTotals[rubro]||0;
+    resData.push([rubro,fmt(d.presup),fmt(d.manual),fmt(dash),fmt(d.presup-d.manual)]);
   });
-  // Note: for Excel we use the last known dashboard totals
-  Object.entries(rubroMap).forEach(([rubro,data])=>{
-    resData.push([rubro,data.presup,data.manual,'—',data.presup-data.manual,0]);
-  });
-  const ws3=XLSX.utils.aoa_to_sheet(resData);
-  ws3['!cols']=[{wch:25},{wch:15},{wch:15},{wch:15},{wch:15},{wch:15}];
-  XLSX.utils.book_append_sheet(wb,ws3,es?'Resumen':'Summary');
+  addSheet(wb,resData,es?'Por rubro':'By category',[{wch:25},{wch:15},{wch:15},{wch:15},{wch:15}]);
+
+  // 5. Crédito, Préstamos y Deudas
+  if((budgetData.debts||[]).length>0){
+    const debtData=[[es?'Nombre':'Name',es?'Tipo':'Type',es?'Saldo':'Balance',es?'Abono':'Payment',es?'Tasa %':'Rate %',es?'Fecha pago':'Pay date']];
+    budgetData.debts.forEach(d=>debtData.push([d.nombre,d.tipo||'—',fmt(d.saldo||0),fmt(d.abono||0),d.tasa||0,d.fechaPago||'—']));
+    debtData.push(['']);debtData.push([es?'Total abonos':'Total payments','','',fmt(totalAbonos),'','']);
+    addSheet(wb,debtData,es?'Deudas':'Debts',[{wch:25},{wch:12},{wch:15},{wch:15},{wch:10},{wch:15}]);
+  }
+
+  // 6. Ingresos y gastos anuales
+  const hasAnnual=(annualData.income&&annualData.income.length>0)||(annualData.expenses&&annualData.expenses.length>0);
+  if(hasAnnual){
+    const annData=[[es?'INGRESOS ANUALES':'ANNUAL INCOME','']];
+    annData.push([es?'Descripción':'Description',es?'Monto':'Amount']);
+    (annualData.income||[]).forEach(i=>annData.push([i.desc,fmt(i.amt)]));
+    const annInc=(annualData.income||[]).reduce((s,i)=>s+i.amt,0);
+    annData.push(['',fmt(annInc)]);
+    annData.push(['']);
+    annData.push([es?'GASTOS ANUALES':'ANNUAL EXPENSES','',es?'Mes':'Month']);
+    annData.push([es?'Descripción':'Description',es?'Monto':'Amount',es?'Mes':'Month']);
+    (annualData.expenses||[]).forEach(e=>annData.push([e.desc,fmt(e.amt),e.month||'']));
+    const annExp=(annualData.expenses||[]).reduce((s,e)=>s+e.amt,0);
+    annData.push(['',fmt(annExp),'']);
+    annData.push(['']);
+    annData.push([es?'Neto mensual promedio':'Monthly net avg',fmt((annInc-annExp)/12),'']);
+    addSheet(wb,annData,es?'Anual':'Annual',[{wch:28},{wch:15},{wch:15}]);
+  }
 
   const fileName=(isEn()?'budget_':'presupuesto_')+monthLbl.replace(' ','_')+'.xlsx';
   XLSX.writeFile(wb,fileName);
@@ -677,6 +718,7 @@ function buildPagoSelect(){
 }
 
 function renderBudget(dashboardTotals,forceExpand=false){
+  _lastDashboardTotals=dashboardTotals||{};
   buildPagoSelect();
   const cats=setupCfg.gastoCats||DEFAULT_GASTOS;
   const totalIncome=(budgetData.income||[]).reduce((s,i)=>s+(i.amt||0),0);
