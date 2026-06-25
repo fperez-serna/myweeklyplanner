@@ -107,6 +107,9 @@ const MES_EN_B=['January','February','March','April','May','June','July','August
 function openBudget(){
   budgetYear=new Date().getFullYear();
   budgetMonth=new Date().getMonth();
+  // Colapsar todos los grupos al abrir
+  budgetCollapsedGroups.clear();
+  (budgetData.groups||[]).forEach((_,i)=>budgetCollapsedGroups.add(i));
   document.getElementById('budget-modal').style.display='block';
   document.body.style.overflow='hidden';
   loadBudgetData();
@@ -788,10 +791,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
     html+=`<div class="budget-group">
       <div class="budget-group-header" onclick="budgetToggle(${gi})">
         <div style="display:flex;align-items:center;gap:6px;">
-          <div style="display:flex;flex-direction:column;gap:1px;">
-            <button onclick="event.stopPropagation();budgetMoveGroup(${gi},-1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;padding:0;line-height:1;" ${gi===0?'disabled style=\"opacity:.3;\"':''}>▲</button>
-            <button onclick="event.stopPropagation();budgetMoveGroup(${gi},1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;padding:0;line-height:1;" ${gi===budgetData.groups.length-1?'disabled style=\"opacity:.3;\"':''}>▼</button>
-          </div>
+          <div class="drag-handle budget-group-drag" data-gi="${gi}" onclick="event.stopPropagation()" style="cursor:grab;"><svg width="12" height="10" viewBox="0 0 12 10" fill="currentColor"><rect y="0" width="12" height="1.5" rx=".75"/><rect y="4" width="12" height="1.5" rx=".75"/><rect y="8" width="12" height="1.5" rx=".75"/></svg></div>
           <div class="budget-group-name" id="grp-name-${gi}" onclick="event.stopPropagation();budgetEditGroupName(${gi})" style="cursor:text;border-bottom:1px dashed var(--border);">${group.name}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
@@ -2064,6 +2064,56 @@ async function generateAnnualReport(){
 let _budgetDragGi=null,_budgetDragSi=null;
 
 function initBudgetDragDrop(){
+  // Drag & drop para GRUPOS
+  let _groupDragGi=null;
+  document.querySelectorAll('.budget-group-drag').forEach(handle=>{
+    const gi=parseInt(handle.dataset.gi);
+    const group=handle.closest('.budget-group');
+    if(!group)return;
+    handle.draggable=true;
+    handle.addEventListener('dragstart',e=>{
+      _groupDragGi=gi;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','');
+      group.classList.add('is-dragging');
+    });
+    handle.addEventListener('dragend',()=>{
+      group.classList.remove('is-dragging');
+      document.querySelectorAll('.budget-group.drag-over').forEach(el=>el.classList.remove('drag-over'));
+    });
+    group.addEventListener('dragover',e=>{e.preventDefault();group.classList.add('drag-over');});
+    group.addEventListener('dragleave',()=>group.classList.remove('drag-over'));
+    group.addEventListener('drop',e=>{
+      e.preventDefault();group.classList.remove('drag-over');
+      const dstGi=parseInt(handle.dataset.gi);
+      if(_groupDragGi!==null&&_groupDragGi!==dstGi)reorderBudgetGroup(_groupDragGi,dstGi);
+    });
+    // Touch
+    let _tc=null,_lastGroup=null;
+    handle.addEventListener('touchstart',e=>{
+      _groupDragGi=gi;const t=e.touches[0];
+      _tc=group.cloneNode(true);
+      _tc.style.cssText='position:fixed;opacity:.75;pointer-events:none;z-index:99999;width:'+group.offsetWidth+'px;left:'+(t.clientX-20)+'px;top:'+(t.clientY-20)+'px;background:var(--bg);box-shadow:0 4px 16px rgba(0,0,0,.18);';
+      document.body.appendChild(_tc);group.style.opacity='.4';
+    },{passive:true});
+    handle.addEventListener('touchmove',e=>{
+      if(!_tc)return;const t=e.touches[0];
+      _tc.style.left=(t.clientX-20)+'px';_tc.style.top=(t.clientY-20)+'px';
+      _tc.style.display='none';const el=document.elementFromPoint(t.clientX,t.clientY);_tc.style.display='';
+      document.querySelectorAll('.budget-group.drag-over').forEach(g=>g.classList.remove('drag-over'));
+      _lastGroup=el?.closest('.budget-group')||null;
+      if(_lastGroup&&_lastGroup!==group)_lastGroup.classList.add('drag-over');
+    },{passive:true});
+    handle.addEventListener('touchend',()=>{
+      _tc?.remove();_tc=null;group.style.opacity='';
+      document.querySelectorAll('.budget-group.drag-over').forEach(g=>g.classList.remove('drag-over'));
+      if(_lastGroup){
+        const dstGi=parseInt(_lastGroup.querySelector('.budget-group-drag')?.dataset.gi);
+        if(!isNaN(dstGi)&&dstGi!==_groupDragGi)reorderBudgetGroup(_groupDragGi,dstGi);
+      }
+      _lastGroup=null;
+    });
+  });
+
+  // Drag & drop para SUBCATEGORÍAS
   document.querySelectorAll('.budget-drag-handle').forEach(handle=>{
     const gi=parseInt(handle.dataset.gi);
     const si=parseInt(handle.dataset.si);
@@ -2113,6 +2163,15 @@ function initBudgetDragDrop(){
       _lastRow=null;
     });
   });
+}
+
+async function reorderBudgetGroup(srcGi,dstGi){
+  if(srcGi===dstGi||srcGi<0||dstGi<0||srcGi>=budgetData.groups.length||dstGi>=budgetData.groups.length)return;
+  const[item]=budgetData.groups.splice(srcGi,1);
+  budgetData.groups.splice(dstGi,0,item);
+  await saveBudgetConfig();
+  const d=await loadMonthGastos();
+  renderBudget(d);
 }
 
 async function reorderBudgetSub(gi,srcSi,dstSi){
