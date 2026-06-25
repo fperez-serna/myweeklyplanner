@@ -278,7 +278,7 @@ function showBudgetTourStep(idx){
       <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;">
         ${prev}${counter}${nextBtnHtml}
       </div>
-      ${_skipLink(es?'Saltar — ir a ¡Ya conoces el app!':'Skip — go to You know the app!','backToDashboardTour()')}`;
+      ${_skipLink(es?'Saltar':'Skip','backToDashboardTour()')}`;
 
     _positionTooltip(rect,pad);
   },350);
