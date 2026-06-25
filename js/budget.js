@@ -104,12 +104,11 @@ async function loadBudgetDebts(){
 const MES_ES_B=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MES_EN_B=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+let _budgetCollapseOnRender=false;
 function openBudget(){
   budgetYear=new Date().getFullYear();
   budgetMonth=new Date().getMonth();
-  // Colapsar todos los grupos al abrir
-  budgetCollapsedGroups.clear();
-  (budgetData.groups||[]).forEach((_,i)=>budgetCollapsedGroups.add(i));
+  _budgetCollapseOnRender=true;
   document.getElementById('budget-modal').style.display='block';
   document.body.style.overflow='hidden';
   loadBudgetData();
@@ -727,6 +726,11 @@ function buildPagoSelect(){
 
 function renderBudget(dashboardTotals,forceExpand=false){
   _lastDashboardTotals=dashboardTotals||{};
+  if(_budgetCollapseOnRender){
+    _budgetCollapseOnRender=false;
+    budgetCollapsedGroups.clear();
+    (budgetData.groups||[]).forEach((_,i)=>budgetCollapsedGroups.add(i));
+  }
   buildPagoSelect();
   const cats=setupCfg.gastoCats||DEFAULT_GASTOS;
   const totalIncome=(budgetData.income||[]).reduce((s,i)=>s+(i.amt||0),0);
