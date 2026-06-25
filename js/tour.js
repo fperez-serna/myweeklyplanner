@@ -51,7 +51,12 @@ function startTour(){
 function startTourFromSetup(){
   const banner=document.getElementById('welcome-banner');
   if(banner)banner.style.display='none';
-  saveSetup();
+  // Cierra setup SIN guardar para no sobreescribir datos de Firebase con defaults
+  document.getElementById('setup-screen').style.display='none';
+  applyConfig(setupCfg);
+  applyLang(setupCfg.lang||'es');
+  renderDay();
+  buildCalendar();
   localStorage.removeItem('wp_tour_done');
   setTimeout(()=>{
     const overlay=document.getElementById('tour-overlay');
