@@ -262,7 +262,7 @@ body{padding:.75rem;}
 .budget-leg-row:last-child{border-bottom:none;}
 .budget-leg-lbl{font-size:11px;font-weight:600;color:var(--text2);min-width:110px;}
 .budget-leg-desc{font-size:11px;color:var(--text3);line-height:1.5;}
-.debt-card{background:var(--mauve-l);border:0.5px solid var(--mauve);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
+.debt-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
 .debt-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
 .debt-card-name{font-size:13px;font-weight:600;color:var(--text);}
 .debt-card-balance{font-size:15px;font-weight:700;color:var(--text);}
