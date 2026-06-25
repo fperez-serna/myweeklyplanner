@@ -89,11 +89,11 @@ function _positionTooltip(rect,pad,narrow=false){
   const tt=document.getElementById('tour-tooltip');
   const vw=window.innerWidth;const vh=window.innerHeight;
   if(vw<640){
-    tt.style.cssText='position:fixed;bottom:24px;left:16px;right:16px;width:auto;';
+    tt.style.cssText='position:fixed;bottom:20px;left:16px;right:16px;width:auto;max-width:none;box-sizing:border-box;';
   } else {
     const w=narrow?230:320;
-    tt.style.position='fixed';tt.style.width=w+'px';
-    tt.style.left='';tt.style.right='';tt.style.bottom='';
+    tt.style.cssText='';
+    tt.style.position='fixed';tt.style.width=w+'px';tt.style.maxWidth='';
     const ttH=tt.offsetHeight||160;
     const below=rect.bottom+pad+12+ttH<vh;
     tt.style.top=below?(rect.bottom+pad+8)+'px':Math.max(8,rect.top-pad-ttH-8)+'px';
