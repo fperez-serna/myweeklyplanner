@@ -16,6 +16,10 @@ const TOUR_STEPS=[
    title:'Enfoque del día',        titleEn:'Daily focus',
    desc:'Define tus 3 prioridades. Márcalas al completarlas al final del día.',
    descEn:'Set your 3 daily priorities and check them off as you complete them.'},
+  {id:'card-agenda',
+   title:'Agenda',                 titleEn:'Calendar',
+   desc:'Agrega eventos libres para verlos en el overview. Conecta Google Calendar para sincronizar: lo que agregues aquí aparece en tu Google Calendar, y los eventos del calendar los ves aquí. Para anclar un evento de Google Calendar al planner, tócalo en el overview.',
+   descEn:'Add events freely to see them in the overview. Connect Google Calendar to sync: what you add here appears in your Google Calendar, and calendar events show here. To anchor a Google Calendar event to the planner, tap it in the overview.'},
   {id:'card-workout',
    title:'Workout & Hábitos',      titleEn:'Workout & Habits',
    desc:'Registra tu actividad y hábitos diarios. Aparecen en tu reporte mensual.',
@@ -32,6 +36,146 @@ const TOUR_STEPS=[
 ];
 
 let _tourStep=0;
+
+function startTour(){
+  if(localStorage.getItem('wp_tour_done'))return;
+  const setup=document.getElementById('setup-screen');
+  if(setup&&setup.style.display!=='none')return;
+  _tourStep=0;
+  const overlay=document.getElementById('tour-overlay');
+  if(!overlay)return;
+  overlay.style.display='block';
+  showTourStep(0);
+}
+
+function startTourFromSetup(){
+  const banner=document.getElementById('welcome-banner');
+  if(banner)banner.style.display='none';
+  saveSetup();
+  localStorage.removeItem('wp_tour_done');
+  setTimeout(()=>{
+    const overlay=document.getElementById('tour-overlay');
+    if(!overlay)return;
+    _tourStep=0;
+    overlay.style.display='block';
+    showTourStep(0);
+  },900);
+}
+
+function skipTourFromSetup(){
+  localStorage.setItem('wp_tour_done','1');
+  document.getElementById('welcome-banner').style.display='none';
+}
+
+// ── shared nav helpers ────────────────────────
+function _prevBtn(onclickFn){
+  return `<button onclick="${onclickFn}" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0;line-height:1;">←</button>`;
+}
+function _counter(cur,total){
+  return `<span style="font-size:11px;color:var(--text3);">${cur} / ${total}</span>`;
+}
+function _nextBtn(label){
+  return `<button onclick="nextTourStep()" style="background:var(--mauve);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:500;cursor:pointer;">${label}</button>`;
+}
+function _skipLink(label,onclick){
+  return `<div style="text-align:center;margin-top:6px;"><button onclick="${onclick}" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;padding:0;text-decoration:underline;">${label}</button></div>`;
+}
+function _positionTooltip(rect,pad){
+  const tt=document.getElementById('tour-tooltip');
+  const vw=window.innerWidth;const vh=window.innerHeight;
+  if(vw<640){
+    tt.style.cssText='position:fixed;bottom:24px;left:16px;right:16px;width:auto;';
+  } else {
+    tt.style.position='fixed';tt.style.width='320px';
+    tt.style.left='';tt.style.right='';tt.style.bottom='';
+    const ttH=tt.offsetHeight||160;
+    const below=rect.bottom+pad+12+ttH<vh;
+    tt.style.top=below?(rect.bottom+pad+8)+'px':Math.max(8,rect.top-pad-ttH-8)+'px';
+    tt.style.left=Math.max(12,Math.min(vw-332,rect.left))+'px';
+  }
+}
+
+function showTourStep(idx){
+  const step=TOUR_STEPS[idx];
+  const el=document.getElementById(step.id);
+  if(!el||el.style.display==='none'){nextTourStep();return;}
+
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+
+  setTimeout(()=>{
+    const rect=el.getBoundingClientRect();
+    const pad=10;
+    const vw=window.innerWidth;const vh=window.innerHeight;
+    const x=Math.max(0,rect.left-pad);const y=Math.max(0,rect.top-pad);
+    const w=Math.min(vw-x,rect.width+pad*2);const h=Math.min(vh-y,rect.height+pad*2);
+    document.getElementById('tour-path').setAttribute('d',
+      `M0,0 H${vw} V${vh} H0 Z M${x},${y} h${w} v${h} h${-w} Z`);
+
+    const es=typeof isEn==='function'?!isEn():true;
+    document.getElementById('tour-title').textContent=es?step.title:step.titleEn;
+    document.getElementById('tour-desc').textContent=es?step.desc:step.descEn;
+
+    const closeBtn=document.getElementById('tour-close');
+    if(closeBtn){closeBtn.style.display='block';closeBtn.onclick=endTour;}
+
+    const footer=document.getElementById('tour-footer');
+    const prev=idx>0?_prevBtn('prevTourStep()'):'<div style="width:24px;"></div>';
+    const counter=_counter(idx+1,TOUR_STEPS.length);
+
+    if(step.customButtons){
+      footer.innerHTML=`
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:10px;">
+          ${prev}${counter}<div style="width:24px;"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button onclick="endTour();openSettings();" style="padding:10px;border-radius:9px;background:var(--mauve);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer;">${es?'Ir a ajustes a personalizar':'Go to Settings to customize'}</button>
+          <button onclick="endTour();openBudget();setTimeout(startBudgetTour,1500);" style="padding:9px;border-radius:9px;background:var(--teal);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer;">${es?'Tour del presupuesto →':'Budget tour →'}</button>
+          <button onclick="endTour();" style="padding:9px;border-radius:9px;background:none;border:0.5px solid var(--border);color:var(--text3);font-size:12px;cursor:pointer;">${es?'Listo, explorar el app':'Done, explore the app'}</button>
+        </div>`;
+    } else {
+      const isLast=idx===TOUR_STEPS.length-1;
+      footer.innerHTML=`
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;">
+          ${prev}${counter}${_nextBtn(isLast?(es?'¡Listo!':'Done!'):(es?'Siguiente →':'Next →'))}
+        </div>
+        ${_skipLink(es?'Saltar al final':'Skip to end',`showTourStep(${TOUR_STEPS.length-1})`)}`;
+    }
+
+    _positionTooltip(rect,pad);
+  },350);
+}
+
+function nextTourStep(){
+  _tourStep++;
+  if(_tourStep>=TOUR_STEPS.length){endTour();}
+  else{showTourStep(_tourStep);}
+}
+
+function prevTourStep(){
+  if(_tourStep>0){_tourStep--;showTourStep(_tourStep);}
+}
+
+function endTour(){
+  const overlay=document.getElementById('tour-overlay');
+  if(overlay)overlay.style.display='none';
+  localStorage.setItem('wp_tour_done','1');
+}
+
+function resetTour(){
+  localStorage.removeItem('wp_tour_done');
+}
+
+function launchTourFromSettings(){
+  resetTour();
+  saveSetup();
+  setTimeout(()=>{
+    const o=document.getElementById('tour-overlay');
+    if(!o)return;
+    _tourStep=0;
+    o.style.display='block';
+    showTourStep(0);
+  },900);
+}
 
 // ── BUDGET TOUR ───────────────────────────────
 const BUDGET_TOUR_STEPS=[
@@ -121,31 +265,22 @@ function showBudgetTourStep(idx){
     document.getElementById('tour-title').textContent=es?step.title:step.titleEn;
     document.getElementById('tour-desc').textContent=es?step.desc:step.descEn;
     const closeBtn=document.getElementById('tour-close');
-    if(closeBtn)closeBtn.style.display='block';
+    if(closeBtn){closeBtn.style.display='block';closeBtn.onclick=endBudgetTour;}
 
     const footer=document.getElementById('tour-footer');
-    const navRow=`<div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;">
-      <button onclick="prevBudgetTourStep()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0;line-height:1;">←</button>
-      <span style="font-size:11px;color:var(--text3);">${idx+1} / ${BUDGET_TOUR_STEPS.length}</span>
-      <button onclick="${step.budgetEnd?'endBudgetTour()':'nextBudgetTourStep()'}" style="background:var(--mauve);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:500;cursor:pointer;">${step.budgetEnd?(es?'¡Listo!':'Done!'):(es?'Siguiente →':'Next →')}</button>
-    </div>
-    <div style="text-align:center;">
-      <button onclick="backToDashboardTour()" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;padding:0;text-decoration:underline;">${es?'Saltar — ir a ¡Ya conoces el app!':'Skip — go to You know the app!'}</button>
-    </div>`;
-    footer.innerHTML=navRow;
+    const prev=idx>0?_prevBtn('prevBudgetTourStep()'):'<div style="width:24px;"></div>';
+    const counter=_counter(idx+1,BUDGET_TOUR_STEPS.length);
+    const nextLabel=step.budgetEnd?(es?'¡Listo!':'Done!'):(es?'Siguiente →':'Next →');
+    const nextOnclick=step.budgetEnd?'endBudgetTour()':'nextBudgetTourStep()';
+    const nextBtnHtml=`<button onclick="${nextOnclick}" style="background:var(--mauve);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:500;cursor:pointer;">${nextLabel}</button>`;
 
-    const tt=document.getElementById('tour-tooltip');
-    const isMobile=vw<640;
-    if(isMobile){
-      tt.style.cssText='position:fixed;bottom:24px;left:16px;right:16px;width:auto;';
-    } else {
-      tt.style.position='fixed';tt.style.width='320px';
-      tt.style.left='';tt.style.right='';tt.style.bottom='';
-      const ttH=tt.offsetHeight||140;
-      const below=rect.bottom+pad+12+ttH<vh;
-      tt.style.top=below?(rect.bottom+pad+8)+'px':Math.max(8,rect.top-pad-ttH-8)+'px';
-      tt.style.left=Math.max(12,Math.min(vw-332,rect.left))+'px';
-    }
+    footer.innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;">
+        ${prev}${counter}${nextBtnHtml}
+      </div>
+      ${_skipLink(es?'Saltar — ir a ¡Ya conoces el app!':'Skip — go to You know the app!','backToDashboardTour()')}`;
+
+    _positionTooltip(rect,pad);
   },350);
 }
 
@@ -174,129 +309,4 @@ function backToDashboardTour(){
   if(!overlay)return;
   overlay.style.display='block';
   showTourStep(TOUR_STEPS.length-1);
-}
-
-function startTour(){
-  if(localStorage.getItem('wp_tour_done'))return;
-  // No iniciar si la pantalla de ajustes está abierta
-  const setup=document.getElementById('setup-screen');
-  if(setup&&setup.style.display!=='none')return;
-  _tourStep=0;
-  const overlay=document.getElementById('tour-overlay');
-  if(!overlay)return;
-  overlay.style.display='block';
-  showTourStep(0);
-}
-
-function startTourFromSetup(){
-  const banner=document.getElementById('welcome-banner');
-  if(banner)banner.style.display='none';
-  saveSetup();
-  localStorage.removeItem('wp_tour_done');
-  setTimeout(()=>{
-    const overlay=document.getElementById('tour-overlay');
-    if(!overlay)return;
-    _tourStep=0;
-    overlay.style.display='block';
-    showTourStep(0);
-  },900);
-}
-
-function skipTourFromSetup(){
-  localStorage.setItem('wp_tour_done','1');
-  document.getElementById('welcome-banner').style.display='none';
-}
-
-function showTourStep(idx){
-  const step=TOUR_STEPS[idx];
-  const el=document.getElementById(step.id);
-  if(!el||el.style.display==='none'){nextTourStep();return;}
-
-  el.scrollIntoView({behavior:'smooth',block:'center'});
-
-  setTimeout(()=>{
-    const rect=el.getBoundingClientRect();
-    const pad=10;
-    const vw=window.innerWidth;
-    const vh=window.innerHeight;
-    const x=Math.max(0,rect.left-pad);
-    const y=Math.max(0,rect.top-pad);
-    const w=Math.min(vw-x,rect.width+pad*2);
-    const h=Math.min(vh-y,rect.height+pad*2);
-
-    document.getElementById('tour-path').setAttribute('d',
-      `M0,0 H${vw} V${vh} H0 Z M${x},${y} h${w} v${h} h${-w} Z`);
-
-    const es=typeof isEn==='function'?!isEn():true;
-    document.getElementById('tour-title').textContent=es?step.title:step.titleEn;
-    document.getElementById('tour-desc').textContent=es?step.desc:step.descEn;
-    const closeBtn=document.getElementById('tour-close');
-    if(closeBtn)closeBtn.style.display='none';
-
-    // Buttons
-    const footer=document.getElementById('tour-footer');
-    if(step.customButtons){
-      footer.innerHTML=`
-        <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
-          <button onclick="endTour();openSettings();" style="padding:10px;border-radius:9px;background:var(--mauve);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer;">${es?'Ir a ajustes a personalizar':'Go to Settings to customize'}</button>
-          <button onclick="endTour();openBudget();setTimeout(startBudgetTour,1500);" style="padding:9px;border-radius:9px;background:var(--teal);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer;">${es?'Tour del presupuesto →':'Budget tour →'}</button>
-          <button onclick="endTour();" style="padding:9px;border-radius:9px;background:none;border:0.5px solid var(--border);color:var(--text3);font-size:12px;cursor:pointer;">${es?'Listo, explorar el app':'Done, explore the app'}</button>
-        </div>`;
-    } else {
-      footer.innerHTML=`
-        <div id="tour-dots"></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button onclick="endTour()" id="tour-skip"></button>
-          <button onclick="nextTourStep()" id="tour-next"></button>
-        </div>`;
-      const isLast=idx===TOUR_STEPS.length-1;
-      document.getElementById('tour-skip').textContent=es?'Saltar':'Skip';
-      document.getElementById('tour-next').textContent=isLast?(es?'¡Listo!':'Done!'):(es?'Siguiente →':'Next →');
-      document.getElementById('tour-dots').innerHTML=
-        TOUR_STEPS.filter(s=>!s.customButtons).map((_,i)=>`<span class="tour-dot${i===idx?' active':''}"></span>`).join('');
-    }
-
-    // Position tooltip
-    const tt=document.getElementById('tour-tooltip');
-    const isMobile=vw<640;
-    if(isMobile){
-      tt.style.cssText='position:fixed;bottom:24px;left:16px;right:16px;width:auto;';
-    } else {
-      tt.style.position='fixed';
-      tt.style.width='290px';
-      tt.style.left='';tt.style.right='';tt.style.bottom='';
-      const ttH=tt.offsetHeight||140;
-      const below=rect.bottom+pad+12+ttH<vh;
-      tt.style.top=below?(rect.bottom+pad+8)+'px':Math.max(8,rect.top-pad-ttH-8)+'px';
-      tt.style.left=Math.max(12,Math.min(vw-302,rect.left))+'px';
-    }
-  },350);
-}
-
-function nextTourStep(){
-  _tourStep++;
-  if(_tourStep>=TOUR_STEPS.length){endTour();}
-  else{showTourStep(_tourStep);}
-}
-
-function endTour(){
-  const overlay=document.getElementById('tour-overlay');
-  if(overlay)overlay.style.display='none';
-  localStorage.setItem('wp_tour_done','1');
-}
-
-function resetTour(){
-  localStorage.removeItem('wp_tour_done');
-}
-
-function launchTourFromSettings(){
-  resetTour();
-  saveSetup();
-  setTimeout(()=>{
-    const o=document.getElementById('tour-overlay');
-    if(!o)return;
-    _tourStep=0;
-    o.style.display='block';
-    showTourStep(0);
-  },900);
 }
