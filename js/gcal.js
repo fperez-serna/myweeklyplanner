@@ -1,6 +1,7 @@
 // ── GOOGLE CALENDAR ────────────────────────
 let _gcalInitRetries=0;
-let _pendingGCalEvent=null; // evento pendiente de crear tras refresh de token
+let _pendingGCalEvent=null;
+let _gcalRefreshTimer=null;
 function initGCal(){
   if(typeof google==='undefined'){
     if(_gcalInitRetries++ < 20){setTimeout(initGCal,500);}
@@ -40,8 +41,9 @@ function initGCal(){
       }
       // Programar refresh silencioso usando expires_in de Google (no el reloj local)
       const expiresIn=(res.expires_in||3600)*1000;
-      const refreshIn=Math.max(0,expiresIn-5*60*1000); // 5 min antes de que expire
-      setTimeout(()=>tokenClient.requestAccessToken({prompt:''}),refreshIn);
+      const refreshIn=Math.max(0,expiresIn-5*60*1000);
+      if(_gcalRefreshTimer)clearTimeout(_gcalRefreshTimer);
+      _gcalRefreshTimer=setTimeout(()=>tokenClient.requestAccessToken({prompt:''}),refreshIn);
     }
   });
   // Al cargar: usar token guardado — si expiró la API devolverá 401 y se refrescará
@@ -64,11 +66,13 @@ function setGCalConnected(){
 
 function disconnectGCal(){
   gcalToken=null;
+  if(_gcalRefreshTimer){clearTimeout(_gcalRefreshTimer);_gcalRefreshTimer=null;}
   const hint=document.getElementById('gcal-pin-hint');
   if(hint)hint.style.display='none';
   localStorage.removeItem('gct');
   gcalEvts={};
   deletedGCalIds.clear();
+  _pendingGCalEvent=null;
   const btn=document.getElementById('gcal-btn');
   btn.textContent=isEn()?'Connect Google Calendar':'Conectar Google Calendar';
   btn.classList.remove('connected');
