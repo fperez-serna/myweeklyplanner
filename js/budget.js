@@ -1433,6 +1433,7 @@ function budgetToggleAll(){
 function debtCalcHTML(rateType,rateVal,meses,saldo,tipo){
   const es=!isEn();
   const pills=[
+    {id:'none',label:es?'Sin interés 🤝':'No interest 🤝'},
     {id:'anual',label:'🇲🇽 Tasa anual'},
     {id:'cat',label:'🇲🇽 CAT'},
     {id:'apr',label:'🇺🇸 APR'},
@@ -1488,10 +1489,12 @@ function debtUpdatePlazoHint(){
   if(lbl)lbl.textContent=tipo==='tarjeta'
     ?(es?'Límite de crédito':'Credit limit')
     :(es?'Saldo original (total deuda)':'Original balance');
+  const corteWrap=document.getElementById('d-corte-wrap');
+  if(corteWrap)corteWrap.style.display=tipo==='tarjeta'?'block':'none';
 }
 
 function debtRatePill(type){
-  ['anual','cat','apr','mensual'].forEach(t=>{
+  ['none','anual','cat','apr','mensual'].forEach(t=>{
     const btn=document.getElementById('rate-pill-'+t);
     if(!btn)return;
     const active=t===type;
@@ -1502,8 +1505,15 @@ function debtRatePill(type){
   const tipoEl=document.getElementById('d-tasa-tipo');
   if(tipoEl)tipoEl.value=type;
   const body=document.getElementById('rate-calc-body');
-  if(body)body.style.display='block';
-  debtCalcUpdate();
+  if(body)body.style.display=type==='none'?'none':'block';
+  if(type==='none'){
+    const tasaEl=document.getElementById('d-tasa');if(tasaEl)tasaEl.value=0;
+    const anualEl=document.getElementById('d-tasa-anual');if(anualEl)anualEl.value=0;
+    const resultsEl=document.getElementById('calc-results');
+    if(resultsEl){const es=!isEn();resultsEl.innerHTML=`<div style="font-size:12px;color:var(--teal);padding:8px 0;">🤝 ${es?'Sin interés — solo registra el saldo y el abono mensual.':'No interest — just track the balance and monthly payment.'}</div>`;}
+  } else {
+    debtCalcUpdate();
+  }
 }
 
 function debtCalcUpdate(){
@@ -1617,9 +1627,11 @@ function budgetAddDebt(){
         <div style="font-size:10px;color:var(--text3);margin-top:4px;font-style:italic;">${es?'Este es el último día para pagar sin intereses.':'This is the last day to pay without interest.'}</div>
       </div>
       <div>
+        <div id="d-corte-wrap">
         <div class="debt-card-lbl">${es?'Fecha de corte (día)':'Billing cut date (day)'}</div>
         <input id="d-corte" class="debt-sinput" type="number" min="1" max="31" placeholder="${es?'Ej: 26':'Ex: 26'}" style="margin-top:3px;"/>
         <div style="font-size:10px;color:var(--text3);margin-top:4px;font-style:italic;">${es?'Las compras después de esta fecha no entran en el pago del mes siguiente.':'Purchases after this date are not included in next month\'s payment.'}</div>
+        </div>
       </div>
     </div>
     ${debtCalcHTML('','',0,0,'fijo')}
@@ -1666,7 +1678,7 @@ function budgetEditDebt(di){
         <input id="d-fecha" class="debt-sinput" type="text" value="${debt.fechaPago||''}" style="margin-top:3px;"/>
         <div style="font-size:10px;color:var(--text3);margin-top:4px;font-style:italic;">${es?'Este es el último día para pagar sin intereses.':'This is the last day to pay without interest.'}</div>
       </div>
-      <div>
+      <div id="d-corte-wrap" style="display:${(debt.tipo||'fijo')==='tarjeta'?'block':'none'};">
         <div class="debt-card-lbl">${es?'Fecha de corte (día)':'Billing cut date (day)'}</div>
         <input id="d-corte" class="debt-sinput" type="number" min="1" max="31" value="${debt.fechaCorte||''}" placeholder="${es?'Ej: 26':'Ex: 26'}" style="margin-top:3px;"/>
         <div style="font-size:10px;color:var(--text3);margin-top:4px;font-style:italic;">${es?'Las compras después de esta fecha no entran en el pago del mes siguiente.':'Purchases after this date are not included in next month\'s payment.'}</div>
