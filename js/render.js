@@ -56,8 +56,10 @@ function buildOv(){
     const n=document.createElement('div');n.className='wovn'+(isT?' today':'');n.textContent=DS[d.getDay()];col.appendChild(n);
     const w=dayWo(i);
     // Orden: wo1 · ha1 · enfoques · eventos por hora · wo2 · ha2
-    if(w.wo1){const t=document.createElement('div');t.className='wtag wwo';t.textContent=emoji(w.wo1,WE);col.appendChild(t);}
-    if(w.ha1){const t=document.createElement('div');t.className='wtag whb';t.textContent=w.ha1;col.appendChild(t);}
+    const _sun='<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:3px;flex-shrink:0;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    const _moon='<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:3px;flex-shrink:0;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+    if(w.wo1){const t=document.createElement('div');t.className='wtag wwo';t.innerHTML=_sun+emoji(w.wo1,WE);col.appendChild(t);}
+    if(w.ha1){const t=document.createElement('div');t.className='wtag whb';t.innerHTML=_sun+w.ha1;col.appendChild(t);}
     const df=focusForDay(i);
     const fd=weekData.focusDone||{};
     [1,2,3].forEach(n=>{
@@ -86,8 +88,8 @@ function buildOv(){
       else if(isGcal){t.title='Click para guardar en el planner';t.onclick=()=>pinGCalEvent(i,ev);}
       col.appendChild(t);
     });
-    if(w.wo2){const t=document.createElement('div');t.className='wtag wwo';t.textContent=w.wo2;col.appendChild(t);}
-    if(w.ha2){const t=document.createElement('div');t.className='wtag whb';t.textContent=w.ha2;col.appendChild(t);}
+    if(w.wo2){const t=document.createElement('div');t.className='wtag wwo';t.innerHTML=_moon+w.wo2;col.appendChild(t);}
+    if(w.ha2){const t=document.createElement('div');t.className='wtag whb';t.innerHTML=_moon+w.ha2;col.appendChild(t);}
     ov.appendChild(col);
   });
 }
