@@ -669,7 +669,8 @@ async function saveBudgetData(){
         id:d.id,nombre:d.nombre,tipo:d.tipo,saldo:d.saldo,
         totalOriginal:d.totalOriginal,tasa:d.tasa,
         tasaTipo:d.tasaTipo||'',tasaAnual:d.tasaAnual||0,meses:d.meses||0,
-        fechaPago:d.fechaPago
+        fechaPago:d.fechaPago,
+        ...(d.saldoManualOverride?{saldoManualOverride:true}:{})
       }))
     };
     await userCol().doc('budget_config').set(config);
@@ -1681,6 +1682,7 @@ function budgetEditDebt(di){
 async function budgetSaveDebt(di){
   const nombreEl=document.getElementById('d-nombre');
   const saldoEl=document.getElementById('d-saldo');
+  if(!nombreEl||!saldoEl)return;
   const nombre=nombreEl.value.trim();
   const saldoVal=saldoEl.value.trim();
   let invalid=false;
@@ -1766,16 +1768,16 @@ async function debtToggleSaldoOverride(di){
   if(iconSpan)iconSpan.style.display='none';
   input.focus();input.select();
   async function save(){
-    const val=parseFloat(input.value)||0;
-    debt.saldo=val;
-    debt.saldoManualOverride=true;
-    debt.saldoInicialMes=val;
-    await saveBudgetConfig();
-    const d=await loadMonthGastos();
-    renderBudget(d);
+    try{
+      const val=parseFloat(input.value)||0;
+      debt.saldo=val;debt.saldoManualOverride=true;debt.saldoInicialMes=val;
+      await saveBudgetConfig();
+      const d=await loadMonthGastos();
+      renderBudget(d);
+    }catch(e){console.error('SaldoOverride save error:',e);showToast(isEn()?'Could not save':'No se pudo guardar');}
   }
   input.addEventListener('blur',save);
-  input.addEventListener('keydown',e=>{if(e.key==='Enter')input.blur();if(e.key==='Escape'){loadMonthGastos().then(d=>renderBudget(d));}});
+  input.addEventListener('keydown',async e=>{if(e.key==='Enter')input.blur();if(e.key==='Escape'){const d=await loadMonthGastos();renderBudget(d);}});
 }
 
 function debtEditAbono(di,cardEl){
@@ -1795,19 +1797,22 @@ function debtEditAbono(di,cardEl){
   let _saving=false;
   async function save(){
     if(_saving)return;_saving=true;
-    const val=parseFloat(input.value)||0;
-    if(isTarjeta){
-      if(debt.saldoInicialMes===undefined)debt.saldoInicialMes=debt.saldo||val;
-      debt.saldo=val;
-      debt.abono=Math.max(0,(debt.saldoInicialMes||0)-val);
-    } else {
-      if(debt.saldoInicialMes===undefined)debt.saldoInicialMes=debt.saldo;
-      debt.abono=val;
-      debt.saldo=Math.max(0,debt.saldoInicialMes-val);
-    }
-    await saveBudgetConfig();
-    const d=await loadMonthGastos();
-    renderBudget(d);
+    try{
+      const val=parseFloat(input.value)||0;
+      if(isTarjeta){
+        if(debt.saldoInicialMes==null)debt.saldoInicialMes=debt.saldo??val;
+        debt.saldo=val;
+        debt.abono=Math.max(0,(debt.saldoInicialMes||0)-val);
+      } else {
+        if(debt.saldoInicialMes==null)debt.saldoInicialMes=debt.saldo??0;
+        debt.abono=val;
+        debt.saldo=Math.max(0,(debt.saldoInicialMes||0)-val);
+      }
+      await saveBudgetConfig();
+      const d=await loadMonthGastos();
+      renderBudget(d);
+    }catch(e){console.error('Abono save error:',e);showToast(isEn()?'Could not save, try again':'No se pudo guardar, intenta de nuevo');}
+    finally{_saving=false;}
   }
   input.addEventListener('blur',save);
   input.addEventListener('keydown',e=>{if(e.key==='Enter')input.blur();if(e.key==='Escape'){input.value=cur;input.blur();}});
