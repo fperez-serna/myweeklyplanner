@@ -217,8 +217,8 @@ async function budgetExportPDF(){
     const gPresup=group.subs.reduce((s,sub)=>s+sub.presup,0);
     const gActual=group.subs.reduce((s,sub)=>s+sub.actual,0);
     // Group header
-    pdf.setFillColor(...mauveC);pdf.roundedRect(10,y,pw,7,1,1,'F');
-    pdf.setFontSize(8);pdf.setFont('helvetica','bold');pdf.setTextColor(255,255,255);
+    pdf.setFillColor(240,235,230);pdf.roundedRect(10,y,pw,7,1,1,'F');
+    pdf.setFontSize(8);pdf.setFont('helvetica','bold');pdf.setTextColor(26,26,26);
     const _rightTxt=fmt(gActual)+' / '+fmt(gPresup);
     const _maxNameW=pw-pdf.getTextWidth(_rightTxt)-8;
     let gName=clean(group.name).toUpperCase();
