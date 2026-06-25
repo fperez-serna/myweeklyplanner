@@ -167,19 +167,19 @@ async function budgetExportPDF(){
   // INGRESOS
   const totalInc=budgetData.income.reduce((s,i)=>s+i.amt,0);
   pdf.setFontSize(8);pdf.setFont('helvetica','bold');pdf.setTextColor(...grayC);
-  pdf.text(es?'INGRESOS':'INCOME',10,y);y+=5;
+  pdf.text(es?'INGRESOS':'INCOME',10,y);y+=9;
   pdf.setFillColor(...lightC);pdf.roundedRect(10,y,pw,10,2,2,'F');
   pdf.setFontSize(10);pdf.setFont('helvetica','bold');pdf.setTextColor(...darkC);
   pdf.text(es?'Total ingresos':'Total income',13,y+6);
   pdf.text(fmt(totalInc),200,y+6,{align:'right'});
-  y+=12;
+  y+=17;
   budgetData.income.forEach(inc=>{
     pdf.setFontSize(9);pdf.setFont('helvetica','normal');pdf.setTextColor(60,60,60);
     pdf.text(inc.desc,15,y);
     pdf.text(fmt(inc.amt),200,y,{align:'right'});
-    y+=5;
+    y+=7;
   });
-  y+=4;pdf.setDrawColor(220,215,210);pdf.line(10,y,200,y);y+=6;
+  y+=5;pdf.setDrawColor(220,215,210);pdf.line(10,y,200,y);y+=7;
 
   // STATS GRID
   const totalPresup=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.presup,0),0);
@@ -211,7 +211,7 @@ async function budgetExportPDF(){
 
   // GRUPOS
   pdf.setFontSize(8);pdf.setFont('helvetica','bold');pdf.setTextColor(...grayC);
-  pdf.text(es?'GASTOS PLANEADOS':'PLANNED EXPENSES',10,y);y+=5;
+  pdf.text(es?'GASTOS PLANEADOS':'PLANNED EXPENSES',10,y);y+=9;
 
   budgetData.groups.forEach(group=>{
     if(y>260){pdf.addPage();y=10;}
@@ -233,7 +233,7 @@ async function budgetExportPDF(){
     pdf.text(es?'Presup.':'Budget',130,y,{align:'right'});
     pdf.text(es?'Actual':'Actual',158,y,{align:'right'});
     pdf.text(es?'Rubro':'Category',200,y,{align:'right'});
-    y+=4;pdf.setDrawColor(230,225,220);pdf.line(10,y,200,y);y+=3;
+    y+=5;pdf.setDrawColor(230,225,220);pdf.line(10,y,200,y);y+=4;
     // Subs
     group.subs.forEach(sub=>{
       if(y>265){pdf.addPage();y=10;}
@@ -246,16 +246,16 @@ async function budgetExportPDF(){
       const _pTxt=fmt(sub.presup);const _pOrig=fitNum(_pTxt,COL.presupW);pdf.setTextColor(...darkC);pdf.text(_pTxt,COL.presupR,y,{align:'right'});pdf.setFontSize(_pOrig);
       const _aTxt=fmt(sub.actual);const _aOrig=fitNum(_aTxt,COL.actualW);pdf.setTextColor(...darkC);pdf.text(_aTxt,COL.actualR,y,{align:'right'});pdf.setFontSize(_aOrig);
       const _rTxt=clean(sub.rubro||'—');pdf.setFontSize(7);pdf.setTextColor(...grayC);const _rW=pdf.getTextWidth(_rTxt);pdf.text(_rTxt,COL.rubroR-_rW,y);pdf.setFontSize(8);
-      y+=5;
+      y+=7;
     });
-    y+=3;
+    y+=6;
   });
 
   // RESUMEN POR RUBRO
   if(y>220){pdf.addPage();y=10;}
   y+=2;pdf.setDrawColor(220,215,210);pdf.line(10,y,200,y);y+=6;
   pdf.setFontSize(8);pdf.setFont('helvetica','bold');pdf.setTextColor(...grayC);
-  pdf.text(es?'RESUMEN POR RUBRO DE GASTOS':'EXPENSE SUMMARY BY CATEGORY',10,y);y+=6;
+  pdf.text(es?'RESUMEN POR RUBRO DE GASTOS':'EXPENSE SUMMARY BY CATEGORY',10,y);y+=9;
 
   // Table headers
   pdf.setFillColor(...lightC);pdf.rect(10,y,pw,6,'F');
