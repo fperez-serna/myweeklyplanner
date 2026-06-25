@@ -412,6 +412,10 @@ function budgetExportExcel(){
 
 async function restoreBudgetFromBackup(){
   if(!db||!currentUser)return;
+  const msg=isEn()
+    ?'If you continue, your budget will revert to the last saved backup. Any changes made after that backup will be lost. Are you sure?'
+    :'Si continúas, tu presupuesto regresará al último respaldo guardado. Cualquier cambio nuevo que hayas hecho después de ese respaldo se perderá. ¿Estás seguro?';
+  if(!confirm(msg))return;
   try{
     const snap=await userCol().doc('budget_config_backup').get();
     if(!snap.exists){alert(isEn()?'No backup found':'No se encontró respaldo');return;}
