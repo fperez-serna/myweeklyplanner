@@ -85,18 +85,19 @@ function _nextBtn(label){
 function _skipLink(label,onclick){
   return `<div style="text-align:center;margin-top:6px;"><button onclick="${onclick}" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;padding:0;text-decoration:underline;">${label}</button></div>`;
 }
-function _positionTooltip(rect,pad){
+function _positionTooltip(rect,pad,narrow=false){
   const tt=document.getElementById('tour-tooltip');
   const vw=window.innerWidth;const vh=window.innerHeight;
   if(vw<640){
     tt.style.cssText='position:fixed;bottom:24px;left:16px;right:16px;width:auto;';
   } else {
-    tt.style.position='fixed';tt.style.width='320px';
+    const w=narrow?230:320;
+    tt.style.position='fixed';tt.style.width=w+'px';
     tt.style.left='';tt.style.right='';tt.style.bottom='';
     const ttH=tt.offsetHeight||160;
     const below=rect.bottom+pad+12+ttH<vh;
     tt.style.top=below?(rect.bottom+pad+8)+'px':Math.max(8,rect.top-pad-ttH-8)+'px';
-    tt.style.left=Math.max(12,Math.min(vw-332,rect.left))+'px';
+    tt.style.left=Math.max(12,Math.min(vw-(w+12),rect.left))+'px';
   }
 }
 
@@ -133,9 +134,9 @@ function showTourStep(idx){
       if(skipTopBtn)skipTopBtn.style.display='none';
       footer.innerHTML=`
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <button onclick="endTour();openSettings();" style="padding:10px;border-radius:9px;background:var(--mauve);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer;">${es?'Ir a ajustes a personalizar':'Go to Settings to customize'}</button>
-          <button onclick="endTour();openBudget();setTimeout(startBudgetTour,1500);" style="padding:9px;border-radius:9px;background:var(--teal);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer;">${es?'Tour del presupuesto →':'Budget tour →'}</button>
-          <button onclick="endTour();" style="padding:9px;border-radius:9px;background:none;border:0.5px solid var(--border);color:var(--text3);font-size:12px;cursor:pointer;">${es?'Listo, explorar el app':'Done, explore the app'}</button>
+          <button onclick="endTour();openSettings();" style="width:100%;padding:10px;border-radius:9px;background:var(--mauve);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer;">${es?'Ir a ajustes a personalizar':'Go to Settings to customize'}</button>
+          <button onclick="endTour();openBudget();setTimeout(startBudgetTour,1500);" style="width:100%;padding:9px;border-radius:9px;background:var(--teal);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer;">${es?'Tour del presupuesto →':'Budget tour →'}</button>
+          <button onclick="endTour();" style="width:100%;padding:9px;border-radius:9px;background:none;border:0.5px solid var(--border);color:var(--text3);font-size:12px;cursor:pointer;">${es?'Listo, explorar el app':'Done, explore the app'}</button>
         </div>`;
     } else {
       if(closeBtn){closeBtn.style.display='block';closeBtn.onclick=endTour;}
@@ -150,7 +151,7 @@ function showTourStep(idx){
         </div>`;
     }
 
-    _positionTooltip(rect,pad);
+    _positionTooltip(rect,pad,!!step.customButtons);
   },350);
 }
 
