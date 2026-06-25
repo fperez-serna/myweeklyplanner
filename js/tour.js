@@ -123,22 +123,20 @@ function showTourStep(idx){
     const counter=_counter(idx+1,TOUR_STEPS.length);
 
     if(step.customButtons){
+      if(closeBtn)closeBtn.style.display='none';
       footer.innerHTML=`
-        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:10px;">
-          ${prev}${counter}<div style="width:24px;"></div>
-        </div>
         <div style="display:flex;flex-direction:column;gap:8px;">
           <button onclick="endTour();openSettings();" style="padding:10px;border-radius:9px;background:var(--mauve);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer;">${es?'Ir a ajustes a personalizar':'Go to Settings to customize'}</button>
           <button onclick="endTour();openBudget();setTimeout(startBudgetTour,1500);" style="padding:9px;border-radius:9px;background:var(--teal);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer;">${es?'Tour del presupuesto →':'Budget tour →'}</button>
           <button onclick="endTour();" style="padding:9px;border-radius:9px;background:none;border:0.5px solid var(--border);color:var(--text3);font-size:12px;cursor:pointer;">${es?'Listo, explorar el app':'Done, explore the app'}</button>
         </div>`;
     } else {
-      const isLast=idx===TOUR_STEPS.length-1;
+      const skipIcon='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>';
       footer.innerHTML=`
         <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;">
-          ${prev}${counter}${_nextBtn(isLast?(es?'¡Listo!':'Done!'):(es?'Siguiente →':'Next →'))}
+          ${prev}${counter}${_nextBtn(es?'Siguiente →':'Next →')}
         </div>
-        ${_skipLink(es?'Saltar al final':'Skip to end',`showTourStep(${TOUR_STEPS.length-1})`)}`;
+        ${_skipLink(skipIcon,`showTourStep(${TOUR_STEPS.length-1})`)}`;
     }
 
     _positionTooltip(rect,pad);
@@ -278,7 +276,7 @@ function showBudgetTourStep(idx){
       <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;">
         ${prev}${counter}${nextBtnHtml}
       </div>
-      ${_skipLink(es?'Saltar':'Skip','backToDashboardTour()')}`;
+      ${_skipLink('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>','backToDashboardTour()')}`;
 
     _positionTooltip(rect,pad);
   },350);
