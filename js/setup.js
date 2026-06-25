@@ -233,7 +233,7 @@ const PALETTES = {
   rose: {
     teal:'#c9847a',tealL:'#faeae8',tealD:'#8f5a54',   // powder blush warm
     mauve:'#c4788a',mauveL:'#fce8ef',mauveD:'#8f4d5e', // petal rose
-    brown:'#7a4a52',silkL:'#EEEBD0',                   // dark bordeaux for text/accents
+    brown:'#7a4a52',silkL:'#f7f0ec',
     bg:'#fff',bg2:'#fdf7f5',bgPage:'#f7ede9',
     border:'rgba(0,0,0,0.09)',text:'#2a1a1c',text2:'#7a5a5e',text3:'#b09498'
   },
