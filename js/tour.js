@@ -121,7 +121,8 @@ function showTourStep(idx){
     document.getElementById('tour-desc').textContent=es?step.desc:step.descEn;
 
     const closeBtn=document.getElementById('tour-close');
-    if(closeBtn){closeBtn.style.display='block';closeBtn.onclick=endTour;}
+    const skipTopBtn=document.getElementById('tour-skip-top');
+    const skipSVG='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>';
 
     const footer=document.getElementById('tour-footer');
     const prev=idx>0?_prevBtn('prevTourStep()'):'<div style="width:24px;"></div>';
@@ -129,6 +130,7 @@ function showTourStep(idx){
 
     if(step.customButtons){
       if(closeBtn)closeBtn.style.display='none';
+      if(skipTopBtn)skipTopBtn.style.display='none';
       footer.innerHTML=`
         <div style="display:flex;flex-direction:column;gap:8px;">
           <button onclick="endTour();openSettings();" style="padding:10px;border-radius:9px;background:var(--mauve);color:#fff;border:none;font-size:13px;font-weight:500;cursor:pointer;">${es?'Ir a ajustes a personalizar':'Go to Settings to customize'}</button>
@@ -136,12 +138,16 @@ function showTourStep(idx){
           <button onclick="endTour();" style="padding:9px;border-radius:9px;background:none;border:0.5px solid var(--border);color:var(--text3);font-size:12px;cursor:pointer;">${es?'Listo, explorar el app':'Done, explore the app'}</button>
         </div>`;
     } else {
-      const skipIcon='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>';
+      if(closeBtn){closeBtn.style.display='block';closeBtn.onclick=endTour;}
+      if(skipTopBtn){
+        skipTopBtn.style.display='block';
+        skipTopBtn.innerHTML=skipSVG;
+        skipTopBtn.onclick=()=>showTourStep(TOUR_STEPS.length-1);
+      }
       footer.innerHTML=`
-        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
           ${prev}${counter}${_nextBtn(es?'Siguiente →':'Next →')}
-        </div>
-        ${_skipLink(skipIcon,`showTourStep(${TOUR_STEPS.length-1})`)}`;
+        </div>`;
     }
 
     _positionTooltip(rect,pad);
@@ -268,7 +274,15 @@ function showBudgetTourStep(idx){
     document.getElementById('tour-title').textContent=es?step.title:step.titleEn;
     document.getElementById('tour-desc').textContent=es?step.desc:step.descEn;
     const closeBtn=document.getElementById('tour-close');
+    const skipTopBtn=document.getElementById('tour-skip-top');
+    const skipSVG='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>';
+
     if(closeBtn){closeBtn.style.display='block';closeBtn.onclick=endBudgetTour;}
+    if(skipTopBtn){
+      skipTopBtn.style.display='block';
+      skipTopBtn.innerHTML=skipSVG;
+      skipTopBtn.onclick=backToDashboardTour;
+    }
 
     const footer=document.getElementById('tour-footer');
     const prev=idx>0?_prevBtn('prevBudgetTourStep()'):'<div style="width:24px;"></div>';
@@ -278,10 +292,9 @@ function showBudgetTourStep(idx){
     const nextBtnHtml=`<button onclick="${nextOnclick}" style="background:var(--mauve);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:500;cursor:pointer;">${nextLabel}</button>`;
 
     footer.innerHTML=`
-      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
         ${prev}${counter}${nextBtnHtml}
-      </div>
-      ${_skipLink('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>','backToDashboardTour()')}`;
+      </div>`;
 
     _positionTooltip(rect,pad);
   },350);
