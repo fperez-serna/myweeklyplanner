@@ -19,7 +19,7 @@ function initGCal(){
         if(res.error==='interaction_required'||res.error==='consent_required'){
           gcalToken=null;
           localStorage.removeItem('gct');
-          localStorage.removeItem('gct_exp');
+          
           const btn=document.getElementById('gcal-btn');
           if(btn){btn.textContent='Conectar Google Calendar';btn.classList.remove('connected');}
         }
@@ -27,33 +27,20 @@ function initGCal(){
       }
       gcalToken=res.access_token;
       localStorage.setItem('gct',gcalToken);
-      localStorage.setItem('gct_exp', Date.now() + 50*60*1000);
       setGCalConnected();
       fetchGCal();
-      // Programar refresh silencioso antes de que expire
-      // Usar visibilitychange para no depender de un timer que se pierde al recargar
-      const _scheduleRefresh=()=>{
-        const exp=parseInt(localStorage.getItem('gct_exp')||'0');
-        const msLeft=exp-Date.now();
-        if(msLeft>0)setTimeout(()=>tokenClient.requestAccessToken({prompt:''}),msLeft);
-      };
-      _scheduleRefresh();
+      // Programar refresh silencioso usando expires_in de Google (no el reloj local)
+      const expiresIn=(res.expires_in||3600)*1000;
+      const refreshIn=Math.max(0,expiresIn-5*60*1000); // 5 min antes de que expire
+      setTimeout(()=>tokenClient.requestAccessToken({prompt:''}),refreshIn);
     }
   });
-  // Al cargar: usar token guardado si sigue vigente
+  // Al cargar: usar token guardado — si expiró la API devolverá 401 y se refrescará
   const saved=localStorage.getItem('gct');
-  const exp=parseInt(localStorage.getItem('gct_exp')||'0');
-  if(saved && exp > Date.now()){
+  if(saved){
     gcalToken=saved;
     setGCalConnected();
     fetchGCal();
-    const msLeft=exp-Date.now();
-    setTimeout(()=>tokenClient.requestAccessToken({prompt:''}), msLeft);
-  } else {
-    // Token expirado o no existe — limpiar y dejar que el usuario reconecte
-    localStorage.removeItem('gct');
-    localStorage.removeItem('gct_exp');
-    gcalToken=null;
   }
 }
 
@@ -71,7 +58,7 @@ function disconnectGCal(){
   const hint=document.getElementById('gcal-pin-hint');
   if(hint)hint.style.display='none';
   localStorage.removeItem('gct');
-  localStorage.removeItem('gct_exp');
+  
   gcalEvts={};
   const btn=document.getElementById('gcal-btn');
   btn.textContent=isEn()?'Connect Google Calendar':'Conectar Google Calendar';
@@ -124,7 +111,7 @@ async function fetchGCal(){
   }catch(e){
     console.error(e);
     gcalToken=null;
-    localStorage.removeItem('gct');localStorage.removeItem('gct_exp');
+    localStorage.removeItem('gct');
     document.getElementById('gcal-note').textContent='Error al cargar — toca Desconectar e intenta de nuevo';
     const btn=document.getElementById('gcal-btn');
     if(btn){btn.textContent='Conectar Google Calendar';btn.classList.remove('connected');}
@@ -149,7 +136,7 @@ async function createGCalEv(title,date,hour,min,ampm,durMins=60){
       // Token expired - refresh and retry once
       gcalToken=null;
       localStorage.removeItem('gct');
-      localStorage.removeItem('gct_exp');
+      
       if(tokenClient){
         tokenClient.requestAccessToken({prompt:''});
         showToast(isEn()?'Reconnecting Google Calendar...':'Reconectando Google Calendar...');
