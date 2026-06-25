@@ -296,6 +296,7 @@ function buildCalendar(){
 async function calGoTo(y,m,d){
   activeDate=new Date(y,m,d);
   weekDays=getWeekDays(activeDate);
+  const prevWeekData=weekData;
   weekData={tasks:[],focus:{},focusDone:{},focusDeleted:{},events:{},workout:{},gastos:{}};
   if(document.getElementById('ev-date'))document.getElementById('ev-date').value=dk(activeDate);
   try{
@@ -304,7 +305,7 @@ async function calGoTo(y,m,d){
       if(snap.exists)weekData=snap.data();
       await loadPendingTasks();
     }
-  }catch(e){console.error('calGoTo load error:',e);}
+  }catch(e){console.error('calGoTo load error:',e);weekData=prevWeekData;}
   subscribeDB();
   buildCalendar();
   renderDay();

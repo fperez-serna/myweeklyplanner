@@ -396,7 +396,7 @@ function toggleFdone(num,di){
   if(!weekData.focusDone)weekData.focusDone={};
   const k=String(di)+'_'+String(num);
   if(weekData.focusDone[k]!==undefined){delete weekData.focusDone[k];}
-  else{weekData.focusDone[k]=String(di);}
+  else{weekData.focusDone[k]=true;}
   saveDB();renderBubbles(di);
 }
 

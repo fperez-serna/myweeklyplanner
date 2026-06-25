@@ -37,13 +37,15 @@ async function saveDB(){
 }
 
 async function flushPendingSaves(){
-  if(!_saveDBTimer)return;
-  clearTimeout(_saveDBTimer);
-  _saveDBTimer=null;
-  if(db&&currentUser&&weekData){
-    try{await userCol().doc(wid()).set(weekData);}
-    catch(e){console.error('Flush save error:',e);}
+  const saves=[];
+  if(_saveDBTimer){
+    clearTimeout(_saveDBTimer);_saveDBTimer=null;
+    if(db&&currentUser&&weekData)saves.push(userCol().doc(wid()).set(weekData).catch(e=>console.error('Flush weekData:',e)));
   }
+  if(_shSaving&&db&&currentUser){
+    saves.push(userCol().doc('shopping').set({cats:shoppingItems}).catch(e=>console.error('Flush shopping:',e)));
+  }
+  if(saves.length)await Promise.all(saves);
 }
 
 let _shSaving=false;

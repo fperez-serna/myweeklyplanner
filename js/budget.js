@@ -246,8 +246,6 @@ async function budgetExportPDF(){
       const ok=sub.presup>0&&sub.actual<=sub.presup;
       const over=sub.presup>0&&sub.actual>sub.presup;
       pdf.setFontSize(8);pdf.setFont('helvetica','normal');pdf.setTextColor(...darkC);
-      if(ok){pdf.setDrawColor(...tealC);pdf.line(13,y+0.5,13+pdf.getTextWidth(clean(sub.name)),y+0.5);}
-      if(over){pdf.setDrawColor(192,57,43);pdf.line(13,y+0.5,13+pdf.getTextWidth(clean(sub.name)),y+0.5);}
       pdf.text(clean(sub.name),13,y);
       const _pTxt=fmt(sub.presup);const _pOrig=fitNum(_pTxt,COL.presupW);pdf.setTextColor(...darkC);pdf.text(_pTxt,COL.presupR,y,{align:'right'});pdf.setFontSize(_pOrig);
       const _aTxt=fmt(sub.actual);const _aOrig=fitNum(_aTxt,COL.actualW);pdf.setTextColor(...darkC);pdf.text(_aTxt,COL.actualR,y,{align:'right'});pdf.setFontSize(_aOrig);
@@ -261,7 +259,7 @@ async function budgetExportPDF(){
   if(y>220){pdf.addPage();y=10;}
   y+=2;pdf.setDrawColor(220,215,210);pdf.line(10,y,200,y);y+=6;
   pdf.setFontSize(8);pdf.setFont('helvetica','bold');pdf.setTextColor(...grayC);
-  pdf.text(es?'RESUMEN POR RUBRO DE GASTOS':'EXPENSE SUMMARY BY CATEGORY',10,y);y+=9;
+  pdf.text(es?'RESUMEN POR RUBRO DE GASTOS':'EXPENSE SUMMARY BY CATEGORY',10,y);y+=13;
 
   // Table headers
   pdf.setFillColor(...lightC);pdf.rect(10,y,pw,6,'F');
