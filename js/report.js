@@ -105,9 +105,9 @@ function renderReport(){
     html+=`<div class="report-section">
       <div class="report-sec-title"><i data-lucide="receipt" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:5px;"></i>${isEn()?'Income & Expenses':'Ingresos y Gastos'}</div>
       ${reportIncome>0?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-        <div class="rstat" style="background:#e8f0ef;"><div class="rstat-val" style="color:var(--teal);">$${reportIncome.toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Income':'Ingresos'}</div></div>
+        <div class="rstat"><div class="rstat-val">$${reportIncome.toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Income':'Ingresos'}</div></div>
         <div class="rstat"><div class="rstat-val" style="color:#c0392b;">$${monthTotal.toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Expenses':'Gastos'}</div></div>
-        <div class="rstat" style="grid-column:1/-1;background:${reportIncome-monthTotal>=0?'#e8f0ef':'#fce4ec'};text-align:center;"><div class="rstat-val" style="color:${reportIncome-monthTotal>=0?'var(--teal)':'#c0392b'};">$${(reportIncome-monthTotal).toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Remaining this month':'Restante del mes'}</div></div>
+        <div class="rstat" style="grid-column:1/-1;text-align:center;"><div class="rstat-val" style="color:${reportIncome-monthTotal>=0?'#2e7d32':'#c0392b'};">$${(reportIncome-monthTotal).toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Remaining this month':'Restante del mes'}</div></div>
       </div>`:''}
       <div class="report-stat-grid">
         <div class="rstat"><div class="rstat-val">$${monthTotal.toLocaleString()}</div><div class="rstat-lbl">${isEn()?'Month total':'Total del mes'}</div></div>

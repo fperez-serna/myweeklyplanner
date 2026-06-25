@@ -175,23 +175,23 @@ body{padding:.75rem;}
 .rtog{font-size:12px;padding:5px 12px;border-radius:99px;border:0.5px solid var(--border);cursor:pointer;color:var(--text2);background:var(--bg2);transition:.15s;}
 .rtog.on{background:var(--mauve);color:#fff;border-color:var(--mauve);}
 .report-section{margin-bottom:1.5rem;}
-.report-sec-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;}
+.report-sec-title{font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;padding-bottom:6px;border-bottom:1.5px solid var(--text);}
 .report-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
 .rstat{background:var(--bg2);border-radius:10px;padding:10px 12px;}
-.rstat-val{font-size:20px;font-weight:500;color:var(--mauve);}
+.rstat-val{font-size:20px;font-weight:600;color:var(--text);}
 .rstat-lbl{font-size:11px;color:var(--text3);margin-top:2px;}
 .rbar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
 .rbar-lbl{font-size:12px;color:var(--text2);width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .rbar-track{flex:1;height:8px;background:var(--bg2);border-radius:99px;overflow:hidden;}
-.rbar-fill{height:100%;background:var(--mauve);border-radius:99px;transition:width .4s;}
+.rbar-fill{height:100%;background:var(--text2);border-radius:99px;transition:width .4s;}
 .rbar-amt{font-size:11px;color:var(--text3);width:60px;text-align:right;}
 .rcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:8px;}
 .rcal-day-lbl{font-size:9px;color:var(--text3);text-align:center;padding-bottom:2px;}
 .rcal-cell{height:24px;border-radius:4px;background:var(--bg2);position:relative;}
-.rcal-cell.has-workout{background:var(--teal-l);}
-.rcal-cell.has-focus{background:var(--mauve-l);}
-.rcal-cell.both{background:linear-gradient(135deg,var(--teal-l) 50%,var(--mauve-l) 50%);}
-.rcal-cell.today-cell{outline:2px solid var(--mauve);}
+.rcal-cell.has-workout{background:#d4e8d4;}
+.rcal-cell.has-focus{background:#e0e0e0;}
+.rcal-cell.both{background:linear-gradient(135deg,#d4e8d4 50%,#e0e0e0 50%);}
+.rcal-cell.today-cell{outline:2px solid var(--text2);}
 .report-loading{text-align:center;padding:2rem;color:var(--text3);font-size:14px;}
 
 
