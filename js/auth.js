@@ -29,10 +29,11 @@ function showQuickGasto(){
   if(b('qg-full-btn'))b('qg-full-btn').textContent=es?'Ver semana completa →':'Open full app →';
   if(b('qg-never-lbl'))b('qg-never-lbl').textContent=es?'Nunca más mostrar esta pantalla':'Never show this screen again';
 
-  // Categorías
+  // Categorías — deduplicadas y sincronizadas con la config actual
   const catSel=b('qg-cat');
   if(catSel){
-    const cats=(setupCfg.gastoCats&&setupCfg.gastoCats.length)?setupCfg.gastoCats:DEFAULT_GASTOS;
+    const rawCats=(setupCfg.gastoCats&&setupCfg.gastoCats.length)?setupCfg.gastoCats:DEFAULT_GASTOS;
+    const cats=[...new Set(rawCats)]; // deduplicar
     const otroLabel=es?'+ Nueva categoría':'+ New category';
     catSel.innerHTML=cats.map(c=>`<option>${c}</option>`).join('')+`<option value="__new__">${otroLabel}</option>`;
   }
@@ -254,6 +255,9 @@ async function signOut(){
         subscribeShoppingDB();
         subscribeConfig();
         setTimeout(()=>startTour(),800);
+        // Refrescar quick gasto si está abierto (asegura categorías actualizadas)
+        const qgEl=document.getElementById('quick-gasto-screen');
+        if(qgEl&&qgEl.style.display==='flex')showQuickGasto();
       }catch(e){
         console.warn('Firebase error:',e);
       }
