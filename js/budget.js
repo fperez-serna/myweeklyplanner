@@ -930,10 +930,10 @@ function renderBudget(dashboardTotals,forceExpand=false){
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
             <div class="debt-card-balance" style="display:flex;align-items:center;gap:6px;">
               <span>${fmt(effectiveSaldo)}</span>
-              ${isTarjeta?`<span onclick="debtToggleSaldoOverride(${di})" style="font-size:11px;cursor:pointer;opacity:0.7;" title="${isAutoSaldo?(es?'Editar manual':'Edit manually'):(es?'Restablecer automático':'Reset to auto')}">${isAutoSaldo?'↺':'✏️'}</span>`:''}
+              ${isTarjeta?`<span onclick="debtToggleSaldoOverride(${di})" style="font-size:11px;cursor:pointer;opacity:0.7;" title="${isAutoSaldo?(es?'Editar manual':'Edit manually'):(es?'Restablecer automático':'Reset to auto')}">${isAutoSaldo?'↺':'<i data-lucide="pencil" style="width:11px;height:11px;display:inline-block;vertical-align:middle;"></i>'}</span>`:''}
             </div>
             <div style="display:flex;gap:4px;">
-              <button onclick="budgetEditDebt(${di})" style="background:none;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text3);font-size:11px;padding:2px 7px;">✏️</button>
+              <button onclick="budgetEditDebt(${di})" style="background:none;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text3);font-size:11px;padding:3px 7px;display:flex;align-items:center;gap:3px;"><i data-lucide="pencil" style="width:11px;height:11px;display:inline-block;"></i></button>
               <button onclick="budgetDelDebt(${di})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0 3px;">×</button>
             </div>
           </div>
@@ -952,7 +952,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
             <div class="debt-card-val" style="color:var(--mauve);">~${fmt(Math.round(minPago))}</div>
           </div>
           <div class="debt-card-item" onclick="debtEditAbono(${di},this)" style="cursor:pointer;" title="${es?'Clic para editar':'Click to edit'}">
-            <div class="debt-card-lbl">${es?'Abonado este mes ✏️':'Paid this month ✏️'}</div>
+            <div class="debt-card-lbl" style="display:flex;align-items:center;gap:4px;">${es?'Abonado este mes':'Paid this month'} <i data-lucide="pencil" style="width:10px;height:10px;display:inline-block;"></i></div>
             <div class="debt-card-val" style="color:var(--teal);" id="debt-abono-${di}">${fmt(debt.abono||0)}</div>
           </div>
           <div class="debt-card-item">
