@@ -708,8 +708,10 @@ async function saveBudgetData(){
 function corteDaysLeft(diaCorte){
   if(!diaCorte)return null;
   const now=new Date();now.setHours(0,0,0,0);
-  const thisMonth=new Date(now.getFullYear(),now.getMonth(),diaCorte);
-  const nextMonth=new Date(now.getFullYear(),now.getMonth()+1,diaCorte);
+  // Clamp día al último día válido del mes para evitar desborde (ej. día 31 en febrero)
+  const clampDay=(y,m,d)=>{const max=new Date(y,m+1,0).getDate();return new Date(y,m,Math.min(d,max));};
+  const thisMonth=clampDay(now.getFullYear(),now.getMonth(),diaCorte);
+  const nextMonth=clampDay(now.getFullYear(),now.getMonth()+1,diaCorte);
   const target=thisMonth>=now?thisMonth:nextMonth;
   return Math.round((target-now)/(1000*60*60*24));
 }
@@ -1801,7 +1803,7 @@ async function debtToggleSaldoOverride(di){
     }catch(e){console.error('SaldoOverride save error:',e);showToast(isEn()?'Could not save':'No se pudo guardar');}
   }
   input.addEventListener('blur',save);
-  input.addEventListener('keydown',async e=>{if(e.key==='Enter')input.blur();if(e.key==='Escape'){const d=await loadMonthGastos();renderBudget(d);}});
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')input.blur();if(e.key==='Escape'){input.removeEventListener('blur',save);renderBudget(_lastDashboardTotals||{});}});
 }
 
 function debtEditAbono(di,cardEl){
