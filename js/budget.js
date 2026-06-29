@@ -37,7 +37,7 @@ function shareTasks(){
 }
 
 function shareShopping(){
-  const cats=setupCfg.shopCats||DEFAULT_SHOP;
+  const cats=(setupCfg.shopCats&&setupCfg.shopCats.length)?setupCfg.shopCats:DEFAULT_SHOP;
   let txt=isEn()?'Shopping List\n':'Lista de compras\n';
   txt+='\n';
   cats.forEach((cat,idx)=>{
