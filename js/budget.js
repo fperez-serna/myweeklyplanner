@@ -486,11 +486,12 @@ async function loadBudgetData(){
       const prevMonthIdx=budgetMonth===0?11:budgetMonth-1;
       const prevYearIdx=budgetMonth===0?budgetYear-1:budgetYear;
       const prevKey='budget_actual_'+prevYearIdx+'_'+String(prevMonthIdx+1).padStart(2,'0');
-      const [actualSnap,prevResult,parallelDash]=await Promise.all([
+      const [actualSnap,prevResult,_pDash]=await Promise.all([
         userCol().doc(monthKey).get(),
         userCol().doc(prevKey).get().catch(()=>null),
         loadMonthGastos().catch(()=>({}))
       ]);
+      parallelDash=_pDash;
       let prevActuals=prevResult?.exists?prevResult.data():null;
       if(actualSnap.exists){
         const monthActuals=actualSnap.data();
