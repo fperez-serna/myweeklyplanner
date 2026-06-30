@@ -246,6 +246,7 @@ async function signOut(){
         await loadDB();
         await loadPendingTasks();
         await loadShoppingDB();
+        renderSh();
         await loadAnnualData();
         loadBudgetDebts();
         applyConfig(setupCfg);

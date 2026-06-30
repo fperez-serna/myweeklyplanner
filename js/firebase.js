@@ -51,8 +51,9 @@ async function flushPendingSaves(){
 let _shSaving=false;
 async function saveShoppingDB(){
   if(!db)return;
-  // Safety: don't save if shoppingItems is empty
-  const hasItems=Object.values(shoppingItems||{}).some(arr=>(arr||[]).length>0);
+  // No guardar hasta que loadShoppingDB() haya traído los datos reales del servidor —
+  // si no, se sobreescribe el documento remoto con shoppingItems vacío/default.
+  if(!_shoppingLoaded){console.warn('saveShoppingDB: skipped, not loaded yet');return;}
   const hasKeys=Object.keys(shoppingItems||{}).length>0;
   if(!hasKeys){console.warn('saveShoppingDB: skipped empty data');_shSaving=false;return;}
   _shSaving=true;
@@ -91,6 +92,7 @@ async function loadShoppingDB(){
       localStorage.setItem('fp_last_shopping_week',thisWeek);
     }
   }catch(e){console.log('Shopping fresh');}
+  finally{_shoppingLoaded=true;}
 }
 
 let _unsubShopping=null;
