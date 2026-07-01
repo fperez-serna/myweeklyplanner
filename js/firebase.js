@@ -126,9 +126,27 @@ function subscribeConfig(){
       if(snap.exists){
         const remoteCfg=snap.data().cfg;
         if(remoteCfg){
-          setupCfg={...setupCfg,...remoteCfg};
+          // Para arrays: el remoto gana solo si tiene contenido; si viene vacío, preservar el local.
+          // Esto evita que un doc corrupto en Firebase borre las categorías del usuario.
+          setupCfg={
+            ...setupCfg,
+            ...remoteCfg,
+            gastoCats:(remoteCfg.gastoCats&&remoteCfg.gastoCats.length)?remoteCfg.gastoCats:(setupCfg.gastoCats&&setupCfg.gastoCats.length)?setupCfg.gastoCats:[],
+            shopCats:(remoteCfg.shopCats&&remoteCfg.shopCats.length)?remoteCfg.shopCats:(setupCfg.shopCats&&setupCfg.shopCats.length)?setupCfg.shopCats:[],
+            workouts:(remoteCfg.workouts&&remoteCfg.workouts.length)?remoteCfg.workouts:(setupCfg.workouts&&setupCfg.workouts.length)?setupCfg.workouts:[],
+            habitos:(remoteCfg.habitos&&remoteCfg.habitos.length)?remoteCfg.habitos:(setupCfg.habitos&&setupCfg.habitos.length)?setupCfg.habitos:[],
+          };
           localStorage.setItem('wp_config',JSON.stringify(setupCfg));
           applyConfig(setupCfg);
+          // Refrescar el SmartSelect de gasto-cat — applyConfig actualiza el <select> subyacente
+          // pero el overlay SmartSelect queda con opciones viejas hasta el siguiente renderDay.
+          const gcSS=document.getElementById('gasto-cat_ss');
+          if(gcSS){
+            gcSS.remove();
+            const gcSel=document.getElementById('gasto-cat');
+            if(gcSel)delete gcSel.dataset.ssReplaced;
+            if(typeof initSmartSelects==='function')initSmartSelects();
+          }
           const setupOpen=document.getElementById('setup-screen')?.style.display!=='none';
           if(setupOpen)initSetupChips();
           const qgOpen=document.getElementById('quick-gasto-screen')?.style.display==='flex';

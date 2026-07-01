@@ -227,9 +227,10 @@ async function signOut(){
       const quickGastoEnabled=setupCfg.features?.quickGasto!==false;
 
       if(isMobile&&quickGastoEnabled&&!neverShow){
-        // Leer config del localStorage (instantáneo, mismo dispositivo)
+        // Leer config del localStorage (instantáneo, mismo dispositivo) —
+        // misma lógica de fallback que initApp() para arrays vacíos.
         const savedCfg=localStorage.getItem('wp_config');
-        if(savedCfg)try{Object.assign(setupCfg,JSON.parse(savedCfg));}catch(e){}
+        if(savedCfg){try{const cfg=JSON.parse(savedCfg);setupCfg={...setupCfg,...cfg,gastoCats:cfg.gastoCats&&cfg.gastoCats.length?cfg.gastoCats:[...DEFAULT_GASTOS],shopCats:cfg.shopCats&&cfg.shopCats.length?cfg.shopCats:[...DEFAULT_SHOP],workouts:cfg.workouts&&cfg.workouts.length?cfg.workouts:[...DEFAULT_WORKOUTS],habitos:cfg.habitos&&cfg.habitos.length?cfg.habitos:[...DEFAULT_HABITOS]};}catch(e){}}
         // Pre-cargar tarjetas de crédito desde Firebase (una lectura rápida)
         try{
           const budSnap=await userCol().doc('budget_config').get();
