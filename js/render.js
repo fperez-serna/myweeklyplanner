@@ -75,17 +75,39 @@ function buildOv(){
     const manualEvDay=dayEvts(i);
     const manualTitles=new Set(manualEvDay.map(e=>(e.title||'').toLowerCase()));
     const allEvs=[
-      ...manualEvDay.map(e=>({...e,_src:'manual'})),
+      ...manualEvDay.map((e,idx)=>({...e,_src:'manual',_manualIdx:idx})),
       ...gcalEvDay.filter(e=>!manualTitles.has(e.title.toLowerCase())).map(e=>({...e,_src:'gcal'}))
     ].sort((a,b)=>parseT(a.time)-parseT(b.time));
     allEvs.forEach(ev=>{
       const t=document.createElement('div');
       const isPinned=!!ev.pinned;
       const isGcal=ev._src==='gcal';
-      t.className='wtag wev'+(isPinned?' pinned':'');
-      t.textContent=ev.title;
-      if(isPinned){t.title='Click para desanclar';t.onclick=()=>pinGCalEvent(i,ev);}
-      else if(isGcal){t.title='Click para guardar en el planner';t.onclick=()=>pinGCalEvent(i,ev);}
+      const isManualSynced=ev._src==='manual'&&!!ev.gcalId;
+      const isManualOnly=ev._src==='manual'&&!ev.pinned&&!ev.gcalId;
+      const isAnchored=isPinned||isManualSynced;
+      t.className='wtag wev';
+      if(isAnchored){
+        const titleNode=document.createTextNode(ev.title);
+        const x=document.createElement('span');x.className='ev-unpin';x.textContent='×';
+        x.addEventListener('click',e=>{
+          e.stopPropagation();
+          if(isPinned){pinGCalEvent(i,ev);}
+          else if(weekData.events&&weekData.events[i]&&weekData.events[i][ev._manualIdx]){
+            delete weekData.events[i][ev._manualIdx].gcalId;saveDB();buildOv();
+          }
+        });
+        t.appendChild(titleNode);t.appendChild(x);
+      } else if(isGcal){
+        t.textContent=ev.title;
+        t.title=isEn()?'Tap to add to planner':'Toca para agregar al planner';
+        t.onclick=()=>pinGCalEvent(i,ev);
+      } else if(isManualOnly&&gcalToken){
+        t.textContent=ev.title;
+        t.title=isEn()?'Tap to sync to Google Calendar':'Toca para sincronizar con Google Calendar';
+        t.onclick=()=>anchorManualToGCal(i,ev._manualIdx);
+      } else {
+        t.textContent=ev.title;
+      }
       col.appendChild(t);
     });
     if(w.wo2){const t=document.createElement('div');t.className='wtag wwo';t.innerHTML=_moon+w.wo2;col.appendChild(t);}

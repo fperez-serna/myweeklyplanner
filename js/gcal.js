@@ -179,6 +179,23 @@ function pinGCalEvent(dayIndex, ev){
   saveDB();buildOv();
 }
 
+async function anchorManualToGCal(di,evIdx){
+  if(!gcalToken)return;
+  const ev=weekData.events?.[di]?.[evIdx];
+  if(!ev)return;
+  let hour='9',min='00',ampm='AM';
+  if(ev.time&&ev.time!=='Todo el día'&&ev.time!=='All day'){
+    const m=ev.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if(m){hour=m[1];min=m[2];ampm=m[3].toUpperCase();}
+  }
+  const gcalId=await createGCalEv(ev.title,dk(weekDays[di]),hour,min,ampm,ev.durMins||60);
+  if(gcalId){
+    weekData.events[di][evIdx].gcalId=gcalId;
+    saveDB();buildOv();
+    showToast(isEn()?'Event synced to Google Calendar ✓':'Evento sincronizado con Google Calendar ✓');
+  }
+}
+
 // ── WEATHER ────────────────────────────────
 let _lastWeather=null;
 function renderWeatherDesc(code,temp,pre,feelsLike){
