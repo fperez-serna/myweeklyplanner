@@ -86,27 +86,16 @@ function buildOv(){
       const isManualOnly=ev._src==='manual'&&!ev.pinned&&!ev.gcalId;
       const isAnchored=isPinned||isManualSynced;
       t.className='wtag wev';
+      t.textContent=ev.title;
       if(isAnchored){
-        const titleNode=document.createTextNode(ev.title);
-        const x=document.createElement('span');x.className='ev-unpin';x.textContent='×';
-        x.addEventListener('click',e=>{
-          e.stopPropagation();
-          if(isPinned){pinGCalEvent(i,ev);}
-          else if(weekData.events&&weekData.events[i]&&weekData.events[i][ev._manualIdx]){
-            delete weekData.events[i][ev._manualIdx].gcalId;saveDB();buildOv();
-          }
-        });
-        t.appendChild(titleNode);t.appendChild(x);
+        // Ya anclado — sin acción en overview; se borra desde la agenda del día
+        t.style.cursor='default';
       } else if(isGcal){
-        t.textContent=ev.title;
         t.title=isEn()?'Tap to add to planner':'Toca para agregar al planner';
         t.onclick=()=>pinGCalEvent(i,ev);
       } else if(isManualOnly&&gcalToken){
-        t.textContent=ev.title;
         t.title=isEn()?'Tap to sync to Google Calendar':'Toca para sincronizar con Google Calendar';
         t.onclick=()=>anchorManualToGCal(i,ev._manualIdx);
-      } else {
-        t.textContent=ev.title;
       }
       col.appendChild(t);
     });
