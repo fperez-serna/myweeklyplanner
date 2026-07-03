@@ -355,8 +355,9 @@ function addChip(type){
 function saveConfigToFirebase(){
   if(db&&currentUser){
     if(!setupCfg||Object.keys(setupCfg).length===0){console.warn('saveConfig: skipped empty');return;}
-    // No guardar si gastoCats está vacío — sobreescribiría las categorías del usuario en Firebase.
+    // No guardar si los arrays de categorías están vacíos — sobreescribirían las del usuario en Firebase.
     if(!setupCfg.gastoCats||!setupCfg.gastoCats.length){console.warn('saveConfig: skipped, gastoCats empty');return;}
+    if(!setupCfg.shopCats||!setupCfg.shopCats.length){console.warn('saveConfig: skipped, shopCats empty');return;}
     localStorage.setItem('wp_config',JSON.stringify(setupCfg));
     userCol().doc('config').set({cfg:setupCfg}).catch(e=>console.error('Config sync:',e));
   }

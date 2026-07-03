@@ -126,15 +126,16 @@ function subscribeConfig(){
       if(snap.exists){
         const remoteCfg=snap.data().cfg;
         if(remoteCfg){
-          // Para arrays: el remoto gana solo si tiene contenido; si viene vacío, preservar el local.
-          // Esto evita que un doc corrupto en Firebase borre las categorías del usuario.
+          // Para arrays: el LOCAL gana si tiene contenido; el remoto solo llena si el local está vacío.
+          // Esto evita que un doc de Firebase con datos viejos/incorrectos sobreescriba
+          // las categorías que el usuario acaba de personalizar en este dispositivo.
           setupCfg={
             ...setupCfg,
             ...remoteCfg,
-            gastoCats:(remoteCfg.gastoCats&&remoteCfg.gastoCats.length)?remoteCfg.gastoCats:(setupCfg.gastoCats&&setupCfg.gastoCats.length)?setupCfg.gastoCats:[],
-            shopCats:(remoteCfg.shopCats&&remoteCfg.shopCats.length)?remoteCfg.shopCats:(setupCfg.shopCats&&setupCfg.shopCats.length)?setupCfg.shopCats:[],
-            workouts:(remoteCfg.workouts&&remoteCfg.workouts.length)?remoteCfg.workouts:(setupCfg.workouts&&setupCfg.workouts.length)?setupCfg.workouts:[],
-            habitos:(remoteCfg.habitos&&remoteCfg.habitos.length)?remoteCfg.habitos:(setupCfg.habitos&&setupCfg.habitos.length)?setupCfg.habitos:[],
+            gastoCats:(setupCfg.gastoCats&&setupCfg.gastoCats.length)?setupCfg.gastoCats:(remoteCfg.gastoCats&&remoteCfg.gastoCats.length)?remoteCfg.gastoCats:[],
+            shopCats:(setupCfg.shopCats&&setupCfg.shopCats.length)?setupCfg.shopCats:(remoteCfg.shopCats&&remoteCfg.shopCats.length)?remoteCfg.shopCats:[],
+            workouts:(setupCfg.workouts&&setupCfg.workouts.length)?setupCfg.workouts:(remoteCfg.workouts&&remoteCfg.workouts.length)?remoteCfg.workouts:[],
+            habitos:(setupCfg.habitos&&setupCfg.habitos.length)?setupCfg.habitos:(remoteCfg.habitos&&remoteCfg.habitos.length)?remoteCfg.habitos:[],
           };
           localStorage.setItem('wp_config',JSON.stringify(setupCfg));
           applyConfig(setupCfg);
