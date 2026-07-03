@@ -226,7 +226,8 @@ async function signOut(){
       const neverShow=localStorage.getItem('wp_never_quick_gasto')==='1';
       const quickGastoEnabled=setupCfg.features?.quickGasto!==false;
 
-      if(isMobile&&quickGastoEnabled&&!neverShow){
+      const isFirstTime=!localStorage.getItem('wp_config');
+      if(isMobile&&quickGastoEnabled&&!neverShow&&!isFirstTime){
         // Leer config del localStorage (instantáneo, mismo dispositivo) —
         // misma lógica de fallback que initApp() para arrays vacíos.
         const savedCfg=localStorage.getItem('wp_config');
