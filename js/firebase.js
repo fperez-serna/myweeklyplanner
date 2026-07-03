@@ -126,16 +126,22 @@ function subscribeConfig(){
       if(snap.exists){
         const remoteCfg=snap.data().cfg;
         if(remoteCfg){
-          // Para arrays: el LOCAL gana si tiene contenido; el remoto solo llena si el local está vacío.
-          // Esto evita que un doc de Firebase con datos viejos/incorrectos sobreescriba
-          // las categorías que el usuario acaba de personalizar en este dispositivo.
+          // Para arrays de categorías: gana el config más reciente (_savedAt).
+          // Si el local nunca fue guardado explícitamente (_savedAt=0), el remoto siempre gana
+          // (primer uso del dispositivo o migración). Si el local es más reciente, local gana.
+          // Esto permite sync entre dispositivos Y protege ediciones locales recientes.
+          const _lt=setupCfg._savedAt||0;
+          const _rt=remoteCfg._savedAt||0;
+          const _remoteWins=!_lt||_rt>_lt;
+          const _pick=(rem,loc)=>_remoteWins?((rem&&rem.length)?rem:(loc&&loc.length)?loc:[]):((loc&&loc.length)?loc:(rem&&rem.length)?rem:[]);
           setupCfg={
             ...setupCfg,
             ...remoteCfg,
-            gastoCats:(setupCfg.gastoCats&&setupCfg.gastoCats.length)?setupCfg.gastoCats:(remoteCfg.gastoCats&&remoteCfg.gastoCats.length)?remoteCfg.gastoCats:[],
-            shopCats:(setupCfg.shopCats&&setupCfg.shopCats.length)?setupCfg.shopCats:(remoteCfg.shopCats&&remoteCfg.shopCats.length)?remoteCfg.shopCats:[],
-            workouts:(setupCfg.workouts&&setupCfg.workouts.length)?setupCfg.workouts:(remoteCfg.workouts&&remoteCfg.workouts.length)?remoteCfg.workouts:[],
-            habitos:(setupCfg.habitos&&setupCfg.habitos.length)?setupCfg.habitos:(remoteCfg.habitos&&remoteCfg.habitos.length)?remoteCfg.habitos:[],
+            _savedAt:Math.max(_lt,_rt),
+            gastoCats:_pick(remoteCfg.gastoCats,setupCfg.gastoCats),
+            shopCats:_pick(remoteCfg.shopCats,setupCfg.shopCats),
+            workouts:_pick(remoteCfg.workouts,setupCfg.workouts),
+            habitos:_pick(remoteCfg.habitos,setupCfg.habitos),
           };
           localStorage.setItem('wp_config',JSON.stringify(setupCfg));
           applyConfig(setupCfg);

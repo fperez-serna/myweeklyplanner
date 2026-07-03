@@ -358,6 +358,7 @@ function saveConfigToFirebase(){
     // No guardar si los arrays de categorías están vacíos — sobreescribirían las del usuario en Firebase.
     if(!setupCfg.gastoCats||!setupCfg.gastoCats.length){console.warn('saveConfig: skipped, gastoCats empty');return;}
     if(!setupCfg.shopCats||!setupCfg.shopCats.length){console.warn('saveConfig: skipped, shopCats empty');return;}
+    setupCfg._savedAt=Date.now();
     localStorage.setItem('wp_config',JSON.stringify(setupCfg));
     userCol().doc('config').set({cfg:setupCfg}).catch(e=>console.error('Config sync:',e));
   }
@@ -580,6 +581,8 @@ function saveSetup(){
   renderDay();
   // Save to Firebase in background
   if(db&&currentUser){
+    setupCfg._savedAt=Date.now();
+    localStorage.setItem('wp_config',JSON.stringify(setupCfg));
     userCol().doc('config').set({cfg:setupCfg}).catch(e=>console.error('Config save:',e));
   }
 }
