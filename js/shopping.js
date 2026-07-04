@@ -21,10 +21,13 @@ function renderSh(){
         <button class="dx" onclick="delShCat('${key}',${i})">×</button>
       </div>`).join('');
     col.innerHTML=`
-      <div style="font-size:11px;font-weight:500;color:var(--mauve);margin-bottom:6px;">${emoji} ${catName}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:11px;font-weight:500;color:var(--mauve);">${emoji} ${catName}</span>
+        <button onclick="shareShCat('${key}','${catName.replace(/'/g,"\\'")}')" title="${isEn()?'Share':'Compartir'}" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text3);font-size:13px;line-height:1;">⬆</button>
+      </div>
       <div id="sh-${key}">${itemsHtml}</div>
       <div class="add-row" style="margin-top:6px;">
-        <input type="text" id="sh-${key}-in" placeholder="${isEn()?'Add...':'Agregar...'}" 
+        <input type="text" id="sh-${key}-in" placeholder="${isEn()?'Add...':'Agregar...'}"
           onkeydown="if(event.key==='Enter')addShCat('${key}')">
         <button onclick="addShCat('${key}')">+</button>
       </div>`;
@@ -65,6 +68,15 @@ function updateShCat(el){
     else el.textContent=shoppingItems[cat][i].text;
   }
 }
+function shareShCat(key, catName){
+  const items=shoppingItems[key]||[];
+  if(!items.length){showToast(isEn()?'Category is empty':'Categoría vacía');return;}
+  const emoji=SHOP_EMOJI[catName]||'';
+  let txt=(emoji?emoji+' ':'')+catName+':\n';
+  items.forEach(i=>{txt+=(i.done?'✓ ~'+i.text+'~':'• '+i.text)+'\n';});
+  shareText(txt.trim());
+}
+
 function clearCheckedSh(){
   Object.keys(shoppingItems).forEach(cat=>{
     shoppingItems[cat]=shoppingItems[cat].filter(item=>!item.done);
