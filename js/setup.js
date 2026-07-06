@@ -285,7 +285,8 @@ function applyPalette(key){
 
 // ── SETUP STATE ────────────────────────────
 
-const DEFAULT_GASTOS=['🍽 Restaurante','🛒 Supermercado','🎬 Entretenimiento','⛽ Gasolina','🚗 Transporte','📱 Suscripción','💪 Ejercicio','📚 Escuela','🔧 Pago a servicio','💼 Negocio','🏠 Casa','💳 Préstamo','✈️ Viaje','💸 Otro'];
+const PAGO_CREDITO_CAT='💳 Pago de crédito';
+const DEFAULT_GASTOS=[PAGO_CREDITO_CAT];
 
 let setupCfg={
   name:'',lang:'es',currency:'MXN',palette:'forest',
@@ -317,6 +318,14 @@ function renderChips(type,arr){
   const wrap=document.getElementById(type+'-chips');
   if(!wrap)return;
   wrap.innerHTML='';
+  // System chip for gasto — always first, no delete
+  if(type==='gasto'){
+    const sys=document.createElement('div');
+    sys.className='chip-item';
+    sys.style.cssText='background:var(--mauve);color:#fff;border-color:var(--mauve);cursor:default;';
+    sys.textContent=PAGO_CREDITO_CAT;
+    wrap.appendChild(sys);
+  }
   if(!arr||arr.length===0){
     const g=CHIP_GHOST_EXAMPLES[type]||{};const examples=(isEn()?g.en:g.es)||[];
     examples.forEach(item=>{

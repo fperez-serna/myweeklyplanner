@@ -90,6 +90,7 @@ let budgetMonth=new Date().getMonth();
 let annualData={income:[],expenses:[]}; // annual income/expenses
 let budgetData={income:[],groups:[],debts:[]};
 let cardPeriodSums={};
+let debtPayments={};
 let _lastDashboardTotals={};
 
 async function loadBudgetDebts(){
@@ -192,7 +193,7 @@ async function budgetExportPDF(){
   const totalManual=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.actual,0),0);
   const dashSnap=await loadMonthGastos();
   const totalDash=Object.values(dashSnap).reduce((s,v)=>s+v,0);
-  const totalAbonosPDF=(budgetData.debts||[]).reduce((s,d)=>s+(d.abono||0),0);
+  const totalAbonosPDF=Object.values(debtPayments).reduce((s,v)=>s+v,0);
   const disponible=totalInc-totalDash-totalAbonosPDF;
 
   const stats=[
@@ -332,7 +333,7 @@ function budgetExportExcel(){
   const totalInc=budgetData.income.reduce((s,i)=>s+i.amt,0);
   const totalPresup=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.presup,0),0);
   const totalManual=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.actual,0),0);
-  const totalAbonos=(budgetData.debts||[]).reduce((s,d)=>s+(d.abono||0),0);
+  const totalAbonos=Object.values(debtPayments).reduce((s,v)=>s+v,0);
   const totalDash=Object.values(_lastDashboardTotals).reduce((s,v)=>s+v,0);
   const disponible=totalInc-totalDash-totalAbonos;
   const sinPresup=totalInc-totalPresup;
@@ -386,7 +387,7 @@ function budgetExportExcel(){
   // 5. Crédito, Préstamos y Deudas
   if((budgetData.debts||[]).length>0){
     const debtData=[[es?'Nombre':'Name',es?'Tipo':'Type',es?'Saldo':'Balance',es?'Abono':'Payment',es?'Tasa %':'Rate %',es?'Fecha pago':'Pay date']];
-    budgetData.debts.forEach(d=>debtData.push([d.nombre,d.tipo||'—',fmt(d.saldo||0),fmt(d.abono||0),d.tasa||0,d.fechaPago||'—']));
+    budgetData.debts.forEach(d=>debtData.push([d.nombre,d.tipo||'—',fmt(d.saldo||0),fmt(debtPayments[d.nombre]||0),d.tasa||0,d.fechaPago||'—']));
     debtData.push(['']);debtData.push([es?'Total abonos':'Total payments','','',fmt(totalAbonos),'','']);
     addSheet(wb,debtData,es?'Deudas':'Debts',[{wch:25},{wch:12},{wch:15},{wch:15},{wch:10},{wch:15}]);
   }
@@ -481,21 +482,15 @@ async function loadBudgetData(){
         budgetData={income:[],groups:getDefaultGroups(),debts:[]};
       }
       await ensureIds();
-      // Paralelizar: actuals mes actual + mes anterior + gastos dashboard
+      // Paralelizar: actuals mes actual + gastos dashboard
       const monthKey='budget_actual_'+budgetYear+'_'+String(budgetMonth+1).padStart(2,'0');
-      const prevMonthIdx=budgetMonth===0?11:budgetMonth-1;
-      const prevYearIdx=budgetMonth===0?budgetYear-1:budgetYear;
-      const prevKey='budget_actual_'+prevYearIdx+'_'+String(prevMonthIdx+1).padStart(2,'0');
-      const [actualSnap,prevResult,_pDash]=await Promise.all([
+      const [actualSnap,_pDash]=await Promise.all([
         userCol().doc(monthKey).get(),
-        userCol().doc(prevKey).get().catch(()=>null),
         loadMonthGastos().catch(()=>({}))
       ]);
       parallelDash=_pDash;
-      let prevActuals=prevResult?.exists?prevResult.data():null;
       if(actualSnap.exists){
         const monthActuals=actualSnap.data();
-        // Apply monthly actuals to groups
         budgetData.groups.forEach((g,gi)=>{
           g.subs.forEach((sub,si)=>{
             const newKey=g.id+'_'+sub.id;
@@ -505,38 +500,8 @@ async function loadBudgetData(){
             else sub.actual=0;
           });
         });
-        // Derive saldoInicialMes from previous month so retroactive abono changes propagate
-        let saldoChanged=false;
-        (budgetData.debts||[]).forEach((debt,di)=>{
-          const did=debt.id;const op='debt_'+di;
-          const abono=monthActuals[did+'_abono']!==undefined?monthActuals[did+'_abono']:monthActuals[op+'_abono']!==undefined?monthActuals[op+'_abono']:0;
-          debt.abono=abono;
-          const prevSaldo=prevActuals?(prevActuals[did+'_saldo']!==undefined?prevActuals[did+'_saldo']:prevActuals[op+'_saldo']):undefined;
-          const curSaldoInicial=monthActuals[did+'_saldoInicial']!==undefined?monthActuals[did+'_saldoInicial']:monthActuals[op+'_saldoInicial'];
-          const curSaldo=monthActuals[did+'_saldo']!==undefined?monthActuals[did+'_saldo']:monthActuals[op+'_saldo'];
-          const saldoInicial=prevSaldo!==undefined?prevSaldo:curSaldoInicial!==undefined?curSaldoInicial:(curSaldo||0)+(abono||0);
-          debt.saldoInicialMes=saldoInicial;
-          const newSaldo=Math.max(0,saldoInicial-abono);
-          if(newSaldo!==(curSaldo!==undefined?curSaldo:debt.saldo||0))saldoChanged=true;
-          debt.saldo=newSaldo;
-        });
-        // Income lives in budget_config — already loaded above, don't override
-        // Auto-save updated saldos so the next month in the chain stays consistent
-        if(saldoChanged)saveBudgetData().catch(()=>{});
       } else {
-        // New month - reset actuals to 0, income already loaded from config
         budgetData.groups.forEach(g=>g.subs.forEach(sub=>sub.actual=0));
-        (budgetData.debts||[]).forEach((debt,di)=>{
-          debt.abono=0;
-          const did=debt.id;const op='debt_'+di;
-          const prevSaldo=prevActuals?(prevActuals[did+'_saldo']!==undefined?prevActuals[did+'_saldo']:prevActuals[op+'_saldo']):undefined;
-          if(prevSaldo!==undefined){
-            debt.saldo=prevSaldo;
-            debt.saldoInicialMes=prevSaldo;
-          } else {
-            debt.saldoInicialMes=debt.saldo||0;
-          }
-        });
       }
     }catch(e){budgetData={income:[],groups:getDefaultGroups(),debts:[]};}
   }
@@ -604,6 +569,7 @@ function getDefaultGroups(){
 async function loadMonthGastos(){
   const totals={};
   cardPeriodSums={};
+  debtPayments={};
   const now=new Date();now.setHours(0,0,0,0);
   // Build per-card last cut dates
   const cardCutDates={};
@@ -631,6 +597,10 @@ async function loadMonthGastos(){
         dayDate.setHours(0,0,0,0);
         items.forEach(g=>{
           if(!g.cat||!g.monto)return;
+          if(g.cat===PAGO_CREDITO_CAT){
+            if(g.pagoCon)debtPayments[g.pagoCon]=(debtPayments[g.pagoCon]||0)+g.monto;
+            return;
+          }
           totals[g.cat]=(totals[g.cat]||0)+g.monto;
           if(g.pagoCon&&cardCutDates[g.pagoCon]&&dayDate>=cardCutDates[g.pagoCon]){
             cardPeriodSums[g.pagoCon]=(cardPeriodSums[g.pagoCon]||0)+g.monto;
@@ -693,12 +663,6 @@ async function saveBudgetData(){
         actuals[g.id+'_'+sub.id]=sub.actual||0;
       });
     });
-    (budgetData.debts||[]).forEach((debt)=>{
-      const did=debt.id;
-      actuals[did+'_abono']=debt.abono||0;
-      actuals[did+'_saldo']=debt.saldo||0;
-      actuals[did+'_saldoInicial']=debt.saldoInicialMes!==undefined?debt.saldoInicialMes:debt.saldo||0;
-    });
     await userCol().doc(monthKey).set(actuals);
   }catch(e){
     console.error('Budget save:',e);
@@ -722,12 +686,22 @@ function buildPagoSelect(){
   if(!sel)return;
   const es=!isEn();
   const prev=sel.value;
-  sel.innerHTML=`<option value="Efectivo">${es?'Efectivo':'Cash'}</option><option value="Débito">${es?'Débito':'Debit'}</option><option value="Transferencia">${es?'Transferencia':'Transfer'}</option>`;
-  (budgetData.debts||[]).filter(d=>d.tipo==='tarjeta').forEach(d=>{
-    const opt=document.createElement('option');
-    opt.value=d.nombre;opt.textContent='💳 '+d.nombre;
-    sel.appendChild(opt);
-  });
+  const catVal=document.getElementById('gasto-cat')?.value||'';
+  if(catVal===PAGO_CREDITO_CAT){
+    sel.innerHTML='';
+    (budgetData.debts||[]).forEach(d=>{
+      const opt=document.createElement('option');
+      opt.value=d.nombre;opt.textContent=(d.tipo==='tarjeta'?'💳 ':'🏦 ')+d.nombre;
+      sel.appendChild(opt);
+    });
+  } else {
+    sel.innerHTML=`<option value="Efectivo">${es?'Efectivo':'Cash'}</option><option value="Débito">${es?'Débito':'Debit'}</option><option value="Transferencia">${es?'Transferencia':'Transfer'}</option>`;
+    (budgetData.debts||[]).filter(d=>d.tipo==='tarjeta').forEach(d=>{
+      const opt=document.createElement('option');
+      opt.value=d.nombre;opt.textContent='💳 '+d.nombre;
+      sel.appendChild(opt);
+    });
+  }
   if(prev&&Array.from(sel.options).some(o=>o.value===prev))sel.value=prev;
 }
 
@@ -744,7 +718,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
   const totalPresup=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.presup,0),0);
   const totalManual=budgetData.groups.reduce((s,g)=>s+g.subs.reduce((ss,sub)=>ss+sub.actual,0),0);
   const totalDash=Object.values(dashboardTotals).reduce((s,v)=>s+v,0);
-  const totalAbonos=(budgetData.debts||[]).reduce((s,d)=>s+(d.abono||0),0);
+  const totalAbonos=Object.values(debtPayments).reduce((s,v)=>s+v,0);
   const disponible=totalIncome-totalDash-totalAbonos;
   const sinPresup=totalIncome-totalPresup;
 
@@ -962,9 +936,9 @@ function renderBudget(dashboardTotals,forceExpand=false){
             <div class="debt-card-lbl">${es?'Pago mínimo est.':'Min. payment est.'}</div>
             <div class="debt-card-val" style="color:var(--mauve);">~${fmt(Math.round(minPago))}</div>
           </div>
-          <div class="debt-card-item" onclick="debtEditAbono(${di},this)" style="cursor:pointer;" title="${es?'Clic para editar':'Click to edit'}">
-            <div class="debt-card-lbl" style="display:flex;align-items:center;gap:4px;">${es?'Abonado este mes':'Paid this month'} <i data-lucide="pencil" style="width:10px;height:10px;display:inline-block;"></i></div>
-            <div class="debt-card-val" style="color:var(--teal);" id="debt-abono-${di}">${fmt(debt.abono||0)}</div>
+          <div class="debt-card-item">
+            <div class="debt-card-lbl">${es?'Pagado este mes':'Paid this month'}</div>
+            <div class="debt-card-val" style="color:var(--teal);">${fmt(debtPayments[debt.nombre]||0)}</div>
           </div>
           <div class="debt-card-item">
             <div class="debt-card-lbl">${debt.tipo==='tarjeta'?(es?'Límite de crédito':'Credit limit'):(es?'Saldo original':'Original balance')}</div>
@@ -997,7 +971,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
     });
   });
   // Add debt abonos as a special rubro entry
-  const totalAbonos2=(budgetData.debts||[]).reduce((s,d)=>s+(d.abono||0),0);
+  const totalAbonos2=Object.values(debtPayments).reduce((s,v)=>s+v,0);
   if(totalAbonos2>0){
     const debtLabel=es?'Préstamos & Deudas':'Loans & Debts';
     if(!rubroMap[debtLabel])rubroMap[debtLabel]={presup:0,manual:0};
@@ -1741,17 +1715,13 @@ async function budgetSaveDebt(di){
     tasaTipo,tasaAnual,meses,
     fechaPago:document.getElementById('d-fecha').value.trim(),
     fechaCorte:parseInt(document.getElementById('d-corte')?.value)||0,
-    abono:0,
   };
   if(di===-1){
     debt.id='d_'+Date.now();
-    debt.saldoInicialMes=saldo;
     budgetData.debts.push(debt);
   } else {
     const existing=budgetData.debts[di];
     debt.id=existing.id;
-    debt.abono=existing.abono||0;
-    debt.saldoInicialMes=existing.saldoInicialMes||saldo;
     budgetData.debts[di]=debt;
   }
   document.getElementById('debt-modal').remove();
@@ -1797,7 +1767,7 @@ async function debtToggleSaldoOverride(di){
   async function save(){
     try{
       const val=parseFloat(input.value)||0;
-      debt.saldo=val;debt.saldoManualOverride=true;debt.saldoInicialMes=val;
+      debt.saldo=val;debt.saldoManualOverride=true;
       await saveBudgetConfig();
       const d=await loadMonthGastos();
       renderBudget(d);
@@ -1807,43 +1777,6 @@ async function debtToggleSaldoOverride(di){
   input.addEventListener('keydown',e=>{if(e.key==='Enter')input.blur();if(e.key==='Escape'){input.removeEventListener('blur',save);renderBudget(_lastDashboardTotals||{});}});
 }
 
-function debtEditAbono(di,cardEl){
-  if(!budgetData.debts||!budgetData.debts[di])return;
-  const debt=budgetData.debts[di];
-  const es=!isEn();
-  const isTarjeta=debt.tipo==='tarjeta';
-  const valEl=document.getElementById('debt-abono-'+di);
-  if(!valEl)return;
-  const cur=isTarjeta?(debt.saldo||0):(debt.abono||0);
-  const input=document.createElement('input');
-  input.type='number';
-  input.value=cur;
-  input.style.cssText='width:80px;font-size:13px;font-weight:500;color:var(--teal);background:transparent;border:none;border-bottom:1.5px solid var(--teal);outline:none;padding:0;';
-  valEl.replaceWith(input);
-  input.focus();input.select();
-  let _saving=false;
-  async function save(){
-    if(_saving)return;_saving=true;
-    try{
-      const val=parseFloat(input.value)||0;
-      if(isTarjeta){
-        if(debt.saldoInicialMes==null)debt.saldoInicialMes=debt.saldo??val;
-        debt.saldo=val;
-        debt.abono=Math.max(0,(debt.saldoInicialMes||0)-val);
-      } else {
-        if(debt.saldoInicialMes==null)debt.saldoInicialMes=debt.saldo??0;
-        debt.abono=val;
-        debt.saldo=Math.max(0,(debt.saldoInicialMes||0)-val);
-      }
-      await saveBudgetConfig();
-      const d=await loadMonthGastos();
-      renderBudget(d);
-    }catch(e){console.error('Abono save error:',e);showToast(isEn()?'Could not save, try again':'No se pudo guardar, intenta de nuevo');}
-    finally{_saving=false;}
-  }
-  input.addEventListener('blur',save);
-  input.addEventListener('keydown',e=>{if(e.key==='Enter')input.blur();if(e.key==='Escape'){input.value=cur;input.blur();}});
-}
 
 // ── ANNUAL SECTION ─────────────────────────────────────
 function toggleAnnualSection(){
@@ -1870,13 +1803,13 @@ async function annualAdd(type){
   annualData[type].push({name,amt,month});
   await saveAnnualData();
   nameEl.value='';amtEl.value='';
-  loadBudgetData();
+  await loadBudgetData();
 }
 
 async function annualDel(type,idx){
   annualData[type].splice(idx,1);
   await saveAnnualData();
-  loadBudgetData();
+  await loadBudgetData();
 }
 
 async function saveAnnualData(){
