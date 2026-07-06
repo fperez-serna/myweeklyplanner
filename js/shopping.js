@@ -129,6 +129,54 @@ function renderGastos(di){
   renderGastosTotals(di);
 }
 
+let _monthGastoCache={month:-1,year:-1,total:0};
+async function refreshMonthlyGastoTotal(){
+  const now=new Date();
+  const month=now.getMonth();const year=now.getFullYear();
+  const el=document.getElementById('gastos-month-total');
+  const lbl=document.getElementById('gastos-month-lbl');
+  if(!el)return;
+  // Invalidate cache when current week changes (gasto added/deleted this week)
+  const firstDay=new Date(year,month,1);
+  const lastDay=new Date(year,month+1,0);
+  // Get week starts that overlap this month
+  const weekStarts=[];
+  const d=new Date(firstDay);d.setDate(d.getDate()-(d.getDay()===0?6:d.getDay()-1));
+  while(d<=lastDay){weekStarts.push(new Date(d));d.setDate(d.getDate()+7);}
+  let total=0;
+  const promises=weekStarts.map(ws=>{
+    const key='week_'+dk(ws);
+    if(key===wid()){
+      // Current week — read from in-memory weekData
+      let wt=0;
+      for(let di=0;di<7;di++){
+        const date=new Date(ws);date.setDate(date.getDate()+di);
+        if(date<firstDay||date>now)continue;
+        ((weekData.gastos||{})[di]||[]).forEach(g=>wt+=g.monto||0);
+      }
+      return Promise.resolve(wt);
+    }
+    if(!db||!currentUser)return Promise.resolve(0);
+    return userCol().doc(key).get().then(snap=>{
+      if(!snap.exists)return 0;
+      const data=snap.data();let wt=0;
+      for(let di=0;di<7;di++){
+        const date=new Date(ws);date.setDate(date.getDate()+di);
+        if(date<firstDay||date>lastDay)continue;
+        ((data.gastos||{})[di]||[]).forEach(g=>wt+=g.monto||0);
+      }
+      return wt;
+    }).catch(()=>0);
+  });
+  const totals=await Promise.all(promises);
+  total=totals.reduce((s,t)=>s+t,0);
+  _monthGastoCache={month,year,total};
+  el.textContent='$'+total.toLocaleString();
+  const MES_ES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const MES_EN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  if(lbl)lbl.textContent=(isEn()?'Total '+(MES_EN[month]):'Total '+(MES_ES[month]));
+}
+
 function renderGastosTotals(di){
   let total=0;
   const bycat={};
@@ -164,6 +212,7 @@ function renderGastosTotals(di){
       '<span style="font-size:12px;font-weight:500;color:var(--text);">$'+amt.toLocaleString()+'</span>';
     rubros.appendChild(div);
   });
+  refreshMonthlyGastoTotal();
 }
 
 function addGasto(){

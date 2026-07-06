@@ -545,9 +545,15 @@
       </div>
     </div>
     <div style="height:0.5px;background:var(--border);margin:10px 0;"></div>
-    <div style="background:var(--bg2);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
-      <span style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;" id="gastos-total-lbl">Total semana</span>
-      <span style="font-size:18px;font-weight:500;color:var(--text);" id="gastos-total">$0</span>
+    <div style="background:var(--bg2);border-radius:8px;padding:10px 12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;" id="gastos-total-lbl">Total semana</span>
+        <span style="font-size:18px;font-weight:500;color:var(--text);" id="gastos-total">$0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;" id="gastos-month-row">
+        <span style="font-size:10px;color:var(--text3);" id="gastos-month-lbl">Total mes</span>
+        <span style="font-size:12px;color:var(--text3);" id="gastos-month-total"></span>
+      </div>
     </div>
     <div class="sec" style="margin-top:12px;">Por categoría esta semana</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="gastos-rubros"></div>

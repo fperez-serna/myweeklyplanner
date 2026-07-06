@@ -114,6 +114,7 @@ body{background:#f0ebe6;padding:1.5rem;padding-bottom:130px;font-family:-apple-s
 .whb{background:var(--silk-l);color:var(--brown);}
 .wev{background:transparent;color:var(--text2);border:0.5px solid var(--border);border-radius:4px;cursor:pointer;transition:background 0.15s;}
 .wev:hover{background:var(--bg2);}
+.wev.anchored{background:var(--teal-l);color:var(--teal-d);border-color:transparent;cursor:default;}
 .wnt{background:var(--bg2);color:var(--text2);}
 .wtsk{background:var(--mauve-l);color:var(--mauve-d);font-size:10px;border-radius:4px;padding:2px 4px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .wtsk.done-task{text-decoration:line-through;opacity:.5;}

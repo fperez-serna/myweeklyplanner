@@ -85,10 +85,9 @@ function buildOv(){
       const isManualSynced=ev._src==='manual'&&!!ev.gcalId;
       const isManualOnly=ev._src==='manual'&&!ev.pinned&&!ev.gcalId;
       const isAnchored=isPinned||isManualSynced;
-      t.className='wtag wev';
+      t.className='wtag wev'+(isAnchored?' anchored':'');
       t.textContent=ev.title;
       if(isAnchored){
-        // Ya anclado — sin acción en overview; se borra desde la agenda del día
         t.style.cursor='default';
       } else if(isGcal){
         t.title=isEn()?'Tap to add to planner':'Toca para agregar al planner';
