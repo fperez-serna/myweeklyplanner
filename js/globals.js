@@ -69,7 +69,7 @@ function tasksForDay(di){
   const currentWeekIds=new Set((weekData.tasks||[]).map(t=>t.id));
   const dayDate=weekDays[di];
   const carryTasks=pendingTasks
-    .filter(p=>!currentWeekIds.has(p.id)&&p.addedDate<=dk(dayDate)&&!p.deleted)
+    .filter(p=>!currentWeekIds.has(p.id)&&p.addedDate<=dk(dayDate)&&!p.deleted&&!p.done)
     .map(p=>({id:p.id,text:p.text,addedOnDay:-1,fromPrevWeek:true,doneOnDay:p.done?0:undefined,...(p.cat?{cat:p.cat}:{})}));
   return [...carryTasks,...weekTasks];
 }
