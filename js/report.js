@@ -367,9 +367,9 @@ function initSmartSelects(){
         showToast(es?'Categoría agregada ✓':'Category added ✓');
       }
     });
-    gastoCatSel.style.cssText = 'display:none!important;flex:2;';
+    gastoCatSel.style.cssText = 'display:none!important;flex:1;';
     gastoCatSel.parentNode.insertBefore(ss, gastoCatSel.nextSibling);
-    ss.style.flex = '2';
+    ss.style.flex = '1';
   }
 }
 
