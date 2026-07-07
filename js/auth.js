@@ -33,16 +33,32 @@ function showQuickGasto(){
   const catSel=b('qg-cat');
   if(catSel){
     const rawCats=(setupCfg.gastoCats&&setupCfg.gastoCats.length)?setupCfg.gastoCats:DEFAULT_GASTOS;
-    const cats=[...new Set(rawCats)]; // deduplicar
+    const cats=[...new Set(rawCats.includes(PAGO_CREDITO_CAT)?rawCats:[...rawCats,PAGO_CREDITO_CAT])];
     const otroLabel=es?'+ Nueva categoría':'+ New category';
     catSel.innerHTML=cats.map(c=>`<option>${c}</option>`).join('')+`<option value="__new__">${otroLabel}</option>`;
+    catSel.onchange=function(e){qgToggleNewCat(e.target.value);qgUpdatePagoSel();};
   }
   const newCatEl=b('qg-cat-new');
   if(newCatEl){newCatEl.style.display='none';newCatEl.value='';}
 
-  // Métodos de pago (igual que el formulario principal)
-  const pagoSel=b('qg-pago');
-  if(pagoSel){
+  qgUpdatePagoSel();
+  qgUpdateTotal();
+  setTimeout(()=>b('qg-desc')?.focus(),300);
+}
+
+function qgUpdatePagoSel(){
+  const es=!isEn();
+  const pagoSel=document.getElementById('qg-pago');
+  if(!pagoSel)return;
+  const catVal=document.getElementById('qg-cat')?.value||'';
+  if(catVal===PAGO_CREDITO_CAT){
+    pagoSel.innerHTML='';
+    (budgetData?.debts||[]).forEach(d=>{
+      const opt=document.createElement('option');
+      opt.value=d.nombre;opt.textContent=(d.tipo==='tarjeta'?'💳 ':'🏦 ')+d.nombre;
+      pagoSel.appendChild(opt);
+    });
+  } else {
     pagoSel.innerHTML=`<option value="Efectivo">${es?'Efectivo':'Cash'}</option><option value="Débito">${es?'Débito':'Debit'}</option><option value="Transferencia">${es?'Transferencia':'Transfer'}</option>`;
     (budgetData?.debts||[]).filter(d=>d.tipo==='tarjeta').forEach(d=>{
       const opt=document.createElement('option');
@@ -50,9 +66,6 @@ function showQuickGasto(){
       pagoSel.appendChild(opt);
     });
   }
-
-  qgUpdateTotal();
-  setTimeout(()=>b('qg-desc')?.focus(),300);
 }
 
 function qgUpdateTotal(){

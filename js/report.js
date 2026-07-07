@@ -348,13 +348,15 @@ function initSmartSelects(){
   if(gastoCatSel && !gastoCatSel.dataset.ssReplaced){
     gastoCatSel.value = '';
     gastoCatSel.dataset.ssReplaced = '1';
-    const gaOpts = (setupCfg.gastoCats||DEFAULT_GASTOS);
+    const baseOpts = (setupCfg.gastoCats||DEFAULT_GASTOS);
+    const gaOpts = baseOpts.includes(PAGO_CREDITO_CAT)?baseOpts:[...baseOpts,PAGO_CREDITO_CAT];
+    gastoCatSel.innerHTML = gaOpts.map(c=>`<option value="${c}">${c}</option>`).join('');
     const ss = createSmartSelect({
       id: 'gasto-cat_ss',
       options: gaOpts,
       value: '',
       placeholder: es?'Categoría...':'Category...',
-      onChange: (v) => { gastoCatSel.value=v; },
+      onChange: (v) => { gastoCatSel.value=v; buildPagoSelect(); },
       onAddNew: (name) => {
         if(!setupCfg.gastoCats) setupCfg.gastoCats=[...DEFAULT_GASTOS];
         if(!setupCfg.gastoCats.includes(name)) setupCfg.gastoCats.push(name);
