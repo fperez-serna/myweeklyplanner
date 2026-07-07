@@ -484,9 +484,10 @@ function createSmartSelect({id, options, value='', placeholder='—', onChange, 
   arrow.className = 'ss-arrow';
   arrow.textContent = '▾';
   arrow.addEventListener('mousedown', e => { e.preventDefault(); input.focus(); });
+  arrow.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); clearTimeout(_ssCloseTimer);_ssCloseTimer=null;ssOpen(input, options, onChange, onAddNew, false); }, {passive:false});
 
   input.addEventListener('focus', () => ssOpen(input, options, onChange, onAddNew, false));
-  input.addEventListener('touchstart', (e) => { e.stopPropagation(); clearTimeout(_ssCloseTimer);_ssCloseTimer=null;setTimeout(()=>ssOpen(input, options, onChange, onAddNew, false),50); }, {passive:true});
+  input.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); clearTimeout(_ssCloseTimer);_ssCloseTimer=null;ssOpen(input, options, onChange, onAddNew, false); }, {passive:false});
   input.addEventListener('input', () => ssOpen(input, options, onChange, onAddNew, true));
   input.addEventListener('blur', () => { _ssCloseTimer=setTimeout(ssClose, 300); });
   input.addEventListener('keydown', e => {
