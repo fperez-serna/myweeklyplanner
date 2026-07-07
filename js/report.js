@@ -350,6 +350,7 @@ function initSmartSelects(){
     gastoCatSel.dataset.ssReplaced = '1';
     const baseOpts = (setupCfg.gastoCats||DEFAULT_GASTOS);
     const gaOpts = baseOpts.includes(PAGO_CREDITO_CAT)?baseOpts:[...baseOpts,PAGO_CREDITO_CAT];
+    gastoCatSel.innerHTML = gaOpts.map(c=>`<option value="${c}">${c}</option>`).join('');
     const ss = createSmartSelect({
       id: 'gasto-cat_ss',
       options: gaOpts,
