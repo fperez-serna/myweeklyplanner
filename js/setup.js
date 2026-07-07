@@ -285,7 +285,6 @@ function applyPalette(key){
 
 // ── SETUP STATE ────────────────────────────
 
-const PAGO_CREDITO_CAT='💳 Pago de crédito';
 const DEFAULT_GASTOS=[PAGO_CREDITO_CAT];
 
 let setupCfg={
