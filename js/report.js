@@ -348,20 +348,19 @@ function initSmartSelects(){
   if(gastoCatSel && !gastoCatSel.dataset.ssReplaced){
     gastoCatSel.value = '';
     gastoCatSel.dataset.ssReplaced = '1';
-    const baseOpts = (setupCfg.gastoCats||DEFAULT_GASTOS);
-    const gaOpts = baseOpts.includes(PAGO_CREDITO_CAT)?baseOpts:[...baseOpts,PAGO_CREDITO_CAT];
-    gastoCatSel.innerHTML = gaOpts.map(c=>`<option value="${c}">${c}</option>`).join('');
+    const gaOpts = (setupCfg.gastoCats||DEFAULT_GASTOS);
     const ss = createSmartSelect({
       id: 'gasto-cat_ss',
       options: gaOpts,
       value: '',
       placeholder: es?'Categoría...':'Category...',
-      onChange: (v) => { gastoCatSel.value=v; buildPagoSelect(); },
+      onChange: (v) => { gastoCatSel.value=v; },
       onAddNew: (name) => {
         if(!setupCfg.gastoCats) setupCfg.gastoCats=[...DEFAULT_GASTOS];
         if(!setupCfg.gastoCats.includes(name)) setupCfg.gastoCats.push(name);
         saveConfigToFirebase();
         localStorage.setItem('wp_config', JSON.stringify(setupCfg));
+        // Rebuild gasto cat select options
         gastoCatSel.innerHTML = setupCfg.gastoCats.map(c=>`<option>${c}</option>`).join('');
         showToast(es?'Categoría agregada ✓':'Category added ✓');
       }

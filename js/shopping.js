@@ -89,7 +89,6 @@ function getGastoColor(cat){
   return {bg:'var(--teal-l)',color:'var(--teal-d)'};
 }
 const GASTO_COLORS = {
-  [PAGO_CREDITO_CAT]:    {bg:'#ede9f6',color:'#5b21b6',icon:'credit-card'},
   'Restaurante':    {bg:'#e8f0ef',color:'#2c5f5c',icon:'utensils'},
   'Entretenimiento':{bg:'#f5e8eb',color:'#8f4652',icon:'film'},
   'Gasolina':       {bg:'#fef3e2',color:'#8a5a00',icon:'fuel'},
@@ -252,8 +251,7 @@ function editGastoCat(span, idx){
   const di=dayIdx();
   const g=(weekData.gastos&&weekData.gastos[di])?weekData.gastos[di][idx]:null;
   if(!g)return;
-  const baseCats=setupCfg.gastoCats||DEFAULT_GASTOS;
-  const cats=baseCats.includes(PAGO_CREDITO_CAT)?baseCats:[PAGO_CREDITO_CAT,...baseCats];
+  const cats=setupCfg.gastoCats||DEFAULT_GASTOS;
   const sel=document.createElement('select');
   sel.style.cssText='font-size:11px;padding:2px 4px;border-radius:6px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);';
   cats.forEach(c=>{

@@ -1,5 +1,4 @@
 // ── CONSTANTS ──────────────────────────────
-const PAGO_CREDITO_CAT='💳 Pago de crédito';
 const DIAS_ES=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const DIAS_EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const DS_ES=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
