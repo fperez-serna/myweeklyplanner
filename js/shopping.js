@@ -121,7 +121,7 @@ function renderGastos(di){
     const c=getGastoColor(g.cat);
     const tr=document.createElement('tr');
     tr.innerHTML=
-      '<td style="padding:6px;border-bottom:0.5px solid var(--border);"><span contenteditable="true" spellcheck="false" data-idx="'+i+'" onblur="updateGastoDesc(this)" style="color:var(--text);outline:none;">'+g.desc+'</span>'+(g.pagoCon?'<br><span style="font-size:9px;color:var(--text3);">'+g.pagoCon+'</span>':'')+'</td>'+
+      '<td style="padding:6px;border-bottom:0.5px solid var(--border);"><span contenteditable="true" spellcheck="false" data-idx="'+i+'" onblur="updateGastoDesc(this)" style="color:var(--text);outline:none;">'+g.desc+'</span>'+(g.pagoCon?'<br><span style="font-size:9px;color:var(--text3);">'+g.pagoCon+(g.cuentaOrigen?' · desde '+g.cuentaOrigen:'')+'</span>':'')+'</td>'+
       '<td style="padding:6px;border-bottom:0.5px solid var(--border);"><span style="font-size:10px;padding:2px 7px;border-radius:99px;background:'+c.bg+';color:'+c.color+';cursor:pointer;" onclick="editGastoCat(this,'+i+')" title="'+(isEn()?'Click to edit':'Click para editar')+'">'+g.cat+'</span></td>'+
       '<td style="padding:6px;border-bottom:0.5px solid var(--border);text-align:right;"><span contenteditable="true" spellcheck="false" data-idx="'+i+'" onblur="updateGastoMonto(this)" style="color:var(--text);outline:none;">$'+g.monto.toLocaleString()+'</span></td>'+
       '<td style="padding:6px;border-bottom:0.5px solid var(--border);"><button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;" onclick="delGasto('+i+')">×</button></td>';
@@ -220,6 +220,7 @@ function addGasto(){
   const desc=document.getElementById('gasto-desc').value.trim();
   const cat=document.getElementById('gasto-cat').value;
   const pagoCon=document.getElementById('gasto-pago')?.value||'Efectivo';
+  const cuentaOrigen=cat===PAGO_CREDITO_CAT?(document.getElementById('gasto-desde')?.value||''):'';
   const monto=parseFloat(document.getElementById('gasto-monto').value);
   if(!desc||!monto||monto<=0){
     const descEl=document.getElementById('gasto-desc');
@@ -231,7 +232,9 @@ function addGasto(){
   const di=dayIdx();
   if(!weekData.gastos)weekData.gastos={};
   if(!weekData.gastos[di])weekData.gastos[di]=[];
-  weekData.gastos[di].push({desc,cat,monto,pagoCon});
+  const entry={desc,cat,monto,pagoCon};
+  if(cuentaOrigen)entry.cuentaOrigen=cuentaOrigen;
+  weekData.gastos[di].push(entry);
   saveDB();renderGastos(di);
   document.getElementById('gasto-desc').value='';
   document.getElementById('gasto-monto').value='';

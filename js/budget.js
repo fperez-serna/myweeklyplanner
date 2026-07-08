@@ -350,7 +350,7 @@ function budgetExportExcel(){
     [es?'Real — capturado':'Real — captured',fmt(totalManual)],
     [es?'Sin presupuestar':'Unbudgeted',fmt(sinPresup)],
   ];
-  if(totalAbonos>0)sumData.push([es?'Abonos deudas':'Debt payments',fmt(totalAbonos)]);
+  if(totalAbonos>0)sumData.push([es?'Abono a créditos':'Credit payments',fmt(totalAbonos)]);
   addSheet(wb,sumData,es?'Resumen':'Summary',[{wch:28},{wch:15}]);
 
   // 2. Ingresos
@@ -687,6 +687,8 @@ function buildPagoSelect(){
   const es=!isEn();
   const prev=sel.value;
   const catVal=document.getElementById('gasto-cat')?.value||'';
+  const desdeWrap=document.getElementById('gasto-desde-wrap');
+  const desdeSel=document.getElementById('gasto-desde');
   if(catVal===PAGO_CREDITO_CAT){
     sel.innerHTML='';
     (budgetData.debts||[]).forEach(d=>{
@@ -694,6 +696,12 @@ function buildPagoSelect(){
       opt.value=d.nombre;opt.textContent=(d.tipo==='tarjeta'?'💳 ':'🏦 ')+d.nombre;
       sel.appendChild(opt);
     });
+    if(desdeWrap)desdeWrap.style.display='flex';
+    if(desdeSel){
+      const prevDesde=desdeSel.value;
+      desdeSel.innerHTML=`<option value="Efectivo">${es?'Efectivo':'Cash'}</option><option value="Débito">${es?'Débito':'Debit'}</option><option value="Transferencia">${es?'Transferencia':'Transfer'}</option>`;
+      if(prevDesde&&Array.from(desdeSel.options).some(o=>o.value===prevDesde))desdeSel.value=prevDesde;
+    }
   } else {
     sel.innerHTML=`<option value="Efectivo">${es?'Efectivo':'Cash'}</option><option value="Débito">${es?'Débito':'Debit'}</option><option value="Transferencia">${es?'Transferencia':'Transfer'}</option>`;
     (budgetData.debts||[]).filter(d=>d.tipo==='tarjeta').forEach(d=>{
@@ -701,6 +709,7 @@ function buildPagoSelect(){
       opt.value=d.nombre;opt.textContent='💳 '+d.nombre;
       sel.appendChild(opt);
     });
+    if(desdeWrap)desdeWrap.style.display='none';
   }
   if(prev&&Array.from(sel.options).some(o=>o.value===prev))sel.value=prev;
 }
@@ -763,7 +772,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
     <div class="budget-stat" id="stat-presupuestado"><div class="budget-stat-val">${fmt(totalPresup)}</div><div class="budget-stat-lbl">${es?'Presupuestado':'Budgeted'}</div></div>
     <div class="budget-stat" id="stat-real"><div class="budget-stat-val">${fmt(totalManual)}</div><div class="budget-stat-lbl">${es?'Real — capturado':'Real — captured'}</div></div>
     <div class="budget-stat" id="stat-sin-presupuestar"><div class="budget-stat-val ${sinPresup>=0?'green':'red'}">${fmt(sinPresup)}</div><div class="budget-stat-lbl">${es?'Sin presupuestar':'Unbudgeted'}</div></div>
-    ${totalAbonos>0?`<div class="budget-stat"><div class="budget-stat-val red">${fmt(totalAbonos)}</div><div class="budget-stat-lbl">${es?'💳 Abonos deudas':'💳 Debt payments'}</div></div>`:''}
+    ${totalAbonos>0?`<div class="budget-stat"><div class="budget-stat-val red">${fmt(totalAbonos)}</div><div class="budget-stat-lbl">${es?'💳 Abono a créditos':'💳 Credit payments'}</div></div>`:''}
   </div>
 
   <!-- GROUPS -->
@@ -975,7 +984,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
   // Add debt abonos as a special rubro entry
   const totalAbonos2=Object.values(debtPayments).reduce((s,v)=>s+v,0);
   if(totalAbonos2>0){
-    const debtLabel=es?'Préstamos & Deudas':'Loans & Debts';
+    const debtLabel=es?'Abono a créditos':'Credit payments';
     if(!rubroMap[debtLabel])rubroMap[debtLabel]={presup:0,manual:0};
     rubroMap[debtLabel].manual+=totalAbonos2;
   }

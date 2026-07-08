@@ -51,6 +51,8 @@ function qgUpdatePagoSel(){
   const pagoSel=document.getElementById('qg-pago');
   if(!pagoSel)return;
   const catVal=document.getElementById('qg-cat')?.value||'';
+  const desdeWrap=document.getElementById('qg-desde-wrap');
+  const desdeSel=document.getElementById('qg-desde');
   if(catVal===PAGO_CREDITO_CAT){
     pagoSel.innerHTML='';
     (budgetData?.debts||[]).forEach(d=>{
@@ -58,6 +60,8 @@ function qgUpdatePagoSel(){
       opt.value=d.nombre;opt.textContent=(d.tipo==='tarjeta'?'💳 ':'🏦 ')+d.nombre;
       pagoSel.appendChild(opt);
     });
+    if(desdeWrap)desdeWrap.style.display='flex';
+    if(desdeSel)desdeSel.innerHTML=`<option value="Efectivo">${es?'Efectivo':'Cash'}</option><option value="Débito">${es?'Débito':'Debit'}</option><option value="Transferencia">${es?'Transferencia':'Transfer'}</option>`;
   } else {
     pagoSel.innerHTML=`<option value="Efectivo">${es?'Efectivo':'Cash'}</option><option value="Débito">${es?'Débito':'Debit'}</option><option value="Transferencia">${es?'Transferencia':'Transfer'}</option>`;
     (budgetData?.debts||[]).filter(d=>d.tipo==='tarjeta').forEach(d=>{
@@ -65,6 +69,7 @@ function qgUpdatePagoSel(){
       opt.value=d.nombre;opt.textContent=d.nombre;
       pagoSel.appendChild(opt);
     });
+    if(desdeWrap)desdeWrap.style.display='none';
   }
 }
 
@@ -98,6 +103,7 @@ function quickGastoAdd(){
     if(!setupCfg.gastoCats.includes(catNew)){setupCfg.gastoCats.push(catNew);saveConfigToFirebase();localStorage.setItem('wp_config',JSON.stringify(setupCfg));}
   }
   const pagoCon=document.getElementById('qg-pago')?.value||'Efectivo';
+  const cuentaOrigen=cat===PAGO_CREDITO_CAT?(document.getElementById('qg-desde')?.value||''):'';
   const monto=parseFloat(document.getElementById('qg-monto')?.value);
   if(!desc||!monto||monto<=0){
     if(!desc)document.getElementById('qg-desc')?.focus();
@@ -106,7 +112,9 @@ function quickGastoAdd(){
   const di=dayIdx();
   if(!weekData.gastos)weekData.gastos={};
   if(!weekData.gastos[di])weekData.gastos[di]=[];
-  weekData.gastos[di].push({desc,cat,monto,pagoCon});
+  const entry={desc,cat,monto,pagoCon};
+  if(cuentaOrigen)entry.cuentaOrigen=cuentaOrigen;
+  weekData.gastos[di].push(entry);
   saveDB();
   qgUpdateTotal();
 
