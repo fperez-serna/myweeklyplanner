@@ -434,8 +434,11 @@ function ssOpen(inputEl, options, onChange, onAddNew, isTyping=false){
       }
       ssClose();
     };
+    let _tStartY = 0, _tMoved = false;
+    div.addEventListener('touchstart', (e) => { _tStartY = e.touches[0].clientY; _tMoved = false; }, {passive:true});
+    div.addEventListener('touchmove', (e) => { if(Math.abs(e.touches[0].clientY - _tStartY) > 8) _tMoved = true; }, {passive:true});
     div.addEventListener('mousedown', _itemHandler);
-    div.addEventListener('touchend', (e) => { e.preventDefault(); _itemHandler(e); });
+    div.addEventListener('touchend', (e) => { if(_tMoved) return; e.preventDefault(); _itemHandler(e); });
     drop.appendChild(div);
   };
 
