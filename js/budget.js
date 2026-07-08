@@ -19,6 +19,27 @@ function showToast(msg){
   setTimeout(()=>{t.style.opacity='0';},2000);
 }
 
+function showConfirm(msg,onYes){
+  const existing=document.getElementById('budget-confirm-overlay');
+  if(existing)existing.remove();
+  const es=!isEn();
+  const ov=document.createElement('div');
+  ov.id='budget-confirm-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99998;display:flex;align-items:flex-end;justify-content:center;padding-bottom:24px;';
+  ov.innerHTML=`<div style="background:var(--bg);border-radius:16px 16px 16px 16px;padding:20px 20px 16px;width:min(340px,92vw);box-shadow:0 8px 32px rgba(0,0,0,.2);">
+    <div style="font-size:14px;color:var(--text);margin-bottom:16px;line-height:1.4;">${msg}</div>
+    <div style="display:flex;gap:8px;">
+      <button id="bc-cancel" style="flex:1;padding:10px;border-radius:10px;border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px;cursor:pointer;">${es?'Cancelar':'Cancel'}</button>
+      <button id="bc-yes" style="flex:1;padding:10px;border-radius:10px;border:none;background:#c0392b;color:#fff;font-size:13px;font-weight:500;cursor:pointer;">${es?'Eliminar':'Delete'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  const close=()=>ov.remove();
+  document.getElementById('bc-cancel').onclick=close;
+  ov.addEventListener('click',e=>{if(e.target===ov)close();});
+  document.getElementById('bc-yes').onclick=()=>{close();onYes();};
+}
+
 function shareTasks(){
   const di=dayIdx();
   const tasks=tasksForDay(di);
@@ -1754,13 +1775,18 @@ async function budgetSaveDebt(di){
   renderBudget(d);
 }
 
-async function budgetDelDebt(di){
-  if(!confirm(!isEn()?'¿Eliminar esta deuda?':'Delete this debt?'))return;
-  if(!budgetData.debts||!budgetData.debts[di])return;
-  budgetData.debts.splice(di,1);
-  await saveBudgetConfig();
-  const d=await loadMonthGastos();
-  renderBudget(d);
+function budgetDelDebt(di){
+  const debt=budgetData.debts?.[di];
+  if(!debt)return;
+  const es=!isEn();
+  const tipo=debt.tipo==='tarjeta'?(es?'tarjeta':'card'):(es?'préstamo':'loan');
+  showConfirm(`${es?'¿Eliminar':'Delete'} ${tipo} <strong>${debt.nombre}</strong>?<br><span style="font-size:12px;color:var(--text3);">${es?'Esta acción no se puede deshacer.':'This cannot be undone.'}</span>`,async()=>{
+    if(!budgetData.debts||!budgetData.debts[di])return;
+    budgetData.debts.splice(di,1);
+    await saveBudgetConfig();
+    const d=await loadMonthGastos();
+    renderBudget(d);
+  });
 }
 
 async function debtToggleSaldoOverride(di){
