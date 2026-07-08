@@ -581,7 +581,7 @@ async function loadMonthGastos(){
   const lastDay=new Date(budgetYear,budgetMonth+1,0);
   const d=new Date(firstDay);
   const dow=d.getDay();
-  d.setDate(d.getDate()-(dow===0?6:dow-1));
+  d.setDate(d.getDate()-(dow===0?6:dow-1)-7); // extra week back to cover cut dates before the 1st
   const promises=[];
   while(d<=lastDay){
     const weekStart=new Date(d);
@@ -882,28 +882,23 @@ function renderBudget(dashboardTotals,forceExpand=false){
         if(days<=3)return `<div style="font-size:11px;font-weight:600;color:#e67e22;margin-top:6px;">${days} ${es?`día${days===1?'':'s'} para tu corte del ${debt.fechaCorte}`:`day${days===1?'':'s'} until your cut date on the ${debt.fechaCorte}`}</div>`;
         return `<div style="font-size:11px;color:var(--text3);margin-top:6px;">✂ ${days} ${es?`días para tu corte del ${debt.fechaCorte}`:`days until your cut date on the ${debt.fechaCorte}`}</div>`;
       })();
-      const tarjetaGastos=(()=>{
+      const tarjetaSemana=(()=>{
         if(debt.tipo!=='tarjeta')return 0;
-        let lastCut=null;
-        if(debt.fechaCorte){
-          const now=new Date();now.setHours(0,0,0,0);
-          const thisMonthCut=new Date(now.getFullYear(),now.getMonth(),debt.fechaCorte);
-          lastCut=thisMonthCut<=now?thisMonthCut:new Date(now.getFullYear(),now.getMonth()-1,debt.fechaCorte);
-        }
-        return [...Array(7).keys()].reduce((s,d)=>{
-          const dayDate=weekDays[d];
-          if(lastCut&&dayDate<lastCut)return s;
-          return s+(gastosForDay(d)||[]).filter(g=>g.pagoCon===debt.nombre).reduce((ss,g)=>ss+(g.monto||0),0);
+        return [...Array(7).keys()].reduce((s,di)=>{
+          return s+(gastosForDay(di)||[])
+            .filter(g=>g.pagoCon===debt.nombre&&g.cat!==PAGO_CREDITO_CAT)
+            .reduce((ss,g)=>ss+(g.monto||0),0);
         },0);
       })();
+      const tarjetaPeriodo=debt.tipo==='tarjeta'?(cardPeriodSums[debt.nombre]??tarjetaSemana):0;
       const tarjetaPeriodoLabel=(()=>{
-        if(!debt.fechaCorte)return es?'esta semana':'this week';
+        if(!debt.fechaCorte)return '';
         const now=new Date();now.setHours(0,0,0,0);
         const thisMonthCut=new Date(now.getFullYear(),now.getMonth(),debt.fechaCorte);
         const lastCut=thisMonthCut<=now?thisMonthCut:new Date(now.getFullYear(),now.getMonth()-1,debt.fechaCorte);
         const cutStr=lastCut.getDate()+'/'+(lastCut.getMonth()+1);
         const todayStr=now.getDate()+'/'+(now.getMonth()+1);
-        return es?`del ${cutStr} al ${todayStr}`:`from ${cutStr} to ${todayStr}`;
+        return es?`del ${cutStr} al ${todayStr}`:`${cutStr} – ${todayStr}`;
       })();
       html+=`<div class="debt-card">
         <div class="debt-card-header">
@@ -948,10 +943,17 @@ function renderBudget(dashboardTotals,forceExpand=false){
             <div class="debt-card-lbl">${isTarjeta?(es?'% de uso':'% used'):(es?'% pagado':'% paid')}</div>
             <div class="debt-card-val" style="color:${barColor};">${pagado}%</div>
           </div>
-          ${debt.tipo==='tarjeta'?`<div class="debt-card-item" style="grid-column:1/-1;background:var(--bg);border-radius:7px;padding:6px 10px;">
-            <div class="debt-card-lbl">${es?`Gastado en este periodo (${tarjetaPeriodoLabel})`:`Spent this period (${tarjetaPeriodoLabel})`}</div>
-            <div class="debt-card-val" style="color:#c0392b;">${fmt(tarjetaGastos)}</div>
+          ${debt.tipo==='tarjeta'?`
+          <div class="debt-card-item">
+            <div class="debt-card-lbl">${es?'Gastado esta semana':'Spent this week'}</div>
+            <div class="debt-card-val" style="color:#c0392b;">${fmt(tarjetaSemana)}</div>
+          </div>
+          ${debt.fechaCorte?`<div class="debt-card-item">
+            <div class="debt-card-lbl">${es?`Periodo ${tarjetaPeriodoLabel}`:`Period ${tarjetaPeriodoLabel}`}</div>
+            <div class="debt-card-val" style="color:#c0392b;">${fmt(tarjetaPeriodo)}</div>
           </div>`:''}
+          `:''}
+
         </div>
         <div class="debt-bar-wrap"><div class="debt-bar-fill" style="width:${pagado}%;background:${barColor};"></div></div>
       </div>`;
