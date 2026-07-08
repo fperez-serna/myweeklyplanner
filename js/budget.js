@@ -887,8 +887,13 @@ function renderBudget(dashboardTotals,forceExpand=false){
         if(!isTarjeta||!debt.fechaCorte)return '';
         const days=corteDaysLeft(debt.fechaCorte);
         if(days===null)return '';
-        if(days===0)return `<div style="font-size:11px;font-weight:600;color:#c0392b;margin-top:6px;">${es?'¡Hoy es tu fecha de corte!':'Today is your billing cut date!'}</div>`;
-        if(days<=3)return `<div style="font-size:11px;font-weight:600;color:#e67e22;margin-top:6px;">${days} ${es?`día${days===1?'':'s'} para tu corte del ${debt.fechaCorte}`:`day${days===1?'':'s'} until your cut date on the ${debt.fechaCorte}`}</div>`;
+        const closeBtn=`<span onclick="debtClosePeriod(${di})" style="cursor:pointer;vertical-align:middle;margin-left:3px;" title="${es?'Cerrar ciclo':'Close cycle'}"><i data-lucide="calendar-check" style="width:11px;height:11px;display:inline-block;vertical-align:middle;"></i></span>`;
+        if(days===0)return `
+          <div style="font-size:11px;font-weight:600;color:#27ae60;margin-top:6px;">${es?'¡Hoy tu banco hace corte!':'Today is your billing cut date!'}</div>
+          <div style="font-size:10px;color:#27ae60;margin-top:2px;">${es?`Registra pagos pendientes y cierra el saldo ${closeBtn}`:`Log any pending payments and close the balance ${closeBtn}`}</div>`;
+        if(days<=3)return `
+          <div style="font-size:11px;font-weight:600;color:#e67e22;margin-top:6px;">${days} ${es?`día${days===1?'':'s'} para tu corte del ${debt.fechaCorte}`:`day${days===1?'':'s'} until your cut date on the ${debt.fechaCorte}`}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;">${es?`No olvides registrar pagos y cerrar el ciclo ${closeBtn}`:`Don't forget to log payments and close the cycle ${closeBtn}`}</div>`;
         return `<div style="font-size:11px;color:var(--text3);margin-top:6px;">✂ ${days} ${es?`días para tu corte del ${debt.fechaCorte}`:`days until your cut date on the ${debt.fechaCorte}`}</div>`;
       })();
       const tarjetaSemana=(()=>{
