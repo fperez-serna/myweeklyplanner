@@ -872,19 +872,19 @@ function renderBudget(dashboardTotals,forceExpand=false){
     html+=`<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px;">${es?'Sin préstamos registrados':'No loans registered'}</div>`;
   } else {
     budgetData.debts.forEach((debt,di)=>{
-      const intMensual=debt.tasa>0?debt.saldo*(debt.tasa/100):0;
-      const minPago=debt.saldo>0?Math.max(intMensual+debt.saldo*0.015,intMensual*1.1):0;
       const isTarjeta=debt.tipo==='tarjeta';
-      const autoSum=isTarjeta&&cardPeriodSums[debt.nombre]!==undefined?cardPeriodSums[debt.nombre]:null;
-      const isAutoSaldo=isTarjeta&&autoSum!==null&&!debt.saldoManualOverride;
-      const effectiveSaldo=isAutoSaldo?autoSum:(debt.saldo||0);
+      const paid=debtPayments[debt.nombre]||0;
+      const saldoBase=debt.saldo||0;
+      const effectiveSaldo=isTarjeta?Math.max(0,saldoBase-paid):saldoBase;
+      const intMensual=debt.tasa>0?saldoBase*(debt.tasa/100):0;
+      const minPago=saldoBase>0?Math.max(intMensual+saldoBase*0.015,intMensual*1.1):0;
       const pagado=debt.totalOriginal>0?Math.min(100,Math.round(isTarjeta?(effectiveSaldo/debt.totalOriginal)*100:((debt.totalOriginal-effectiveSaldo)/debt.totalOriginal)*100)):0;
-      const barColor=isTarjeta?(pagado<=40?'#27ae60':pagado<=70?'#f39c12':'#c0392b'):'var(--mauve)';
+      const barColor=isTarjeta?(pagado<=40?'#27ae60':pagado<=70?'#f39c12':'#c0392b'):(pagado<=30?'#c0392b':pagado<=60?'#f39c12':'#27ae60');
       const diasLabel=debt.fechaPago?`<i data-lucide="calendar" style="width:11px;height:11px;vertical-align:middle;display:inline-block;margin-right:3px;"></i>${es?'Pago: ':'Due: '}${debt.fechaPago}`:es?'Sin fecha de pago':'No due date';
       const rateLbl=debt.tasaTipo==='cat'?'CAT':debt.tasaTipo==='apr'?'APR':debt.tasaTipo==='anual'?(es?'Tasa anual':'Ann. rate'):(es?'Tasa mensual':'Monthly rate');
       const rateDisplay=debt.tasaTipo&&debt.tasaTipo!=='mensual'&&debt.tasaAnual?`${debt.tasaAnual}% ${rateLbl}`:`${debt.tasa}% ${rateLbl}`;
       const corteInfo=(()=>{
-        if(debt.tipo!=='tarjeta'||!debt.fechaCorte)return '';
+        if(!isTarjeta||!debt.fechaCorte)return '';
         const days=corteDaysLeft(debt.fechaCorte);
         if(days===null)return '';
         if(days===0)return `<div style="font-size:11px;font-weight:600;color:#c0392b;margin-top:6px;">${es?'¡Hoy es tu fecha de corte!':'Today is your billing cut date!'}</div>`;
@@ -892,14 +892,14 @@ function renderBudget(dashboardTotals,forceExpand=false){
         return `<div style="font-size:11px;color:var(--text3);margin-top:6px;">✂ ${days} ${es?`días para tu corte del ${debt.fechaCorte}`:`days until your cut date on the ${debt.fechaCorte}`}</div>`;
       })();
       const tarjetaSemana=(()=>{
-        if(debt.tipo!=='tarjeta')return 0;
+        if(!isTarjeta)return 0;
         return [...Array(7).keys()].reduce((s,di)=>{
           return s+(gastosForDay(di)||[])
             .filter(g=>g.pagoCon===debt.nombre&&g.cat!==PAGO_CREDITO_CAT)
             .reduce((ss,g)=>ss+(g.monto||0),0);
         },0);
       })();
-      const tarjetaPeriodo=debt.tipo==='tarjeta'?(cardPeriodSums[debt.nombre]??tarjetaSemana):0;
+      const tarjetaPeriodo=isTarjeta?(cardPeriodSums[debt.nombre]??tarjetaSemana):0;
       const tarjetaPeriodoLabel=(()=>{
         if(!debt.fechaCorte)return '';
         const now=new Date();now.setHours(0,0,0,0);
@@ -919,8 +919,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
             <div class="debt-card-balance" style="display:flex;align-items:center;gap:6px;">
               <span>${fmt(effectiveSaldo)}</span>
-              ${isTarjeta?`<span onclick="debtToggleSaldoOverride(${di})" style="font-size:11px;cursor:pointer;opacity:0.7;" title="${isAutoSaldo?(es?'Editar manual':'Edit manually'):(es?'Restablecer automático':'Reset to auto')}">${isAutoSaldo?'↺':'<i data-lucide="pencil" style="width:11px;height:11px;display:inline-block;vertical-align:middle;"></i>'}</span>`:''}
-              ${(debtPayments[debt.nombre]||0)>0?`<span onclick="debtApplyPayment(${di})" style="cursor:pointer;color:var(--teal);opacity:0.85;" title="${es?`Aplicar pago de ${fmt(debtPayments[debt.nombre]||0)} al saldo`:`Apply payment of ${fmt(debtPayments[debt.nombre]||0)} to balance`}"><i data-lucide="refresh-cw" style="width:12px;height:12px;display:inline-block;vertical-align:middle;"></i></span>`:''}
+              ${isTarjeta&&paid>0?`<span onclick="debtClosePeriod(${di})" style="cursor:pointer;color:var(--teal);opacity:0.85;" title="${es?`Cerrar ciclo — guardar ${fmt(effectiveSaldo)} como nuevo saldo base`:`Close cycle — save ${fmt(effectiveSaldo)} as new base balance`}"><i data-lucide="calendar-check" style="width:13px;height:13px;display:inline-block;vertical-align:middle;"></i></span>`:''}
             </div>
             <div style="display:flex;gap:4px;">
               <button onclick="budgetEditDebt(${di})" style="background:none;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text3);font-size:11px;padding:3px 7px;display:flex;align-items:center;gap:3px;"><i data-lucide="pencil" style="width:11px;height:11px;display:inline-block;"></i></button>
@@ -942,18 +941,27 @@ function renderBudget(dashboardTotals,forceExpand=false){
             <div class="debt-card-val" style="color:var(--mauve);">~${fmt(Math.round(minPago))}</div>
           </div>
           <div class="debt-card-item">
-            <div class="debt-card-lbl">${es?'Pagado este mes':'Paid this month'}</div>
-            <div class="debt-card-val" style="color:var(--teal);">${fmt(debtPayments[debt.nombre]||0)}</div>
+            <div class="debt-card-lbl">${es?'Pagado este ciclo':'Paid this cycle'}</div>
+            <div class="debt-card-val" style="color:var(--teal);">${fmt(paid)}</div>
+          </div>
+          ${isTarjeta?`
+          <div class="debt-card-item">
+            <div class="debt-card-lbl">${es?'Saldo base':'Base balance'}</div>
+            <div class="debt-card-val">${fmt(saldoBase)}</div>
           </div>
           <div class="debt-card-item">
-            <div class="debt-card-lbl">${debt.tipo==='tarjeta'?(es?'Límite de crédito':'Credit limit'):(es?'Saldo original':'Original balance')}</div>
-            <div class="debt-card-val">${fmt(debt.totalOriginal||debt.saldo)}</div>
-          </div>
+            <div class="debt-card-lbl">${es?'Límite de crédito':'Credit limit'}</div>
+            <div class="debt-card-val">${fmt(debt.totalOriginal||0)}</div>
+          </div>`:`
+          <div class="debt-card-item">
+            <div class="debt-card-lbl">${es?'Saldo original':'Original balance'}</div>
+            <div class="debt-card-val">${fmt(debt.totalOriginal||saldoBase)}</div>
+          </div>`}
           <div class="debt-card-item">
             <div class="debt-card-lbl">${isTarjeta?(es?'% de uso':'% used'):(es?'% pagado':'% paid')}</div>
             <div class="debt-card-val" style="color:${barColor};">${pagado}%</div>
           </div>
-          ${debt.tipo==='tarjeta'?`
+          ${isTarjeta?`
           <div class="debt-card-item">
             <div class="debt-card-lbl">${es?'Gastado esta semana':'Spent this week'}</div>
             <div class="debt-card-val" style="color:#c0392b;">${fmt(tarjetaSemana)}</div>
@@ -963,7 +971,6 @@ function renderBudget(dashboardTotals,forceExpand=false){
             <div class="debt-card-val" style="color:#c0392b;">${fmt(tarjetaPeriodo)}</div>
           </div>`:''}
           `:''}
-
         </div>
         <div class="debt-bar-wrap"><div class="debt-bar-fill" style="width:${pagado}%;background:${barColor};"></div></div>
       </div>`;
@@ -1790,19 +1797,19 @@ async function debtToggleSaldoOverride(di){
 }
 
 
-async function debtApplyPayment(di){
+async function debtClosePeriod(di){
   const es=!isEn();
   const debt=budgetData.debts?.[di];
   if(!debt)return;
   const paid=debtPayments[debt.nombre]||0;
-  if(!paid){showToast(es?'Sin pagos registrados este mes':'No payments this month');return;}
+  if(!paid){showToast(es?'Sin pagos registrados este ciclo':'No payments this cycle');return;}
   const newSaldo=Math.max(0,(debt.saldo||0)-paid);
   debt.saldo=newSaldo;
-  debt.saldoManualOverride=true;
+  delete debt.saldoManualOverride;
   await saveBudgetConfig();
   const d=await loadMonthGastos();
   renderBudget(d);
-  showToast(es?`Saldo actualizado: ${fmt(newSaldo)}`:`Balance updated: ${fmt(newSaldo)}`);
+  showToast(es?`Ciclo cerrado — nuevo saldo base: ${fmt(newSaldo)}`:`Cycle closed — new base balance: ${fmt(newSaldo)}`);
 }
 
 // ── ANNUAL SECTION ─────────────────────────────────────
