@@ -489,9 +489,9 @@ function createSmartSelect({id, options, value='', placeholder='—', onChange, 
   input.addEventListener('focus', () => ssOpen(input, options, onChange, onAddNew, false));
   input.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); clearTimeout(_ssCloseTimer);_ssCloseTimer=null;ssOpen(input, options, onChange, onAddNew, false); }, {passive:false});
   input.addEventListener('input', () => ssOpen(input, options, onChange, onAddNew, true));
-  input.addEventListener('blur', () => { _ssCloseTimer=setTimeout(ssClose, 300); });
+  input.addEventListener('blur', () => { if(!('ontouchstart' in window)) _ssCloseTimer=setTimeout(ssClose, 150); });
   input.addEventListener('keydown', e => {
-    if(e.key === 'Escape'){ ssClose(); input.blur(); return; }
+    if(e.key === 'Escape' || e.key === 'Tab'){ ssClose(); input.blur(); return; }
     if(e.key === 'Enter'){
       e.preventDefault();
       const drop = document.getElementById('ss-dropdown-active');
