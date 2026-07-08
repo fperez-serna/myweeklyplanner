@@ -920,6 +920,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
             <div class="debt-card-balance" style="display:flex;align-items:center;gap:6px;">
               <span>${fmt(effectiveSaldo)}</span>
               ${isTarjeta?`<span onclick="debtToggleSaldoOverride(${di})" style="font-size:11px;cursor:pointer;opacity:0.7;" title="${isAutoSaldo?(es?'Editar manual':'Edit manually'):(es?'Restablecer automático':'Reset to auto')}">${isAutoSaldo?'↺':'<i data-lucide="pencil" style="width:11px;height:11px;display:inline-block;vertical-align:middle;"></i>'}</span>`:''}
+              ${(debtPayments[debt.nombre]||0)>0?`<span onclick="debtApplyPayment(${di})" style="cursor:pointer;color:var(--teal);opacity:0.85;" title="${es?`Aplicar pago de ${fmt(debtPayments[debt.nombre]||0)} al saldo`:`Apply payment of ${fmt(debtPayments[debt.nombre]||0)} to balance`}"><i data-lucide="refresh-cw" style="width:12px;height:12px;display:inline-block;vertical-align:middle;"></i></span>`:''}
             </div>
             <div style="display:flex;gap:4px;">
               <button onclick="budgetEditDebt(${di})" style="background:none;border:0.5px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text3);font-size:11px;padding:3px 7px;display:flex;align-items:center;gap:3px;"><i data-lucide="pencil" style="width:11px;height:11px;display:inline-block;"></i></button>
@@ -1788,6 +1789,21 @@ async function debtToggleSaldoOverride(di){
   input.addEventListener('keydown',e=>{if(e.key==='Enter')input.blur();if(e.key==='Escape'){input.removeEventListener('blur',save);renderBudget(_lastDashboardTotals||{});}});
 }
 
+
+async function debtApplyPayment(di){
+  const es=!isEn();
+  const debt=budgetData.debts?.[di];
+  if(!debt)return;
+  const paid=debtPayments[debt.nombre]||0;
+  if(!paid){showToast(es?'Sin pagos registrados este mes':'No payments this month');return;}
+  const newSaldo=Math.max(0,(debt.saldo||0)-paid);
+  debt.saldo=newSaldo;
+  debt.saldoManualOverride=true;
+  await saveBudgetConfig();
+  const d=await loadMonthGastos();
+  renderBudget(d);
+  showToast(es?`Saldo actualizado: ${fmt(newSaldo)}`:`Balance updated: ${fmt(newSaldo)}`);
+}
 
 // ── ANNUAL SECTION ─────────────────────────────────────
 function toggleAnnualSection(){
