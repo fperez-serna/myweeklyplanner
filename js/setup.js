@@ -681,11 +681,9 @@ function initApp(){
   if(typeof QS!=='undefined')shuffleArr(QS);
   const saved=localStorage.getItem('wp_config');
   if(!saved){
-    // First time — show setup with welcome banner
+    // No local config — could be incognito or truly new user.
+    // Don't show setup yet; let subscribeConfig check Firebase first.
     initSetupChips();
-    document.getElementById('setup-screen').style.display='block';
-    const wb=document.getElementById('welcome-banner');
-    if(wb)wb.style.display='block';
   } else {
     const cfg=JSON.parse(saved);
     setupCfg={

@@ -145,6 +145,9 @@ function subscribeConfig(){
           };
           localStorage.setItem('wp_config',JSON.stringify(setupCfg));
           applyConfig(setupCfg);
+          // Hide welcome banner if it was shown (e.g. incognito with no localStorage)
+          const wb=document.getElementById('welcome-banner');
+          if(wb&&wb.style.display!=='none')wb.style.display='none';
           // Refrescar el SmartSelect de gasto-cat — applyConfig actualiza el <select> subyacente
           // pero el overlay SmartSelect queda con opciones viejas hasta el siguiente renderDay.
           const gcSS=document.getElementById('gasto-cat_ss');
@@ -159,6 +162,13 @@ function subscribeConfig(){
           const qgOpen=document.getElementById('quick-gasto-screen')?.style.display==='flex';
           if(qgOpen&&typeof showQuickGasto==='function')showQuickGasto();
         }
+      } else if(!localStorage.getItem('wp_config')){
+        // Firebase also has no config → truly new user → show setup
+        if(typeof initSetupChips==='function')initSetupChips();
+        const ss=document.getElementById('setup-screen');
+        if(ss)ss.style.display='block';
+        const wb=document.getElementById('welcome-banner');
+        if(wb)wb.style.display='block';
       }
     }catch(e){console.error('subscribeConfig handler error:',e);}
   });
