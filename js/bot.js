@@ -71,6 +71,7 @@ const _GUIA_CICLO = {
     nutri:    'Hierro (carne roja, lentejas, espinaca), proteína, omega-3, vitamina C para absorber hierro. Comida caliente y cocida.',
     hacer:    'Descansar sin culpa, introspección, ritual de cuidado propio, delegar lo que puedas.',
     evitar:   'Presión por productividad, ejercicio intenso, cafeína en exceso, azúcar refinada.',
+    menu:     { desayuno: 'Avena caliente con plátano, canela y semillas de chía', comida: 'Lentejas guisadas con espinaca y tortillas de maíz', cena: 'Caldo de res con verduras o sopa de pasta ligera' },
   },
   'Folicular': {
     icon:     'sprout',
@@ -81,6 +82,7 @@ const _GUIA_CICLO = {
     nutri:    'Proteína para construir músculo, verduras crucíferas (brócoli, coliflor) para metabolizar estrógeno, carbos complejos.',
     hacer:    'Iniciar proyectos, planear la semana, tomar decisiones, socializar, probar cosas nuevas.',
     evitar:   'Sobrecargarte solo porque tienes energía — sigue siendo importante descansar bien.',
+    menu:     { desayuno: 'Huevos revueltos con espinaca y tostadas integrales', comida: 'Pollo a la plancha con brócoli al vapor y arroz integral', cena: 'Bowl de atún, aguacate, pepino y semillas' },
   },
   'Ovulación': {
     icon:     'flower-2',
@@ -91,6 +93,7 @@ const _GUIA_CICLO = {
     nutri:    'Antioxidantes (berries, vegetales de color), zinc, fibra. Hidratación extra.',
     hacer:    'Presentaciones, conversaciones difíciles, trabajo en equipo, visibilidad, citas importantes.',
     evitar:   'Aislarte — tu energía social está en su mejor momento.',
+    menu:     { desayuno: 'Smoothie de berries, proteína en polvo, espinaca y chía', comida: 'Salmón con ensalada de colores (betabel, zanahoria, pepino)', cena: 'Stir-fry de pollo con verduras y jengibre' },
   },
   'Lútea Temprana': {
     icon:     'target',
@@ -101,6 +104,7 @@ const _GUIA_CICLO = {
     nutri:    'Magnesio (reduce síntomas PMS), proteína, carbos complejos. Chocolate negro si hay antojos.',
     hacer:    'Completar proyectos, organizar, trabajo profundo individual, cerrar pendientes.',
     evitar:   'Iniciar demasiadas cosas nuevas — esta fase pide terminar, no empezar.',
+    menu:     { desayuno: 'Yogur griego con granola, nueces y miel de abeja', comida: 'Res a la mexicana con frijoles negros y arroz', cena: 'Quesadillas de espinaca con queso panela y guacamole' },
   },
   'Lútea Tardía': {
     icon:     'cloud',
@@ -111,6 +115,7 @@ const _GUIA_CICLO = {
     nutri:    'Magnesio, vitamina B6, calcio. Reduce sodio y cafeína para minimizar retención. Comida cálida y reconfortante.',
     hacer:    'Ritual de cierre de semana, reflexión, limpiar espacios, reducir agenda social.',
     evitar:   'Tomar decisiones grandes, compararte, sobrecargarte de compromisos.',
+    menu:     { desayuno: 'Avena con plátano, almendras y cacao en polvo (magnesio)', comida: 'Sopa de verduras caliente con pollo desmenuzado', cena: 'Pasta integral con champiñones salteados y queso cotija' },
   },
 };
 
@@ -187,30 +192,62 @@ async function renderMenuDia() {
     if (doc.exists) menuTexto = doc.data().menu || null;
   } catch(e) {}
 
-  if (!menuTexto) { el.innerHTML = ''; return; }
-
-  // Extrae la sección del día actual del texto libre
+  // Intenta extraer sección del día actual
   const nombresDia = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
-  const regex = new RegExp(`(${nombresDia.join('|')})\\s*:?\\s*`, 'gi');
-  const partes = menuTexto.split(regex).filter(s => s.trim());
   let seccionHoy = null;
-  for (let i = 0; i < partes.length; i++) {
-    if (partes[i].trim().toLowerCase() === hoy.toLowerCase() && partes[i + 1]) {
-      seccionHoy = partes[i + 1].trim();
-      break;
+  if (menuTexto) {
+    const regex = new RegExp(`(${nombresDia.join('|')})\\s*:?\\s*`, 'gi');
+    const partes = menuTexto.split(regex).filter(s => s.trim());
+    for (let i = 0; i < partes.length; i++) {
+      if (partes[i].trim().toLowerCase() === hoy.toLowerCase() && partes[i + 1]) {
+        seccionHoy = partes[i + 1].trim();
+        break;
+      }
     }
+    if (!seccionHoy) seccionHoy = menuTexto.slice(0, 300);
   }
 
-  const contenido = seccionHoy || menuTexto.slice(0, 280);
-  el.innerHTML = `
-    <div style="border-radius:12px;padding:1rem;background:var(--bg2);border:0.5px solid var(--border);">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-        <i data-lucide="utensils" style="width:12px;height:12px;stroke:var(--teal);stroke-width:2;flex-shrink:0;"></i>
-        <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Menú · ${hoy}</span>
+  if (seccionHoy) {
+    // Menú real guardado
+    el.innerHTML = `
+      <div style="border-radius:12px;padding:1rem;background:var(--bg2);border:0.5px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+          <i data-lucide="utensils" style="width:12px;height:12px;stroke:var(--teal);stroke-width:2;flex-shrink:0;"></i>
+          <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Menú · ${hoy}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;">${seccionHoy}</div>
       </div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;">${contenido}</div>
-    </div>
-  `;
+    `;
+  } else {
+    // Placeholder con recomendación por fase
+    const fase = document.getElementById('bot-meta')?.textContent?.split('·')[1]?.trim() || '';
+    const guia = _GUIA_CICLO[fase];
+    const sugerencia = guia?.menu;
+    el.innerHTML = `
+      <div style="border-radius:12px;padding:1rem;background:var(--bg2);border:0.5px solid var(--border);opacity:.85;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <i data-lucide="utensils" style="width:12px;height:12px;stroke:var(--text3);stroke-width:2;flex-shrink:0;"></i>
+            <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Menú · ${hoy}</span>
+          </div>
+          <span style="font-size:10px;color:var(--text3);">Dile al bot "genera el menú"</span>
+        </div>
+        ${sugerencia ? `
+        <div style="font-size:10px;color:var(--text3);margin-bottom:6px;font-style:italic;">Sugerencia para fase ${fase}:</div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;gap:8px;font-size:11px;color:var(--text2);">
+            <span style="color:var(--text3);min-width:64px;">Desayuno</span>${sugerencia.desayuno}
+          </div>
+          <div style="display:flex;gap:8px;font-size:11px;color:var(--text2);">
+            <span style="color:var(--text3);min-width:64px;">Comida</span>${sugerencia.comida}
+          </div>
+          <div style="display:flex;gap:8px;font-size:11px;color:var(--text2);">
+            <span style="color:var(--text3);min-width:64px;">Cena</span>${sugerencia.cena}
+          </div>
+        </div>` : ''}
+      </div>
+    `;
+  }
   if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
