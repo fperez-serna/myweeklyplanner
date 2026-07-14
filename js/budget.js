@@ -896,7 +896,7 @@ function renderBudget(dashboardTotals,forceExpand=false){
       const isTarjeta=debt.tipo==='tarjeta';
       const paid=debtPayments[debt.nombre]||0;
       const saldoBase=debt.saldo||0;
-      const effectiveSaldo=isTarjeta?Math.max(0,saldoBase-paid):saldoBase;
+      const effectiveSaldo=isTarjeta?Math.max(0,saldoBase-Math.max(0,paid-_debtAlreadySubtracted(debt))):saldoBase;
       const intMensual=debt.tasa>0?saldoBase*(debt.tasa/100):0;
       const minPago=saldoBase>0?Math.max(intMensual+saldoBase*0.015,intMensual*1.1):0;
       const pagado=debt.totalOriginal>0?Math.min(100,Math.round(isTarjeta?(effectiveSaldo/debt.totalOriginal)*100:((debt.totalOriginal-effectiveSaldo)/debt.totalOriginal)*100)):0;
@@ -1828,14 +1828,29 @@ async function debtToggleSaldoOverride(di){
 }
 
 
+function _debtAlreadySubtracted(debt){
+  if(!debt.cicloUltimoCierre||!debt.saldoCerradoConPagos)return 0;
+  const corte=parseInt(debt.corte)||parseInt(debt.fechaCorte)||0;
+  if(!corte)return 0;
+  const hoy=activeDate||new Date();
+  const lastCorteDate=new Date(hoy.getFullYear(),hoy.getMonth(),corte);
+  if(corte>hoy.getDate())lastCorteDate.setMonth(lastCorteDate.getMonth()-1);
+  const lastCierre=new Date(debt.cicloUltimoCierre+'T12:00:00');
+  return lastCierre>=lastCorteDate?(debt.saldoCerradoConPagos||0):0;
+}
+
 async function debtClosePeriod(di){
   const es=!isEn();
   const debt=budgetData.debts?.[di];
   if(!debt)return;
   const paid=debtPayments[debt.nombre]||0;
   if(!paid){showToast(es?'Sin pagos registrados este ciclo':'No payments this cycle');return;}
-  const newSaldo=Math.max(0,(debt.saldo||0)-paid);
+  const newPaid=Math.max(0,paid-_debtAlreadySubtracted(debt));
+  if(!newPaid){showToast(es?'Sin pagos nuevos desde el último cierre':'No new payments since last close');return;}
+  const newSaldo=Math.max(0,(debt.saldo||0)-newPaid);
   debt.saldo=newSaldo;
+  debt.saldoCerradoConPagos=paid;
+  debt.cicloUltimoCierre=dk(activeDate);
   delete debt.saldoManualOverride;
   await saveBudgetConfig();
   const d=await loadMonthGastos();
