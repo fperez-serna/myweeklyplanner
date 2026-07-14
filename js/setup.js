@@ -110,11 +110,7 @@ function updateGastosLang(lang){
   const sel=document.getElementById('gasto-cat');
   if(sel){
     // Use user's custom categories if available
-    const userCats=setupCfg&&setupCfg.gastoCats&&setupCfg.gastoCats.length?setupCfg.gastoCats:null;
-    const defaultCats=isEn
-      ?['🍽 Restaurant','🛒 Grocery','🎬 Entertainment','⛽ Gas','🚗 Transport','📱 Subscription','💪 Exercise','📚 School','🔧 Service payment','💼 Business','🏠 Home','💳 Loan','✈️ Travel','💸 Other']
-      :['🍽 Restaurante','🛒 Supermercado','🎬 Entretenimiento','⛽ Gasolina','🚗 Transporte','📱 Suscripción','💪 Ejercicio','📚 Escuela','🔧 Pago a servicio','💼 Negocio','🏠 Casa','💳 Préstamo','✈️ Viaje','💸 Otro'];
-    const cats=userCats||defaultCats;
+    const cats=(setupCfg&&setupCfg.gastoCats&&setupCfg.gastoCats.length)?setupCfg.gastoCats:[];
     sel.innerHTML=cats.map(c=>'<option>'+c+'</option>').join('');
   }
   // Total label
@@ -422,15 +418,9 @@ function selectLang(el){
   const sc=setupCfg.shopCats;
   const shopChips=sc&&sc.length?(langIsEn?sc.map(c=>shopMap2[c]||c):sc):[];
   renderChips('shop',shopChips);
-  // Gasto chips
-  if(!setupCfg.gastoCats||setupCfg.gastoCats.length===0){
-    renderChips('gasto',[]);
-  }else{
-    const gaArr=langIsEn
-      ?['🍽 Restaurant','🛒 Grocery','🎬 Entertainment','⛽ Gas','🚗 Transport','📱 Subscription','💪 Exercise','📚 School','🔧 Service payment','💼 Business','🏠 Home','💳 Loan','✈️ Travel','💸 Other']
-      :['🍽 Restaurante','🛒 Supermercado','🎬 Entretenimiento','⛽ Gasolina','🚗 Transporte','📱 Suscripción','💪 Ejercicio','📚 Escuela','🔧 Pago a servicio','💼 Negocio','🏠 Casa','💳 Préstamo','✈️ Viaje','💸 Otro'];
-    renderChips('gasto',gaArr);
-  }
+  // Gasto chips — translate the user's actual categories
+  const gaArr=setupCfg.gastoCats&&setupCfg.gastoCats.length?setupCfg.gastoCats:[];
+  renderChips('gasto',gaArr);
 }
 
 const SETUP_T={
@@ -627,8 +617,8 @@ function applyConfig(cfg){
   });
   const sc=(setupCfg.shopCats&&setupCfg.shopCats.length)?setupCfg.shopCats:DEFAULT_SHOP;
   if(sc.length){applyShopCats(sc);initShoppingItems();}
-  const gc=(setupCfg.gastoCats&&setupCfg.gastoCats.length)?setupCfg.gastoCats:DEFAULT_GASTOS;
-  if(gc.length){const sel=document.getElementById('gasto-cat');if(sel)sel.innerHTML=gc.map(c=>'<option>'+c+'</option>').join('');}
+  const gc=(setupCfg.gastoCats&&setupCfg.gastoCats.length)?setupCfg.gastoCats:[];
+  const sel2=document.getElementById('gasto-cat');if(sel2)sel2.innerHTML=gc.map(c=>'<option>'+c+'</option>').join('');
 }
 
 const SHOP_EMOJI={};

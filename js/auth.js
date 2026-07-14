@@ -32,7 +32,7 @@ function showQuickGasto(){
   // Categorías — deduplicadas y sincronizadas con la config actual
   const catSel=b('qg-cat');
   if(catSel){
-    const rawCats=(setupCfg.gastoCats&&setupCfg.gastoCats.length)?setupCfg.gastoCats:DEFAULT_GASTOS;
+    const rawCats=(setupCfg.gastoCats&&setupCfg.gastoCats.length)?setupCfg.gastoCats:[];
     const cats=[...new Set(rawCats.includes(PAGO_CREDITO_CAT)?rawCats:[...rawCats,PAGO_CREDITO_CAT])];
     const otroLabel=es?'+ Nueva categoría':'+ New category';
     catSel.innerHTML=cats.map(c=>`<option>${c}</option>`).join('')+`<option value="__new__">${otroLabel}</option>`;
@@ -252,7 +252,7 @@ async function signOut(){
         // Leer config del localStorage (instantáneo, mismo dispositivo) —
         // misma lógica de fallback que initApp() para arrays vacíos.
         const savedCfg=localStorage.getItem('wp_config');
-        if(savedCfg){try{const cfg=JSON.parse(savedCfg);setupCfg={...setupCfg,...cfg,gastoCats:cfg.gastoCats&&cfg.gastoCats.length?cfg.gastoCats:[...DEFAULT_GASTOS],shopCats:cfg.shopCats&&cfg.shopCats.length?cfg.shopCats:[...DEFAULT_SHOP],workouts:cfg.workouts&&cfg.workouts.length?cfg.workouts:[...DEFAULT_WORKOUTS],habitos:cfg.habitos&&cfg.habitos.length?cfg.habitos:[...DEFAULT_HABITOS]};}catch(e){}}
+        if(savedCfg){try{const cfg=JSON.parse(savedCfg);setupCfg={...setupCfg,...cfg,gastoCats:cfg.gastoCats&&cfg.gastoCats.length?cfg.gastoCats:[],shopCats:cfg.shopCats&&cfg.shopCats.length?cfg.shopCats:[...DEFAULT_SHOP],workouts:cfg.workouts&&cfg.workouts.length?cfg.workouts:[...DEFAULT_WORKOUTS],habitos:cfg.habitos&&cfg.habitos.length?cfg.habitos:[...DEFAULT_HABITOS]};}catch(e){}}
         // Pre-cargar tarjetas de crédito desde Firebase (una lectura rápida)
         try{
           const budSnap=await userCol().doc('budget_config').get();
