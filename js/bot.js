@@ -61,13 +61,56 @@ function calcularCiclo(ultimoInicio, duracionPromedio) {
   return { diaCiclo, fase };
 }
 
+const _GUIA_CICLO = {
+  'Menstrual': {
+    kw:       'descanso · hierro · restauración',
+    energia:  'Energía baja y hacia adentro. Tu cuerpo está liberando y renovando. No es flojera — es biología.',
+    cuerpo:   'El útero se contrae, los niveles de estrógeno y progesterona están en su punto más bajo. Máxima sensibilidad al dolor y al estrés.',
+    entreno:  'Yoga suave, caminata, movilidad, stretching. Nada de HIIT ni cargas máximas.',
+    nutri:    'Hierro (carne roja, lentejas, espinaca), proteína, omega-3, vitamina C para absorber hierro. Comida caliente y cocida.',
+    hacer:    'Descansar sin culpa, introspección, ritual de cuidado propio, delegar lo que puedas.',
+    evitar:   'Presión por productividad, ejercicio intenso, cafeína en exceso, azúcar refinada.',
+  },
+  'Folicular': {
+    kw:       'energía nueva · creatividad · inicio',
+    energia:  'El estrógeno sube progresivamente. Claridad mental, optimismo, ganas de hacer. Mejor momento para aprender cosas nuevas.',
+    cuerpo:   'Los folículos crecen, el endometrio se reconstruye. Aumento de dopamina y serotonina — buen humor natural.',
+    entreno:  'Gym, fuerza, HIIT, cardio. Tu cuerpo responde muy bien al entrenamiento en esta fase.',
+    nutri:    'Proteína para construir músculo, verduras crucíferas (brócoli, coliflor) para metabolizar estrógeno, carbos complejos.',
+    hacer:    'Iniciar proyectos, planear la semana, tomar decisiones, socializar, probar cosas nuevas.',
+    evitar:   'Sobrecargarte solo porque tienes energía — sigue siendo importante descansar bien.',
+  },
+  'Ovulación': {
+    kw:       'pico de energía · conexión · fuerza',
+    energia:  'Pico hormonal: estrógeno y testosterona en su máximo. Energía, atractivo, elocuencia y confianza en su punto más alto.',
+    cuerpo:   'El óvulo se libera. Tu cerebro procesa lenguaje más rápido, tienes más fuerza física y mayor tolerancia al dolor.',
+    entreno:  'Tu momento de máximo rendimiento. Levantamientos pesados, HIIT intenso, clases de alta demanda. Aprovéchalo.',
+    nutri:    'Antioxidantes (berries, vegetales de color), zinc, fibra. Hidratación extra.',
+    hacer:    'Presentaciones, conversaciones difíciles, trabajo en equipo, visibilidad, citas importantes.',
+    evitar:   'Aislarte — tu energía social está en su mejor momento.',
+  },
+  'Lútea Temprana': {
+    kw:       'enfoque · orden · profundidad',
+    energia:  'La progesterona sube. Energía más hacia adentro, pero aún estable. Ideal para trabajo profundo y atención a los detalles.',
+    cuerpo:   'La temperatura corporal sube ~0.5°C. Metabolismo más acelerado — puedes sentir más hambre. El cerebro en modo organización y cierre.',
+    entreno:  'Fuerza moderada, yoga, natación, pilates. El cuerpo sigue respondiendo bien pero prefiere consistencia sobre intensidad.',
+    nutri:    'Magnesio (reduce síntomas PMS), proteína, carbos complejos. Chocolate negro si hay antojos.',
+    hacer:    'Completar proyectos, organizar, trabajo profundo individual, cerrar pendientes.',
+    evitar:   'Iniciar demasiadas cosas nuevas — esta fase pide terminar, no empezar.',
+  },
+  'Lútea Tardía': {
+    kw:       'soltar · cuidado · preparación',
+    energia:  'Estrógeno y progesterona bajan. Puede haber sensibilidad emocional, fatiga o niebla mental. Tu sistema nervioso pide menos estímulos.',
+    cuerpo:   'El cuerpo prepara la menstruación. Posibles síntomas PMS: retención de líquidos, sensibilidad en senos, cambios de humor.',
+    entreno:  'Movimiento suave: caminata, yoga restaurativo, stretching. Escucha a tu cuerpo — si pide descanso, descansa.',
+    nutri:    'Magnesio, vitamina B6, calcio. Reduce sodio y cafeína para minimizar retención. Comida cálida y reconfortante.',
+    hacer:    'Ritual de cierre de semana, reflexión, limpiar espacios, reducir agenda social.',
+    evitar:   'Tomar decisiones grandes, compararte, sobrecargarte de compromisos.',
+  },
+};
+
 function cicloKeywords(fase) {
-  const f = (fase || '').toLowerCase();
-  if (f.includes('menstrual'))  return 'descanso · hierro · restauración';
-  if (f.includes('folicular'))  return 'energía nueva · creatividad · inicio';
-  if (f.includes('ovul'))       return 'pico de energía · conexión · fuerza';
-  if (f.includes('lútea') || f.includes('lutea')) return 'enfoque · orden · profundidad';
-  return '';
+  return (_GUIA_CICLO[fase] || {}).kw || '';
 }
 
 // ── main render ──────────────────────────
@@ -173,35 +216,51 @@ async function renderSemanaPerfecta() {
 
 function renderDynamicCard(fase, wo1, wo2, hour) {
   const card = document.getElementById('bot-dynamic-card');
-  const faseL = (fase || '').toLowerCase();
-  let titulo, subtitulo;
+  const guia = _GUIA_CICLO[fase];
 
-  if (faseL.includes('menstrual') || faseL.includes('regla')) {
-    titulo = 'Hoy toca descanso activo';
-    subtitulo = 'Prioriza descanso, hierro y movilidad suave. No pasa nada si bajas la intensidad.';
-  } else if (faseL.includes('ovul')) {
-    titulo = 'Energía alta — buen día para fuerza';
-    subtitulo = 'Tu energía probablemente está en su punto más alto. Aprovéchalo.';
-  } else if (wo1 || wo2) {
-    const woStr = [wo1, wo2].filter(Boolean).join(' + ');
-    titulo = `Hoy: ${woStr}`;
-    subtitulo = hour < 12
-      ? 'Recuerda nutrición pre-entreno. Carbos + proteína antes.'
-      : hour < 17
-        ? '¿Ya entrenaste? Recuperación: proteína en los próximos 45 min.'
-        : 'Noche de entrenamiento. Cena ligera después.';
-  } else if (faseL.includes('lútea') || faseL.includes('lutea')) {
-    titulo = 'Fase lútea — energía hacia adentro';
-    subtitulo = 'Buen momento para trabajo profundo, orden y proyectos creativos.';
+  if (guia) {
+    // Reporte completo del ciclo
+    const woHoy = [wo1, wo2].filter(Boolean).join(' + ');
+    const entrenoBadge = woHoy
+      ? `<div style="margin-top:8px;padding:5px 8px;background:var(--bg);border-radius:6px;font-size:11px;color:var(--text2);">🏋️ Hoy: <strong style="color:var(--text);">${woHoy}</strong></div>`
+      : '';
+    card.innerHTML = `
+      <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">Tu cuerpo hoy</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:8px;">${guia.energia}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Entreno</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.4;">${guia.entreno}</div>
+        </div>
+        <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Nutrición</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.4;">${guia.nutri}</div>
+        </div>
+        <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
+          <div style="font-size:9px;color:var(--mauve);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Haz esto</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.4;">${guia.hacer}</div>
+        </div>
+        <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Evita</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.4;">${guia.evitar}</div>
+        </div>
+      </div>
+      ${entrenoBadge}
+    `;
   } else {
-    titulo = 'Sin entrenamiento planificado hoy';
-    subtitulo = 'Dile al asistente qué vas a hacer para actualizar el planner.';
+    // Sin ciclo: muestra info de entreno
+    const woStr = [wo1, wo2].filter(Boolean).join(' + ');
+    const titulo = woStr ? `Hoy: ${woStr}` : 'Sin entrenamiento planificado hoy';
+    const subtitulo = woStr
+      ? (hour < 12 ? 'Carbos + proteína antes del entreno.'
+        : hour < 17 ? '¿Ya entrenaste? Proteína en los próximos 45 min.'
+        : 'Cena ligera después del entreno nocturno.')
+      : 'Dile al asistente qué vas a hacer para actualizar el planner.';
+    card.innerHTML = `
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">${titulo}</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.5;">${subtitulo}</div>
+    `;
   }
-
-  card.innerHTML = `
-    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">${titulo}</div>
-    <div style="font-size:12px;color:var(--text2);line-height:1.5;">${subtitulo}</div>
-  `;
 }
 
 function renderCalStats() {
