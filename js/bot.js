@@ -19,14 +19,14 @@ function openBotModule(mod) {
 // ── luna ─────────────────────────────────
 
 const _GUIA_LUNA = {
-  'Luna nueva':        { arquetipo: 'La Hechicera',  significado: 'Fin de un ciclo, comienzo de otro. Momento para retirarte al interior y sentir sin producir.', ritual: 'diario, meditación, baño con sales, descansar sin culpa' },
-  'Luna creciente':    { arquetipo: 'La Doncella',   significado: 'Después de la quietud llega la renovación. Momento ideal para sembrar intenciones e iniciar proyectos.', ritual: 'escribir objetivos, comenzar nuevos hábitos, caminar en la naturaleza' },
-  'Cuarto creciente':  { arquetipo: 'La Doncella',   significado: 'La energía sigue creciendo. Buen momento para dar forma a los proyectos que iniciaste y avanzar con determinación.', ritual: 'organizar metas, conectar con lo que quieres construir' },
-  'Gibosa creciente':  { arquetipo: 'La Madre',      significado: 'La energía alcanza su plenitud. La Madre crea, cuida, enseña y comparte — más allá de la maternidad biológica.', ritual: 'reuniones con amigas, crear arte, expresar gratitud, conectar' },
-  'Luna llena':        { arquetipo: 'La Madre',      significado: 'Máxima expansión. Momento para celebrar, crear, convivir y compartir lo que llevas cultivando.', ritual: 'círculos de luna, danza, música, agradecer lo que ha florecido' },
-  'Gibosa menguante':  { arquetipo: 'La Sabia',      significado: 'La energía empieza a dirigirse hacia adentro. Momento de preguntarte: ¿qué quiero seguir cultivando?', ritual: 'limpiar espacios, ordenar, escribir lo que deseas soltar' },
-  'Cuarto menguante':  { arquetipo: 'La Sabia',      significado: 'Tiempo de soltar lo que ya cumplió su ciclo. La Sabia no se aferra — sabe que dejar ir es parte del crecimiento.', ritual: 'ordenar la casa, cerrar ciclos, perdonar, compostar' },
-  'Luna menguante':    { arquetipo: 'La Sabia',      significado: 'La Luna se acerca a su oscuridad. Prepárate para el descanso y la renovación que viene.', ritual: 'meditación, descanso, baño ritual, agradecer el ciclo que termina' },
+  'Luna nueva':        { arquetipo: 'La Hechicera',  significado: 'Fin de un ciclo, comienzo de otro. Momento para retirarte al interior y sentir sin producir.', ritual: 'Diario, meditación, baño con sales, descansar sin culpa' },
+  'Luna creciente':    { arquetipo: 'La Doncella',   significado: 'Después de la quietud llega la renovación. Momento ideal para sembrar intenciones e iniciar proyectos.', ritual: 'Escribir objetivos, comenzar nuevos hábitos, caminar en la naturaleza' },
+  'Cuarto creciente':  { arquetipo: 'La Doncella',   significado: 'La energía sigue creciendo. Buen momento para dar forma a los proyectos que iniciaste y avanzar con determinación.', ritual: 'Organizar metas, conectar con lo que quieres construir' },
+  'Gibosa creciente':  { arquetipo: 'La Madre',      significado: 'La energía alcanza su plenitud. La Madre crea, cuida, enseña y comparte — más allá de la maternidad biológica.', ritual: 'Reuniones con amigas, crear arte, expresar gratitud, conectar' },
+  'Luna llena':        { arquetipo: 'La Madre',      significado: 'Máxima expansión. Momento para celebrar, crear, convivir y compartir lo que llevas cultivando.', ritual: 'Círculos de luna, danza, música, agradecer lo que ha florecido' },
+  'Gibosa menguante':  { arquetipo: 'La Sabia',      significado: 'La energía empieza a dirigirse hacia adentro. Momento de preguntarte: ¿qué quiero seguir cultivando?', ritual: 'Limpiar espacios, ordenar, escribir lo que deseas soltar' },
+  'Cuarto menguante':  { arquetipo: 'La Sabia',      significado: 'Tiempo de soltar lo que ya cumplió su ciclo. La Sabia no se aferra — sabe que dejar ir es parte del crecimiento.', ritual: 'Ordenar la casa, cerrar ciclos, perdonar, compostar' },
+  'Luna menguante':    { arquetipo: 'La Sabia',      significado: 'La Luna se acerca a su oscuridad. Prepárate para el descanso y la renovación que viene.', ritual: 'Meditación, descanso, baño ritual, agradecer el ciclo que termina' },
 };
 
 function lunaFase() {
@@ -64,7 +64,7 @@ function calcularCiclo(ultimoInicio, duracionPromedio) {
 const _GUIA_CICLO = {
   'Menstrual': {
     icon:     'droplets',
-    kw:       'descanso · hierro · restauración',
+    kw:       'Descanso · hierro · restauración',
     energia:  'Energía baja y hacia adentro. Tu cuerpo está liberando y renovando. No es flojera — es biología.',
     cuerpo:   'El útero se contrae, los niveles de estrógeno y progesterona están en su punto más bajo. Máxima sensibilidad al dolor y al estrés.',
     entreno:  'Yoga suave, caminata, movilidad, stretching. Nada de HIIT ni cargas máximas.',
@@ -75,7 +75,7 @@ const _GUIA_CICLO = {
   },
   'Folicular': {
     icon:     'sprout',
-    kw:       'energía nueva · creatividad · inicio',
+    kw:       'Energía nueva · creatividad · inicio',
     energia:  'El estrógeno sube progresivamente. Claridad mental, optimismo, ganas de hacer. Mejor momento para aprender cosas nuevas.',
     cuerpo:   'Los folículos crecen, el endometrio se reconstruye. Aumento de dopamina y serotonina — buen humor natural.',
     entreno:  'Gym, fuerza, HIIT, cardio. Tu cuerpo responde muy bien al entrenamiento en esta fase.',
@@ -86,7 +86,7 @@ const _GUIA_CICLO = {
   },
   'Ovulación': {
     icon:     'flower-2',
-    kw:       'pico de energía · conexión · fuerza',
+    kw:       'Pico de energía · conexión · fuerza',
     energia:  'Pico hormonal: estrógeno y testosterona en su máximo. Energía, atractivo, elocuencia y confianza en su punto más alto.',
     cuerpo:   'El óvulo se libera. Tu cerebro procesa lenguaje más rápido, tienes más fuerza física y mayor tolerancia al dolor.',
     entreno:  'Tu momento de máximo rendimiento. Levantamientos pesados, HIIT intenso, clases de alta demanda. Aprovéchalo.',
@@ -97,7 +97,7 @@ const _GUIA_CICLO = {
   },
   'Lútea Temprana': {
     icon:     'target',
-    kw:       'enfoque · orden · profundidad',
+    kw:       'Enfoque · orden · profundidad',
     energia:  'La progesterona sube. Energía más hacia adentro, pero aún estable. Ideal para trabajo profundo y atención a los detalles.',
     cuerpo:   'La temperatura corporal sube ~0.5°C. Metabolismo más acelerado — puedes sentir más hambre. El cerebro en modo organización y cierre.',
     entreno:  'Fuerza moderada, yoga, natación, pilates. El cuerpo sigue respondiendo bien pero prefiere consistencia sobre intensidad.',
@@ -108,7 +108,7 @@ const _GUIA_CICLO = {
   },
   'Lútea Tardía': {
     icon:     'cloud',
-    kw:       'soltar · cuidado · preparación',
+    kw:       'Soltar · cuidado · preparación',
     energia:  'Estrógeno y progesterona bajan. Puede haber sensibilidad emocional, fatiga o niebla mental. Tu sistema nervioso pide menos estímulos.',
     cuerpo:   'El cuerpo prepara la menstruación. Posibles síntomas PMS: retención de líquidos, sensibilidad en senos, cambios de humor.',
     entreno:  'Movimiento suave: caminata, yoga restaurativo, stretching. Escucha a tu cuerpo — si pide descanso, descansa.',
@@ -160,7 +160,7 @@ async function renderBotHome() {
   renderDynamicCard(cicloFase, cicloDia, wo.wo1 || '', wo.wo2 || '', hour);
   await renderMenuDia();
   await renderSemanaPerfecta();
-  renderCalStats();
+  await renderCalStats();
   renderFinStats();
 }
 
@@ -380,10 +380,28 @@ function renderDynamicCard(fase, diaCiclo, wo1, wo2, hour) {
   }
 }
 
-function renderCalStats() {
-  document.getElementById('bot-cal-val').textContent = '—';
-  document.getElementById('bot-cal-sub').textContent = 'Registra desde el asistente';
-  document.getElementById('bot-cal-fill').style.width = '0%';
+async function renderCalStats() {
+  const hoy = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); })();
+  try {
+    const doc = await userCol().doc('nutricion_hoy').get();
+    if (doc.exists && doc.data().fecha === hoy) {
+      const { total } = doc.data();
+      const kcal = total?.calorias || 0;
+      const objetivo = 1600;
+      const pct = Math.min(100, Math.round(kcal / objetivo * 100));
+      document.getElementById('bot-cal-val').textContent = kcal + ' kcal';
+      document.getElementById('bot-cal-sub').textContent = `${pct}% del objetivo (${objetivo} kcal)`;
+      document.getElementById('bot-cal-fill').style.width = pct + '%';
+    } else {
+      document.getElementById('bot-cal-val').textContent = '—';
+      document.getElementById('bot-cal-sub').textContent = 'Registra comidas con el asistente';
+      document.getElementById('bot-cal-fill').style.width = '0%';
+    }
+  } catch(e) {
+    document.getElementById('bot-cal-val').textContent = '—';
+    document.getElementById('bot-cal-sub').textContent = 'Registra comidas con el asistente';
+    document.getElementById('bot-cal-fill').style.width = '0%';
+  }
 }
 
 function renderFinStats() {
