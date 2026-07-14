@@ -10,8 +10,8 @@ const MES_ES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto',
 const MES_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 let MES=MES_ES;
 const ICAL_URL='https://calendar.google.com/calendar/ical/f.perezserna%40gmail.com/private-00450f29f66ba6d8112c19e9435f65b5/basic.ics';
-const WE={Tennis:'','E. Club':'',Swimming:'',Pilates:'',Gym:'',Yoga:'',Box:'','Free Diving':'',Climbing:'',Rest:'',Otro:''};
-const HE={Meditar:'',Leer:'',Stretching:'',Escribir:'',Otro:''};
+const WE={'gym':'','pilates':'','natación':'','equitación':'','yoga':'','tennis':'','padel':'','escalar':'','apnea':'','rutina en casa':'','rutina casa a':'','rutina casa b':''};
+const HE={'escribir':'','gratitud':'','leer':'','meditar':'','practicar violin':'','suplementos':'','dormirse temprano':'','dormir 8 horas':'','tomar agua':''};
 const DW={0:{wo1:'',wo2:'',ha1:'',ha2:''},1:{wo1:'',wo2:'',ha1:'',ha2:''},2:{wo1:'',wo2:'',ha1:'',ha2:''},3:{wo1:'',wo2:'',ha1:'',ha2:''},4:{wo1:'',wo2:'',ha1:'',ha2:''},5:{wo1:'',wo2:'',ha1:'',ha2:''},6:{wo1:'',wo2:'',ha1:'',ha2:''}};
 const GCAL_ID='768734489364-vtacuutjbop0h19kj85qgoeodgd4dseq.apps.googleusercontent.com';
 
@@ -70,7 +70,7 @@ function tasksForDay(di){
   const currentWeekIds=new Set((weekData.tasks||[]).map(t=>t.id));
   const dayDate=weekDays[di];
   const carryTasks=pendingTasks
-    .filter(p=>!currentWeekIds.has(p.id)&&p.addedDate<=dk(dayDate)&&!p.deleted&&!p.done)
+    .filter(p=>!currentWeekIds.has(p.id)&&p.addedDate<=dk(dayDate)&&!p.deleted&&(!p.done||p.doneDate===dk(dayDate)))
     .map(p=>({id:p.id,text:p.text,addedOnDay:-1,fromPrevWeek:true,doneOnDay:p.done?0:undefined,...(p.cat?{cat:p.cat}:{})}));
   return [...carryTasks,...weekTasks];
 }

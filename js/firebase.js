@@ -195,7 +195,7 @@ async function loadPendingTasks(){
   try{
     const snap=await userCol().doc('pending_tasks').get();
     if(snap.exists){
-      pendingTasks=(snap.data().tasks||[]).filter(t=>!t.doneDate&&!t.deletedDate);
+      pendingTasks=(snap.data().tasks||[]).filter(t=>!t.deletedDate);
     }
   }catch(e){console.log('No pending tasks');}
 }
