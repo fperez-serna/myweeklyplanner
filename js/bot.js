@@ -131,6 +131,7 @@ async function renderBotHome() {
 
   // Ciclo — doc solo tiene ultimoInicio y duracionPromedio, fase se calcula
   let cicloFase = '';
+  let cicloDia = 0;
   try {
     const cicloDoc = await userCol().doc('ciclo').get();
     if (cicloDoc.exists) {
@@ -138,6 +139,7 @@ async function renderBotHome() {
       if (c.ultimoInicio) {
         const { diaCiclo, fase } = calcularCiclo(c.ultimoInicio, c.duracionPromedio);
         cicloFase = fase;
+        cicloDia = diaCiclo;
         document.getElementById('bot-meta').textContent = `Día ${diaCiclo} del ciclo · ${fase}`;
         const kw = cicloKeywords(fase);
         const kwEl = document.getElementById('bot-ciclo-kw');
@@ -147,7 +149,7 @@ async function renderBotHome() {
   } catch(e) { console.warn('ciclo:', e); }
 
   renderLuna();
-  renderDynamicCard(cicloFase, wo.wo1 || '', wo.wo2 || '', hour);
+  renderDynamicCard(cicloFase, cicloDia, wo.wo1 || '', wo.wo2 || '', hour);
   await renderSemanaPerfecta();
   renderCalStats();
   renderFinStats();
@@ -214,27 +216,37 @@ async function renderSemanaPerfecta() {
   `;
 }
 
-function renderDynamicCard(fase, wo1, wo2, hour) {
+function renderDynamicCard(fase, diaCiclo, wo1, wo2, hour) {
   const card = document.getElementById('bot-dynamic-card');
   const guia = _GUIA_CICLO[fase];
+  const woHoy = [wo1, wo2].filter(Boolean).join(' + ');
 
   if (guia) {
-    // Reporte completo del ciclo
-    const woHoy = [wo1, wo2].filter(Boolean).join(' + ');
-    const entrenoBadge = woHoy
-      ? `<div style="margin-top:8px;padding:5px 8px;background:var(--bg);border-radius:6px;font-size:11px;color:var(--text2);">🏋️ Hoy: <strong style="color:var(--text);">${woHoy}</strong></div>`
-      : '';
+    // Nutrición: si hay entreno hoy, adapta el consejo
+    let nutriTexto = guia.nutri;
+    if (woHoy) {
+      nutriTexto = hour < 14
+        ? `Pre-entreno: carbos + proteína 1-2h antes. Post: proteína en 45 min. ${guia.nutri}`
+        : `Post-entreno: proteína dentro de 45 min. ${guia.nutri}`;
+    }
+
+    const woRow = woHoy ? `
+      <div style="display:flex;align-items:center;gap:7px;margin-top:8px;padding:6px 8px;background:var(--bg);border-radius:8px;border:0.5px solid var(--border);">
+        <i data-lucide="dumbbell" style="width:14px;height:14px;stroke:var(--mauve);stroke-width:2;flex-shrink:0;"></i>
+        <span style="font-size:12px;color:var(--text);">${woHoy}</span>
+      </div>` : '';
+
     card.innerHTML = `
-      <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">Tu cuerpo hoy</div>
+      <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Tu cuerpo hoy · Día ${diaCiclo} · ${fase}</div>
       <div style="font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:8px;">${guia.energia}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
         <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Entreno</div>
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Entreno fase</div>
           <div style="font-size:11px;color:var(--text2);line-height:1.4;">${guia.entreno}</div>
         </div>
         <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
           <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Nutrición</div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.4;">${guia.nutri}</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.4;">${nutriTexto}</div>
         </div>
         <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
           <div style="font-size:9px;color:var(--mauve);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Haz esto</div>
@@ -245,21 +257,24 @@ function renderDynamicCard(fase, wo1, wo2, hour) {
           <div style="font-size:11px;color:var(--text2);line-height:1.4;">${guia.evitar}</div>
         </div>
       </div>
-      ${entrenoBadge}
+      ${woRow}
     `;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   } else {
     // Sin ciclo: muestra info de entreno
-    const woStr = [wo1, wo2].filter(Boolean).join(' + ');
-    const titulo = woStr ? `Hoy: ${woStr}` : 'Sin entrenamiento planificado hoy';
+    const woStr = woHoy || '';
+    const titulo = woStr ? woStr : 'Sin entrenamiento planificado hoy';
     const subtitulo = woStr
       ? (hour < 12 ? 'Carbos + proteína antes del entreno.'
-        : hour < 17 ? '¿Ya entrenaste? Proteína en los próximos 45 min.'
+        : hour < 17 ? 'Proteína en los próximos 45 min.'
         : 'Cena ligera después del entreno nocturno.')
       : 'Dile al asistente qué vas a hacer para actualizar el planner.';
+    const woIcon = woStr ? `<i data-lucide="dumbbell" style="width:14px;height:14px;stroke:var(--mauve);stroke-width:2;vertical-align:middle;margin-right:5px;"></i>` : '';
     card.innerHTML = `
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">${titulo}</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">${woIcon}${titulo}</div>
       <div style="font-size:12px;color:var(--text2);line-height:1.5;">${subtitulo}</div>
     `;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   }
 }
 
