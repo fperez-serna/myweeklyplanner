@@ -127,8 +127,6 @@ async function renderBotHome() {
   const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const nombre = setupCfg?.name ? setupCfg.name.split(' ')[0] : '';
 
-  const saludo = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
-  document.getElementById('bot-greeting').textContent = `${saludo}${nombre ? ', ' + nombre : ''}`;
   document.getElementById('bot-date').textContent = `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]}`;
 
   const di = dayIdx();
@@ -155,6 +153,7 @@ async function renderBotHome() {
 
   renderLuna();
   renderDynamicCard(cicloFase, cicloDia, wo.wo1 || '', wo.wo2 || '', hour);
+  await renderMenuDia();
   await renderSemanaPerfecta();
   renderCalStats();
   renderFinStats();
@@ -175,6 +174,44 @@ function renderLuna() {
       ${guia.ritual ? `<div style="font-size:10px;color:var(--text3);margin-top:3px;">Ritual: ${guia.ritual}</div>` : ''}
     </div>
   `;
+}
+
+async function renderMenuDia() {
+  const el = document.getElementById('bot-menu-dia');
+  if (!el) return;
+  const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const hoy = dias[new Date().getDay()];
+  let menuTexto = null;
+  try {
+    const doc = await userCol().doc('menu_semana').get();
+    if (doc.exists) menuTexto = doc.data().menu || null;
+  } catch(e) {}
+
+  if (!menuTexto) { el.innerHTML = ''; return; }
+
+  // Extrae la sección del día actual del texto libre
+  const nombresDia = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+  const regex = new RegExp(`(${nombresDia.join('|')})\\s*:?\\s*`, 'gi');
+  const partes = menuTexto.split(regex).filter(s => s.trim());
+  let seccionHoy = null;
+  for (let i = 0; i < partes.length; i++) {
+    if (partes[i].trim().toLowerCase() === hoy.toLowerCase() && partes[i + 1]) {
+      seccionHoy = partes[i + 1].trim();
+      break;
+    }
+  }
+
+  const contenido = seccionHoy || menuTexto.slice(0, 280);
+  el.innerHTML = `
+    <div style="border-radius:12px;padding:1rem;background:var(--bg2);border:0.5px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+        <i data-lucide="utensils" style="width:12px;height:12px;stroke:var(--teal);stroke-width:2;flex-shrink:0;"></i>
+        <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Menú · ${hoy}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;">${contenido}</div>
+    </div>
+  `;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 async function renderSemanaPerfecta() {
@@ -306,17 +343,24 @@ function renderCalStats() {
 
 function renderFinStats() {
   try {
-    const gastosData = typeof getGastosResumenMes === 'function' ? getGastosResumenMes() : null;
-    if (gastosData && gastosData.total != null) {
-      const pct = gastosData.presupuesto > 0 ? Math.min(100, Math.round(gastosData.total / gastosData.presupuesto * 100)) : 0;
-      const fmt = n => '$' + Number(n).toLocaleString('es-MX', { maximumFractionDigits: 0 });
-      document.getElementById('bot-fin-val').textContent = fmt(gastosData.total);
-      document.getElementById('bot-fin-sub').textContent = `de ${fmt(gastosData.presupuesto)} · ${pct}%`;
-      document.getElementById('bot-fin-fill').style.width = pct + '%';
-      if (pct > 85) document.getElementById('bot-fin-fill').style.background = 'var(--mauve)';
+    const fmt = n => '$' + Number(n).toLocaleString('es-MX', { maximumFractionDigits: 0 });
+
+    // Total semanal: suma todos los gastos de weekData (bot + WP directo)
+    let totalSemana = 0;
+    if (weekData && weekData.gastos) {
+      Object.values(weekData.gastos).forEach(dayArr => {
+        if (Array.isArray(dayArr)) dayArr.forEach(g => { totalSemana += Number(g.monto) || 0; });
+      });
+    }
+
+    if (totalSemana > 0) {
+      document.getElementById('bot-fin-val').textContent = fmt(totalSemana);
+      document.getElementById('bot-fin-sub').textContent = 'gastado esta semana';
+      document.getElementById('bot-fin-fill').style.width = '100%';
     } else {
-      document.getElementById('bot-fin-val').textContent = '—';
-      document.getElementById('bot-fin-sub').textContent = 'Abre Presupuesto para ver';
+      document.getElementById('bot-fin-val').textContent = '$0';
+      document.getElementById('bot-fin-sub').textContent = 'sin gastos esta semana';
+      document.getElementById('bot-fin-fill').style.width = '0%';
     }
   } catch(e) {
     document.getElementById('bot-fin-val').textContent = '—';
