@@ -1,4 +1,4 @@
-const CACHE_NAME = 'weekly-planner-v8';
+const CACHE_NAME = 'weekly-planner-v9';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -22,8 +22,9 @@ self.addEventListener('fetch', e => {
     return;
   }
   
-  // For everything else, try network then cache
+  // JS/CSS: bypass HTTP cache to always get latest, fallback to SW cache
+  const isScript = url.pathname.endsWith('.js') || url.pathname.endsWith('.css');
   e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
+    fetch(e.request, isScript ? { cache: 'no-cache' } : {}).catch(() => caches.match(e.request))
   );
 });
