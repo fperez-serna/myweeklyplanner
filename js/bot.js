@@ -328,35 +328,35 @@ function renderDynamicCard(fase, diaCiclo, wo1, wo2, hour) {
         <i data-lucide="${guia.icon}" style="width:14px;height:14px;stroke:var(--mauve);stroke-width:1.75;flex-shrink:0;"></i>
         <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Tu cuerpo hoy · Día ${diaCiclo} · ${fase}</span>
       </div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px;">${guia.energia}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div style="padding:10px;background:var(--bg);border-radius:8px;">
-          <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;">
+      <div style="font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:12px;">${guia.energia}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="padding:12px 14px;background:var(--bg);border-radius:8px;">
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:8px;">
             <i data-lucide="dumbbell" style="width:10px;height:10px;stroke:var(--text3);stroke-width:2;flex-shrink:0;"></i>
             <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;">Entreno fase</span>
           </div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.5;">${guia.entreno}</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.65;">${guia.entreno}</div>
         </div>
-        <div style="padding:10px;background:var(--bg);border-radius:8px;">
-          <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;">
+        <div style="padding:12px 14px;background:var(--bg);border-radius:8px;">
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:8px;">
             <i data-lucide="apple" style="width:10px;height:10px;stroke:var(--text3);stroke-width:2;flex-shrink:0;"></i>
             <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;">Nutrición</span>
           </div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.5;">${nutriTexto}</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.65;">${nutriTexto}</div>
         </div>
-        <div style="padding:10px;background:var(--bg);border-radius:8px;">
-          <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;">
+        <div style="padding:12px 14px;background:var(--bg);border-radius:8px;">
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:8px;">
             <i data-lucide="list-todo" style="width:10px;height:10px;stroke:var(--mauve);stroke-width:2;flex-shrink:0;"></i>
             <span style="font-size:9px;color:var(--mauve);text-transform:uppercase;letter-spacing:.05em;">Haz esto</span>
           </div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.5;">${guia.hacer}</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.65;">${guia.hacer}</div>
         </div>
-        <div style="padding:10px;background:var(--bg);border-radius:8px;">
-          <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;">
+        <div style="padding:12px 14px;background:var(--bg);border-radius:8px;">
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:8px;">
             <i data-lucide="ban" style="width:10px;height:10px;stroke:var(--text3);stroke-width:2;flex-shrink:0;"></i>
             <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;">Evita</span>
           </div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.5;">${guia.evitar}</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.65;">${guia.evitar}</div>
         </div>
       </div>
       ${woRow}
