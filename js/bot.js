@@ -45,12 +45,28 @@ function lunaFase() {
 
 // ── ciclo ────────────────────────────────
 
+function calcularCiclo(ultimoInicio, duracionPromedio) {
+  const dur = duracionPromedio || 28;
+  const inicio = new Date(ultimoInicio + 'T00:00:00');
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const diaCiclo = Math.floor((hoy - inicio) / 86400000) + 1;
+  let fase;
+  if      (diaCiclo <= 5)   fase = 'Menstrual';
+  else if (diaCiclo <= 13)  fase = 'Folicular';
+  else if (diaCiclo <= 16)  fase = 'Ovulación';
+  else if (diaCiclo <= 23)  fase = 'Lútea Temprana';
+  else if (diaCiclo <= dur) fase = 'Lútea Tardía';
+  else                      fase = 'Lútea Tardía';
+  return { diaCiclo, fase };
+}
+
 function cicloKeywords(fase) {
   const f = (fase || '').toLowerCase();
-  if (f.includes('menstrual') || f.includes('regla')) return 'descanso · hierro · restauración';
-  if (f.includes('folicular'))                         return 'energía nueva · creatividad · inicio';
-  if (f.includes('ovul'))                              return 'pico de energía · conexión · fuerza';
-  if (f.includes('lútea') || f.includes('lutea'))      return 'enfoque · orden · profundidad';
+  if (f.includes('menstrual'))  return 'descanso · hierro · restauración';
+  if (f.includes('folicular'))  return 'energía nueva · creatividad · inicio';
+  if (f.includes('ovul'))       return 'pico de energía · conexión · fuerza';
+  if (f.includes('lútea') || f.includes('lutea')) return 'enfoque · orden · profundidad';
   return '';
 }
 
@@ -70,16 +86,17 @@ async function renderBotHome() {
   const di = dayIdx();
   const wo = dayWo(di >= 0 ? di : 0);
 
-  // Ciclo (usa userCol — el Firebase del WP)
+  // Ciclo — doc solo tiene ultimoInicio y duracionPromedio, fase se calcula
   let cicloFase = '';
   try {
     const cicloDoc = await userCol().doc('ciclo').get();
     if (cicloDoc.exists) {
       const c = cicloDoc.data();
-      cicloFase = c.fase || '';
-      if (c.dia_ciclo) {
-        document.getElementById('bot-meta').textContent = `Día ${c.dia_ciclo} · ${cicloFase}`;
-        const kw = cicloKeywords(cicloFase);
+      if (c.ultimoInicio) {
+        const { diaCiclo, fase } = calcularCiclo(c.ultimoInicio, c.duracionPromedio);
+        cicloFase = fase;
+        document.getElementById('bot-meta').textContent = `Día ${diaCiclo} del ciclo · ${fase}`;
+        const kw = cicloKeywords(fase);
         const kwEl = document.getElementById('bot-ciclo-kw');
         if (kwEl && kw) kwEl.textContent = kw;
       }
