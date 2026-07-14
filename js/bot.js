@@ -385,12 +385,14 @@ async function renderCalStats() {
   try {
     const doc = await userCol().doc('nutricion_hoy').get();
     if (doc.exists && doc.data().fecha === hoy) {
-      const { total } = doc.data();
-      const kcal = total?.calorias || 0;
-      const objetivo = 1600;
-      const pct = Math.min(100, Math.round(kcal / objetivo * 100));
+      const d = doc.data();
+      const kcal = d.total?.calorias || 0;
+      const objetivo = d.objetivo || 0;
+      const pct = objetivo > 0 ? Math.min(100, Math.round(kcal / objetivo * 100)) : 0;
       document.getElementById('bot-cal-val').textContent = kcal + ' kcal';
-      document.getElementById('bot-cal-sub').textContent = `${pct}% del objetivo (${objetivo} kcal)`;
+      document.getElementById('bot-cal-sub').textContent = objetivo
+        ? `${pct}% del objetivo · Meta: ${objetivo} kcal`
+        : `${kcal} kcal registradas hoy`;
       document.getElementById('bot-cal-fill').style.width = pct + '%';
     } else {
       document.getElementById('bot-cal-val').textContent = '—';
