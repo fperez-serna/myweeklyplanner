@@ -175,8 +175,8 @@ function renderLuna() {
     <span style="font-size:20px;line-height:1;flex-shrink:0;">${luna.icon}</span>
     <div style="flex:1;min-width:0;">
       <div style="font-size:12px;font-weight:600;color:var(--text);">${luna.nombre}${guia.arquetipo ? ' · <span style="font-weight:400;">' + guia.arquetipo + '</span>' : ''}</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4;">${guia.significado || ''}</div>
-      ${guia.ritual ? `<div style="font-size:10px;color:var(--text3);margin-top:3px;">Ritual: ${guia.ritual}</div>` : ''}
+      <div style="font-size:11px;color:var(--text2);margin-top:3px;line-height:1.5;">${guia.significado || ''}</div>
+      ${guia.ritual ? `<div style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.45;">Ritual: ${guia.ritual}</div>` : ''}
     </div>
   `;
 }
@@ -207,15 +207,21 @@ async function renderMenuDia() {
     if (!seccionHoy) seccionHoy = menuTexto.slice(0, 300);
   }
 
+  // Time-of-day filtering: show only meals still ahead
+  const nowH = new Date().getHours() + new Date().getMinutes() / 60;
+  const mostrarDesayuno = nowH < 12;
+  const mostrarComida   = nowH < 15.5;
+  // Cena siempre se muestra
+
   if (seccionHoy) {
     // Menú real guardado
     el.innerHTML = `
       <div style="border-radius:12px;padding:1rem;background:var(--bg2);border:0.5px solid var(--border);">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
           <i data-lucide="utensils" style="width:12px;height:12px;stroke:var(--teal);stroke-width:2;flex-shrink:0;"></i>
           <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Menú · ${hoy}</span>
         </div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;">${seccionHoy}</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.65;white-space:pre-wrap;">${seccionHoy}</div>
       </div>
     `;
   } else {
@@ -223,28 +229,30 @@ async function renderMenuDia() {
     const fase = document.getElementById('bot-meta')?.textContent?.split('·')[1]?.trim() || '';
     const guia = _GUIA_CICLO[fase];
     const sugerencia = guia?.menu;
+
+    const mealRow = (label, texto) => `
+      <div style="display:flex;gap:10px;font-size:11px;color:var(--text2);line-height:1.5;">
+        <span style="color:var(--text3);min-width:68px;flex-shrink:0;">${label}</span><span>${texto}</span>
+      </div>`;
+
+    const meals = sugerencia ? [
+      mostrarDesayuno ? mealRow('Desayuno', sugerencia.desayuno) : '',
+      mostrarComida   ? mealRow('Comida',   sugerencia.comida)   : '',
+                        mealRow('Cena',     sugerencia.cena),
+    ].join('') : '';
+
     el.innerHTML = `
       <div style="border-radius:12px;padding:1rem;background:var(--bg2);border:0.5px solid var(--border);opacity:.85;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <div style="display:flex;align-items:center;gap:6px;">
             <i data-lucide="utensils" style="width:12px;height:12px;stroke:var(--text3);stroke-width:2;flex-shrink:0;"></i>
             <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Menú · ${hoy}</span>
           </div>
           <span style="font-size:10px;color:var(--text3);">Dile al bot "genera el menú"</span>
         </div>
-        ${sugerencia ? `
-        <div style="font-size:10px;color:var(--text3);margin-bottom:6px;font-style:italic;">Sugerencia para fase ${fase}:</div>
-        <div style="display:flex;flex-direction:column;gap:4px;">
-          <div style="display:flex;gap:8px;font-size:11px;color:var(--text2);">
-            <span style="color:var(--text3);min-width:64px;">Desayuno</span>${sugerencia.desayuno}
-          </div>
-          <div style="display:flex;gap:8px;font-size:11px;color:var(--text2);">
-            <span style="color:var(--text3);min-width:64px;">Comida</span>${sugerencia.comida}
-          </div>
-          <div style="display:flex;gap:8px;font-size:11px;color:var(--text2);">
-            <span style="color:var(--text3);min-width:64px;">Cena</span>${sugerencia.cena}
-          </div>
-        </div>` : ''}
+        ${meals ? `
+        <div style="font-size:10px;color:var(--text3);margin-bottom:8px;font-style:italic;">Sugerencia por fase ${fase}:</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">${meals}</div>` : ''}
       </div>
     `;
   }
@@ -272,23 +280,23 @@ async function renderSemanaPerfecta() {
   const intencion   = semana.intencionSemanal || '';
 
   el.innerHTML = `
-    <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Semana Perfecta</div>
-    ${intencion ? `<div style="font-size:12px;font-style:italic;color:var(--text2);margin-bottom:8px;line-height:1.4;">"${intencion}"</div>` : ''}
-    <div style="display:flex;flex-direction:column;gap:5px;">
-      <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:var(--mauve);border-radius:8px;">
+    <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Semana Perfecta</div>
+    ${intencion ? `<div style="font-size:12px;font-style:italic;color:var(--text2);margin-bottom:10px;line-height:1.55;">"${intencion}"</div>` : ''}
+    <div style="display:flex;flex-direction:column;gap:7px;">
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:9px 10px;background:var(--mauve);border-radius:8px;">
         <span style="font-size:11px;color:rgba(255,255,255,.7);white-space:nowrap;padding-top:1px;">Ancla</span>
-        <span style="font-size:12px;color:#fff;font-weight:600;flex:1;line-height:1.4;">${ancla}</span>
+        <span style="font-size:12px;color:#fff;font-weight:600;flex:1;line-height:1.5;">${ancla}</span>
       </div>
       ${secundarias.map(n => `
-        <div style="display:flex;align-items:flex-start;gap:8px;padding:5px 8px;background:var(--bg2);border:0.5px solid var(--border);border-radius:8px;">
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--bg2);border:0.5px solid var(--border);border-radius:8px;">
           <span style="font-size:10px;color:var(--text3);white-space:nowrap;padding-top:2px;">2ª</span>
-          <span style="font-size:12px;color:var(--text);flex:1;line-height:1.4;">${n}</span>
+          <span style="font-size:12px;color:var(--text);flex:1;line-height:1.5;">${n}</span>
         </div>
       `).join('')}
       ${semilla.map(n => `
-        <div style="display:flex;align-items:flex-start;gap:8px;padding:4px 8px;border-radius:8px;">
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:5px 10px;border-radius:8px;">
           <span style="font-size:10px;color:var(--text3);white-space:nowrap;padding-top:2px;">·</span>
-          <span style="font-size:11px;color:var(--text2);flex:1;line-height:1.4;">${n}</span>
+          <span style="font-size:11px;color:var(--text2);flex:1;line-height:1.5;">${n}</span>
         </div>
       `).join('')}
     </div>
@@ -316,39 +324,39 @@ function renderDynamicCard(fase, diaCiclo, wo1, wo2, hour) {
       </div>` : '';
 
     card.innerHTML = `
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
         <i data-lucide="${guia.icon}" style="width:14px;height:14px;stroke:var(--mauve);stroke-width:1.75;flex-shrink:0;"></i>
         <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Tu cuerpo hoy · Día ${diaCiclo} · ${fase}</span>
       </div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:8px;">${guia.energia}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-        <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
-          <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px;">${guia.energia}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="padding:10px;background:var(--bg);border-radius:8px;">
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;">
             <i data-lucide="dumbbell" style="width:10px;height:10px;stroke:var(--text3);stroke-width:2;flex-shrink:0;"></i>
             <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;">Entreno fase</span>
           </div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.4;">${guia.entreno}</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.5;">${guia.entreno}</div>
         </div>
-        <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
-          <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">
+        <div style="padding:10px;background:var(--bg);border-radius:8px;">
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;">
             <i data-lucide="apple" style="width:10px;height:10px;stroke:var(--text3);stroke-width:2;flex-shrink:0;"></i>
             <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;">Nutrición</span>
           </div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.4;">${nutriTexto}</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.5;">${nutriTexto}</div>
         </div>
-        <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
-          <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">
+        <div style="padding:10px;background:var(--bg);border-radius:8px;">
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;">
             <i data-lucide="list-todo" style="width:10px;height:10px;stroke:var(--mauve);stroke-width:2;flex-shrink:0;"></i>
             <span style="font-size:9px;color:var(--mauve);text-transform:uppercase;letter-spacing:.05em;">Haz esto</span>
           </div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.4;">${guia.hacer}</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.5;">${guia.hacer}</div>
         </div>
-        <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
-          <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">
+        <div style="padding:10px;background:var(--bg);border-radius:8px;">
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;">
             <i data-lucide="ban" style="width:10px;height:10px;stroke:var(--text3);stroke-width:2;flex-shrink:0;"></i>
             <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;">Evita</span>
           </div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.4;">${guia.evitar}</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.5;">${guia.evitar}</div>
         </div>
       </div>
       ${woRow}
@@ -392,11 +400,11 @@ function renderFinStats() {
 
     if (totalSemana > 0) {
       document.getElementById('bot-fin-val').textContent = fmt(totalSemana);
-      document.getElementById('bot-fin-sub').textContent = 'gastado esta semana';
+      document.getElementById('bot-fin-sub').textContent = 'Gastado esta semana';
       document.getElementById('bot-fin-fill').style.width = '100%';
     } else {
       document.getElementById('bot-fin-val').textContent = '$0';
-      document.getElementById('bot-fin-sub').textContent = 'sin gastos esta semana';
+      document.getElementById('bot-fin-sub').textContent = 'Sin gastos esta semana';
       document.getElementById('bot-fin-fill').style.width = '0%';
     }
   } catch(e) {
