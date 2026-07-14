@@ -63,6 +63,7 @@ function calcularCiclo(ultimoInicio, duracionPromedio) {
 
 const _GUIA_CICLO = {
   'Menstrual': {
+    icon:     'droplets',
     kw:       'descanso · hierro · restauración',
     energia:  'Energía baja y hacia adentro. Tu cuerpo está liberando y renovando. No es flojera — es biología.',
     cuerpo:   'El útero se contrae, los niveles de estrógeno y progesterona están en su punto más bajo. Máxima sensibilidad al dolor y al estrés.',
@@ -72,6 +73,7 @@ const _GUIA_CICLO = {
     evitar:   'Presión por productividad, ejercicio intenso, cafeína en exceso, azúcar refinada.',
   },
   'Folicular': {
+    icon:     'sprout',
     kw:       'energía nueva · creatividad · inicio',
     energia:  'El estrógeno sube progresivamente. Claridad mental, optimismo, ganas de hacer. Mejor momento para aprender cosas nuevas.',
     cuerpo:   'Los folículos crecen, el endometrio se reconstruye. Aumento de dopamina y serotonina — buen humor natural.',
@@ -81,6 +83,7 @@ const _GUIA_CICLO = {
     evitar:   'Sobrecargarte solo porque tienes energía — sigue siendo importante descansar bien.',
   },
   'Ovulación': {
+    icon:     'flower-2',
     kw:       'pico de energía · conexión · fuerza',
     energia:  'Pico hormonal: estrógeno y testosterona en su máximo. Energía, atractivo, elocuencia y confianza en su punto más alto.',
     cuerpo:   'El óvulo se libera. Tu cerebro procesa lenguaje más rápido, tienes más fuerza física y mayor tolerancia al dolor.',
@@ -90,6 +93,7 @@ const _GUIA_CICLO = {
     evitar:   'Aislarte — tu energía social está en su mejor momento.',
   },
   'Lútea Temprana': {
+    icon:     'target',
     kw:       'enfoque · orden · profundidad',
     energia:  'La progesterona sube. Energía más hacia adentro, pero aún estable. Ideal para trabajo profundo y atención a los detalles.',
     cuerpo:   'La temperatura corporal sube ~0.5°C. Metabolismo más acelerado — puedes sentir más hambre. El cerebro en modo organización y cierre.',
@@ -99,6 +103,7 @@ const _GUIA_CICLO = {
     evitar:   'Iniciar demasiadas cosas nuevas — esta fase pide terminar, no empezar.',
   },
   'Lútea Tardía': {
+    icon:     'cloud',
     kw:       'soltar · cuidado · preparación',
     energia:  'Estrógeno y progesterona bajan. Puede haber sensibilidad emocional, fatiga o niebla mental. Tu sistema nervioso pide menos estímulos.',
     cuerpo:   'El cuerpo prepara la menstruación. Posibles síntomas PMS: retención de líquidos, sensibilidad en senos, cambios de humor.',
@@ -237,23 +242,38 @@ function renderDynamicCard(fase, diaCiclo, wo1, wo2, hour) {
       </div>` : '';
 
     card.innerHTML = `
-      <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Tu cuerpo hoy · Día ${diaCiclo} · ${fase}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <i data-lucide="${guia.icon}" style="width:14px;height:14px;stroke:var(--mauve);stroke-width:1.75;flex-shrink:0;"></i>
+        <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Tu cuerpo hoy · Día ${diaCiclo} · ${fase}</span>
+      </div>
       <div style="font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:8px;">${guia.energia}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
         <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Entreno fase</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">
+            <i data-lucide="dumbbell" style="width:10px;height:10px;stroke:var(--text3);stroke-width:2;flex-shrink:0;"></i>
+            <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;">Entreno fase</span>
+          </div>
           <div style="font-size:11px;color:var(--text2);line-height:1.4;">${guia.entreno}</div>
         </div>
         <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Nutrición</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">
+            <i data-lucide="apple" style="width:10px;height:10px;stroke:var(--text3);stroke-width:2;flex-shrink:0;"></i>
+            <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;">Nutrición</span>
+          </div>
           <div style="font-size:11px;color:var(--text2);line-height:1.4;">${nutriTexto}</div>
         </div>
         <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
-          <div style="font-size:9px;color:var(--mauve);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Haz esto</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">
+            <i data-lucide="list-todo" style="width:10px;height:10px;stroke:var(--mauve);stroke-width:2;flex-shrink:0;"></i>
+            <span style="font-size:9px;color:var(--mauve);text-transform:uppercase;letter-spacing:.05em;">Haz esto</span>
+          </div>
           <div style="font-size:11px;color:var(--text2);line-height:1.4;">${guia.hacer}</div>
         </div>
         <div style="padding:7px 8px;background:var(--bg);border-radius:8px;">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Evita</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">
+            <i data-lucide="ban" style="width:10px;height:10px;stroke:var(--text3);stroke-width:2;flex-shrink:0;"></i>
+            <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;">Evita</span>
+          </div>
           <div style="font-size:11px;color:var(--text2);line-height:1.4;">${guia.evitar}</div>
         </div>
       </div>
