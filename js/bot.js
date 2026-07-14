@@ -16,21 +16,34 @@ function openBotModule(mod) {
   showToast('Próximamente: ' + { sp: 'Semana Perfecta', cuerpo: 'Mi Cuerpo', hogar: 'Mi Hogar', fin: 'Finanzas' }[mod]);
 }
 
-// ── helpers ──────────────────────────────
+// ── luna ─────────────────────────────────
+
+const _GUIA_LUNA = {
+  'Luna nueva':        { arquetipo: 'La Hechicera',  significado: 'Fin de un ciclo, comienzo de otro. Momento para retirarte al interior y sentir sin producir.', ritual: 'diario, meditación, baño con sales, descansar sin culpa' },
+  'Luna creciente':    { arquetipo: 'La Doncella',   significado: 'Después de la quietud llega la renovación. Momento ideal para sembrar intenciones e iniciar proyectos.', ritual: 'escribir objetivos, comenzar nuevos hábitos, caminar en la naturaleza' },
+  'Cuarto creciente':  { arquetipo: 'La Doncella',   significado: 'La energía sigue creciendo. Buen momento para dar forma a los proyectos que iniciaste y avanzar con determinación.', ritual: 'organizar metas, conectar con lo que quieres construir' },
+  'Gibosa creciente':  { arquetipo: 'La Madre',      significado: 'La energía alcanza su plenitud. La Madre crea, cuida, enseña y comparte — más allá de la maternidad biológica.', ritual: 'reuniones con amigas, crear arte, expresar gratitud, conectar' },
+  'Luna llena':        { arquetipo: 'La Madre',      significado: 'Máxima expansión. Momento para celebrar, crear, convivir y compartir lo que llevas cultivando.', ritual: 'círculos de luna, danza, música, agradecer lo que ha florecido' },
+  'Gibosa menguante':  { arquetipo: 'La Sabia',      significado: 'La energía empieza a dirigirse hacia adentro. Momento de preguntarte: ¿qué quiero seguir cultivando?', ritual: 'limpiar espacios, ordenar, escribir lo que deseas soltar' },
+  'Cuarto menguante':  { arquetipo: 'La Sabia',      significado: 'Tiempo de soltar lo que ya cumplió su ciclo. La Sabia no se aferra — sabe que dejar ir es parte del crecimiento.', ritual: 'ordenar la casa, cerrar ciclos, perdonar, compostar' },
+  'Luna menguante':    { arquetipo: 'La Sabia',      significado: 'La Luna se acerca a su oscuridad. Prepárate para el descanso y la renovación que viene.', ritual: 'meditación, descanso, baño ritual, agradecer el ciclo que termina' },
+};
 
 function lunaFase() {
   const CICLO = 29.53058867;
   const REF = new Date('2025-01-29T12:36:00Z').getTime();
   const p = ((((Date.now() - REF) / 86400000) % CICLO) + CICLO) % CICLO;
-  if (p < 1.85)  return { icon: '🌑', nombre: 'Luna nueva',        energia: 'intención · silencio · inicio' };
-  if (p < 7.38)  return { icon: '🌒', nombre: 'Luna creciente',    energia: 'arranque · acción · visibilidad' };
-  if (p < 9.22)  return { icon: '🌓', nombre: 'Cuarto creciente',  energia: 'decisión · movimiento · claridad' };
-  if (p < 14.76) return { icon: '🌔', nombre: 'Gibosa creciente',  energia: 'refinamiento · ajuste · impulso' };
-  if (p < 16.61) return { icon: '🌕', nombre: 'Luna llena',        energia: 'pico · revelación · celebración' };
-  if (p < 22.15) return { icon: '🌖', nombre: 'Gibosa menguante',  energia: 'gratitud · compartir · cosecha' };
-  if (p < 23.99) return { icon: '🌗', nombre: 'Cuarto menguante',  energia: 'soltar · integrar · revisión' };
-  return          { icon: '🌘', nombre: 'Luna menguante',           energia: 'descanso · vaciado · preparación' };
+  if (p < 1.85)  return { icon: '🌑', nombre: 'Luna nueva' };
+  if (p < 7.38)  return { icon: '🌒', nombre: 'Luna creciente' };
+  if (p < 9.22)  return { icon: '🌓', nombre: 'Cuarto creciente' };
+  if (p < 14.76) return { icon: '🌔', nombre: 'Gibosa creciente' };
+  if (p < 16.61) return { icon: '🌕', nombre: 'Luna llena' };
+  if (p < 22.15) return { icon: '🌖', nombre: 'Gibosa menguante' };
+  if (p < 23.99) return { icon: '🌗', nombre: 'Cuarto menguante' };
+  return          { icon: '🌘', nombre: 'Luna menguante' };
 }
+
+// ── ciclo ────────────────────────────────
 
 function cicloKeywords(fase) {
   const f = (fase || '').toLowerCase();
@@ -51,31 +64,31 @@ async function renderBotHome() {
   const nombre = setupCfg?.name ? setupCfg.name.split(' ')[0] : '';
 
   const saludo = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
-  document.getElementById('bot-greeting').textContent = `${saludo}${nombre ? ', ' + nombre : ''} 👋`;
+  document.getElementById('bot-greeting').textContent = `${saludo}${nombre ? ', ' + nombre : ''}`;
   document.getElementById('bot-date').textContent = `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]}`;
 
   const di = dayIdx();
   const wo = dayWo(di >= 0 ? di : 0);
 
-  // Ciclo
+  // Ciclo (usa userCol — el Firebase del WP)
   let cicloFase = '';
   try {
-    const cicloDoc = await wpUser().doc('ciclo').get();
+    const cicloDoc = await userCol().doc('ciclo').get();
     if (cicloDoc.exists) {
       const c = cicloDoc.data();
       cicloFase = c.fase || '';
       if (c.dia_ciclo) {
-        document.getElementById('bot-meta').textContent = `Día ${c.dia_ciclo} del ciclo · ${cicloFase}`;
+        document.getElementById('bot-meta').textContent = `Día ${c.dia_ciclo} · ${cicloFase}`;
         const kw = cicloKeywords(cicloFase);
         const kwEl = document.getElementById('bot-ciclo-kw');
         if (kwEl && kw) kwEl.textContent = kw;
       }
     }
-  } catch(e) {}
+  } catch(e) { console.warn('ciclo:', e); }
 
   renderLuna();
   renderDynamicCard(cicloFase, wo.wo1 || '', wo.wo2 || '', hour);
-  renderMicroacciones(di);
+  await renderSemanaPerfecta();
   renderCalStats();
   renderFinStats();
 }
@@ -86,39 +99,58 @@ function renderLuna() {
   const el = document.getElementById('bot-luna-row');
   if (!el) return;
   const luna = lunaFase();
+  const guia = _GUIA_LUNA[luna.nombre] || {};
   el.innerHTML = `
-    <span style="font-size:18px;line-height:1;">${luna.icon}</span>
-    <div style="flex:1;">
-      <div style="font-size:12px;font-weight:500;color:var(--text);">${luna.nombre}</div>
-      <div style="font-size:10px;color:var(--text3);">${luna.energia}</div>
+    <span style="font-size:20px;line-height:1;flex-shrink:0;">${luna.icon}</span>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:12px;font-weight:600;color:var(--text);">${luna.nombre}${guia.arquetipo ? ' · <span style="font-weight:400;">' + guia.arquetipo + '</span>' : ''}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4;">${guia.significado || ''}</div>
+      ${guia.ritual ? `<div style="font-size:10px;color:var(--text3);margin-top:3px;">Ritual: ${guia.ritual}</div>` : ''}
     </div>
   `;
 }
 
-function renderMicroacciones(di) {
+async function renderSemanaPerfecta() {
   const el = document.getElementById('bot-microacciones');
   if (!el) return;
-  const idx = di >= 0 ? di : 0;
-  const focus = focusForDay(idx);
-  const wo    = dayWo(idx);
 
-  const items = [];
-  if (focus[1]) items.push({ text: focus[1], tipo: 'focus' });
-  if (focus[2]) items.push({ text: focus[2], tipo: 'focus' });
-  if (focus[3]) items.push({ text: focus[3], tipo: 'focus' });
-  if (wo.ha1)   items.push({ text: wo.ha1,   tipo: 'habito' });
-  if (wo.ha2)   items.push({ text: wo.ha2,   tipo: 'habito' });
+  let semana = null;
+  try {
+    const doc = await userCol().doc('semana_perfecta').get();
+    if (doc.exists) semana = doc.data();
+  } catch(e) { console.warn('semana_perfecta:', e); }
 
-  if (!items.length) { el.innerHTML = ''; return; }
+  if (!semana || !semana.metaAncla) {
+    el.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:4px 0;">Sin Semana Perfecta activa esta semana.</div>`;
+    return;
+  }
+
+  const ancla = semana.metaAncla?.nombre || semana.metaAncla || '';
+  const secundarias = (semana.metasSecundarias || []).map(m => m.nombre || m);
+  const semilla     = (semana.metasSemilla || []).map(m => m.nombre || m);
+  const intencion   = semana.intencionSemanal || '';
 
   el.innerHTML = `
-    <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Microacciones de hoy</div>
-    ${items.map(i => `
-      <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);">
-        <span style="font-size:13px;opacity:.7;">${i.tipo === 'focus' ? '◎' : '⚡'}</span>
-        <span style="font-size:12px;color:var(--text);flex:1;line-height:1.4;">${i.text}</span>
+    <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Semana Perfecta</div>
+    ${intencion ? `<div style="font-size:12px;font-style:italic;color:var(--text2);margin-bottom:8px;line-height:1.4;">"${intencion}"</div>` : ''}
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:var(--mauve);border-radius:8px;">
+        <span style="font-size:11px;color:rgba(255,255,255,.7);white-space:nowrap;padding-top:1px;">Ancla</span>
+        <span style="font-size:12px;color:#fff;font-weight:600;flex:1;line-height:1.4;">${ancla}</span>
       </div>
-    `).join('')}
+      ${secundarias.map(n => `
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:5px 8px;background:var(--bg2);border:0.5px solid var(--border);border-radius:8px;">
+          <span style="font-size:10px;color:var(--text3);white-space:nowrap;padding-top:2px;">2ª</span>
+          <span style="font-size:12px;color:var(--text);flex:1;line-height:1.4;">${n}</span>
+        </div>
+      `).join('')}
+      ${semilla.map(n => `
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:4px 8px;border-radius:8px;">
+          <span style="font-size:10px;color:var(--text3);white-space:nowrap;padding-top:2px;">·</span>
+          <span style="font-size:11px;color:var(--text2);flex:1;line-height:1.4;">${n}</span>
+        </div>
+      `).join('')}
+    </div>
   `;
 }
 
