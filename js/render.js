@@ -584,7 +584,7 @@ function setSelectVal(id, val){
     const hmapped=HABITO_MAP[val]||Object.keys(HABITO_MAP).find(k=>HABITO_MAP[k]===val);
     const alt=mapped||hmapped;
     if(alt&&[...sel.options].some(o=>o.value===alt)){sel.value=alt;}
-    else sel.value='';
+    else{const opt=new Option(val,val);sel.add(opt);sel.value=val;}
   }
   const wrap=document.getElementById(id+'_ss');
   if(wrap){const inp=wrap.querySelector('input.ss-input');if(inp&&inp!==document.activeElement)inp.value=sel.value;}

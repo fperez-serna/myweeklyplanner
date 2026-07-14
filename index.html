@@ -325,6 +325,9 @@
     <button onclick="openBackupsUI()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#666;font-size:11px;">
       <i data-lucide="cloud-upload" style="width:22px;height:22px;stroke:#666;stroke-width:1.75;"></i><span style="font-size:11px;" id="bar-lbl-backup">Respaldos</span>
     </button>
+    <button id="bot-btn" onclick="openBotDashboard()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#666;font-size:11px;">
+      <i data-lucide="bot" style="width:22px;height:22px;stroke:#666;stroke-width:1.75;"></i><span style="font-size:11px;">Asistente</span>
+    </button>
     <button id="settings-btn" onclick="openSettings()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 12px;color:#666;font-size:11px;">
       <i data-lucide="sliders-horizontal" style="width:22px;height:22px;stroke:#666;stroke-width:1.75;"></i><span style="font-size:11px;" id="bar-lbl-settings">Ajustes</span>
     </button>
@@ -501,8 +504,8 @@
       </div>
       <div class="card" id="card-workout">
         <div class="sec">Workout</div>
-        <div class="dr-row"><div class="dr-lbl"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></div><select class="dr-sel" id="wo1" onchange="saveWorkout()"><option value="">—</option><option>gym</option><option>pilates</option><option>natación</option><option>equitación</option><option>yoga</option><option>tennis</option><option>padel</option><option>escalar</option><option>apnea</option></select></div>
-        <div class="dr-row"><div class="dr-lbl"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div><select class="dr-sel" id="wo2" onchange="saveWorkout()"><option value="">—</option><option>gym</option><option>pilates</option><option>natación</option><option>equitación</option><option>yoga</option><option>tennis</option><option>padel</option><option>escalar</option><option>apnea</option></select></div>
+        <div class="dr-row"><div class="dr-lbl"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></div><select class="dr-sel" id="wo1" onchange="saveWorkout()"><option value="">—</option><option>gym</option><option>pilates</option><option>natación</option><option>equitación</option><option>yoga</option><option>tennis</option><option>padel</option><option>escalar</option><option>apnea</option><option>rutina en casa</option></select></div>
+        <div class="dr-row"><div class="dr-lbl"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div><select class="dr-sel" id="wo2" onchange="saveWorkout()"><option value="">—</option><option>gym</option><option>pilates</option><option>natación</option><option>equitación</option><option>yoga</option><option>tennis</option><option>padel</option><option>escalar</option><option>apnea</option><option>rutina en casa</option></select></div>
         <div class="dvdr"></div>
         <div class="sec">Hábito</div>
         <div class="dr-row"><div class="dr-lbl"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></div><select class="dr-sel" id="ha1" onchange="saveWorkout()"><option value="">—</option><option>escribir</option><option>gratitud</option><option>leer</option><option>meditar</option><option>practicar violin</option><option>suplementos</option><option>dormirse temprano</option><option>dormir 8 horas</option><option>tomar agua</option></select></div>
@@ -683,6 +686,7 @@
 <script src="js/setup.js"></script>
 <script src="js/budget.js"></script>
 <script src="js/report.js"></script>
+<script src="js/bot.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/tour.js"></script>
 </body>

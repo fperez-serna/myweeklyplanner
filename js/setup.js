@@ -61,6 +61,7 @@ const WORKOUT_MAP={
   '🧘 Pilates':'🧘 Pilates',
   '🎾 Tennis':'🎾 Tennis',
   '🌿 Yoga':'🌿 Yoga',
+  '🏠 Rutina en casa':'🏠 Home Workout',
 };
 const DEFAULT_WORKOUTS=Object.keys(WORKOUT_MAP);
 const HABITO_MAP={
