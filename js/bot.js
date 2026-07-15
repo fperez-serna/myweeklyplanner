@@ -384,15 +384,17 @@ async function renderCalStats() {
   const hoy = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); })();
   try {
     const doc = await userCol().doc('nutricion_hoy').get();
-    if (doc.exists && doc.data().fecha === hoy) {
+    console.log('[cal] nutricion_hoy exists:', doc.exists, '| doc fecha:', doc.exists ? doc.data().fecha : 'N/A', '| hoy:', hoy);
+    if (doc.exists) {
       const d = doc.data();
       const kcal = d.total?.calorias || 0;
       const objetivo = d.objetivo || 0;
       const pct = objetivo > 0 ? Math.min(100, Math.round(kcal / objetivo * 100)) : 0;
+      const fechaLabel = d.fecha !== hoy ? ` (${d.fecha})` : '';
       document.getElementById('bot-cal-val').textContent = kcal + ' kcal';
       document.getElementById('bot-cal-sub').textContent = objetivo
-        ? `${pct}% del objetivo · Meta: ${objetivo} kcal`
-        : `${kcal} kcal registradas hoy`;
+        ? `${pct}% del objetivo · Meta: ${objetivo} kcal${fechaLabel}`
+        : `${kcal} kcal registradas${fechaLabel}`;
       document.getElementById('bot-cal-fill').style.width = pct + '%';
     } else {
       document.getElementById('bot-cal-val').textContent = '—';
@@ -400,6 +402,7 @@ async function renderCalStats() {
       document.getElementById('bot-cal-fill').style.width = '0%';
     }
   } catch(e) {
+    console.error('[cal] error:', e);
     document.getElementById('bot-cal-val').textContent = '—';
     document.getElementById('bot-cal-sub').textContent = 'Registra comidas con el asistente';
     document.getElementById('bot-cal-fill').style.width = '0%';
