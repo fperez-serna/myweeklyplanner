@@ -382,30 +382,61 @@ function renderDynamicCard(fase, diaCiclo, wo1, wo2, hour) {
 
 async function renderCalStats() {
   const hoy = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); })();
+  const macrosEl = document.getElementById('bot-cal-macros');
   try {
-    const doc = await userCol().doc('nutricion_hoy').get();
-    console.log('[cal] nutricion_hoy exists:', doc.exists, '| doc fecha:', doc.exists ? doc.data().fecha : 'N/A', '| hoy:', hoy);
-    if (doc.exists) {
+    // Force server read — offline persistence caches "not found" and won't update
+    const doc = await userCol().doc('nutricion_hoy').get({ source: 'server' });
+    if (doc.exists && doc.data().fecha === hoy) {
       const d = doc.data();
-      const kcal = d.total?.calorias || 0;
+      const kcal  = d.total?.calorias  || 0;
+      const prot  = d.total?.proteina  || 0;
+      const carbs = d.total?.carbos    || 0;
+      const grasas = d.total?.grasas   || 0;
       const objetivo = d.objetivo || 0;
+      const macros   = d.macros   || null;
       const pct = objetivo > 0 ? Math.min(100, Math.round(kcal / objetivo * 100)) : 0;
-      const fechaLabel = d.fecha !== hoy ? ` (${d.fecha})` : '';
+
       document.getElementById('bot-cal-val').textContent = kcal + ' kcal';
       document.getElementById('bot-cal-sub').textContent = objetivo
-        ? `${pct}% del objetivo · Meta: ${objetivo} kcal${fechaLabel}`
-        : `${kcal} kcal registradas${fechaLabel}`;
+        ? `${pct}% del objetivo · Meta: ${objetivo} kcal`
+        : `${kcal} kcal registradas hoy`;
       document.getElementById('bot-cal-fill').style.width = pct + '%';
+
+      // Macros
+      if (macrosEl) {
+        const macroRow = (label, val, meta) => {
+          const resto = meta ? Math.max(0, meta - val) : null;
+          const mpct  = meta ? Math.min(100, Math.round(val / meta * 100)) : null;
+          return `
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:10px;color:var(--text3);min-width:52px;">${label}</span>
+              <div style="flex:1;height:3px;border-radius:2px;background:var(--border);overflow:hidden;">
+                <div style="height:100%;border-radius:2px;background:var(--mauve);width:${mpct ?? 50}%;opacity:${mpct !== null ? 1 : 0.3};"></div>
+              </div>
+              <span style="font-size:10px;color:var(--text2);white-space:nowrap;">
+                ${val}g${resto !== null ? ` <span style="color:var(--text3);">/ ${meta}g</span>` : ''}
+              </span>
+            </div>`;
+        };
+        macrosEl.innerHTML = `
+          <div style="display:flex;flex-direction:column;gap:5px;padding-top:8px;border-top:0.5px solid var(--border);">
+            ${macroRow('Proteína', prot,  macros?.proteina || null)}
+            ${macroRow('Carbos',   carbs, macros?.carbos   || null)}
+            ${macroRow('Grasas',   grasas, macros?.grasas  || null)}
+          </div>`;
+        macrosEl.style.display = 'block';
+      }
     } else {
       document.getElementById('bot-cal-val').textContent = '—';
-      document.getElementById('bot-cal-sub').textContent = 'Sin datos · dile al bot qué comiste';
+      document.getElementById('bot-cal-sub').textContent = 'Dile al bot qué comiste';
       document.getElementById('bot-cal-fill').style.width = '0%';
+      if (macrosEl) macrosEl.style.display = 'none';
     }
   } catch(e) {
-    console.error('[cal] error:', e);
     document.getElementById('bot-cal-val').textContent = '—';
-    document.getElementById('bot-cal-sub').textContent = 'Sin datos · dile al bot qué comiste';
+    document.getElementById('bot-cal-sub').textContent = 'Dile al bot qué comiste';
     document.getElementById('bot-cal-fill').style.width = '0%';
+    if (macrosEl) macrosEl.style.display = 'none';
   }
 }
 

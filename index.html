@@ -657,12 +657,13 @@
     <!-- Microacciones -->
     <div id="bot-microacciones" style="margin:0 1rem 1rem;"></div>
     <!-- Stats row -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 1rem 1.1rem;">
+    <div style="display:flex;flex-direction:column;gap:12px;margin:0 1rem 1.1rem;">
       <div id="bot-card-cal" style="border-radius:12px;padding:1rem;background:var(--bg2);border:0.5px solid var(--border);">
         <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">Calorías hoy</div>
         <div id="bot-cal-val" style="font-size:20px;font-weight:600;color:var(--text);"></div>
         <div id="bot-cal-bar" style="margin-top:7px;height:4px;border-radius:2px;background:var(--border);overflow:hidden;"><div id="bot-cal-fill" style="height:100%;border-radius:2px;background:var(--mauve);transition:width .4s;"></div></div>
         <div id="bot-cal-sub" style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.4;"></div>
+        <div id="bot-cal-macros" style="margin-top:10px;display:none;"></div>
       </div>
       <div id="bot-card-fin" style="border-radius:12px;padding:1rem;background:var(--bg2);border:0.5px solid var(--border);">
         <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;">Finanzas</div>
@@ -739,7 +740,7 @@
 <script src="js/setup.js"></script>
 <script src="js/budget.js"></script>
 <script src="js/report.js"></script>
-<script src="js/bot.js?v=cal-debug2"></script>
+<script src="js/bot.js?v=macros"></script>
 <script src="js/auth.js"></script>
 <script src="js/tour.js"></script>
 </body>
