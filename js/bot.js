@@ -192,7 +192,7 @@ async function renderMenuDia() {
     if (doc.exists) menuTexto = doc.data().menu || null;
   } catch(e) {}
 
-  // Intenta extraer sección del día actual
+  // Extrae sección del día del menú guardado
   const nombresDia = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
   let seccionHoy = null;
   if (menuTexto) {
@@ -207,14 +207,12 @@ async function renderMenuDia() {
     if (!seccionHoy) seccionHoy = menuTexto.slice(0, 300);
   }
 
-  // Time-of-day filtering: show only meals still ahead
+  // Filtro por hora del día
   const nowH = new Date().getHours() + new Date().getMinutes() / 60;
   const mostrarDesayuno = nowH < 12;
   const mostrarComida   = nowH < 15.5;
-  // Cena siempre se muestra
 
   if (seccionHoy) {
-    // Menú real guardado
     el.innerHTML = `
       <div style="border-radius:12px;padding:1rem;background:var(--bg2);border:0.5px solid var(--border);">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
@@ -225,21 +223,51 @@ async function renderMenuDia() {
       </div>
     `;
   } else {
-    // Placeholder con recomendación por fase
+    // Placeholder: primero recetario, luego _GUIA_CICLO como fallback
     const fase = document.getElementById('bot-meta')?.textContent?.split('·')[1]?.trim() || '';
-    const guia = _GUIA_CICLO[fase];
-    const sugerencia = guia?.menu;
+    const faseMap = { 'Menstrual':'menstrual','Folicular':'folicular','Ovulación':'ovulacion','Lútea Temprana':'lutea_temprana','Lútea Tardía':'lutea_tardia' };
+    const faseKey = faseMap[fase] || null;
 
-    const mealRow = (label, texto) => `
+    let desayunoNombre = null, comidaNombre = null, cenaNombre = null;
+    let fuenteLabel = '';
+
+    try {
+      const recDoc = await userCol().doc('recetario').get();
+      const recetas = recDoc.exists ? (recDoc.data().recetas || []) : [];
+      if (recetas.length > 0) {
+        const seed = new Date().getDate(); // varía cada día del mes
+        const filtrar = (tag) => {
+          let pool = recetas.filter(r => (r.etiquetas || []).includes(tag));
+          // Preferir recetas de la fase actual si las hay
+          const porFase = faseKey ? pool.filter(r => (r.etiquetas || []).includes('ideal_' + faseKey)) : [];
+          if (porFase.length) pool = porFase;
+          return pool.length ? pool[seed % pool.length].nombre : null;
+        };
+        desayunoNombre = filtrar('desayuno');
+        comidaNombre   = filtrar('comida');
+        cenaNombre     = filtrar('cena');
+        if (desayunoNombre || comidaNombre || cenaNombre) fuenteLabel = 'De tu recetario:';
+      }
+    } catch(e) {}
+
+    // Fallback a _GUIA_CICLO si no hay recetas con esas etiquetas
+    if (!desayunoNombre && !comidaNombre && !cenaNombre) {
+      const guia = _GUIA_CICLO[fase];
+      const s = guia?.menu;
+      if (s) { desayunoNombre = s.desayuno; comidaNombre = s.comida; cenaNombre = s.cena; }
+      if (fase) fuenteLabel = `Sugerencia · fase ${fase}:`;
+    }
+
+    const mealRow = (label, texto) => texto ? `
       <div style="display:flex;gap:10px;font-size:11px;color:var(--text2);line-height:1.5;">
         <span style="color:var(--text3);min-width:68px;flex-shrink:0;">${label}</span><span>${texto}</span>
-      </div>`;
+      </div>` : '';
 
-    const meals = sugerencia ? [
-      mostrarDesayuno ? mealRow('Desayuno', sugerencia.desayuno) : '',
-      mostrarComida   ? mealRow('Comida',   sugerencia.comida)   : '',
-                        mealRow('Cena',     sugerencia.cena),
-    ].join('') : '';
+    const meals = [
+      mostrarDesayuno ? mealRow('Desayuno', desayunoNombre) : '',
+      mostrarComida   ? mealRow('Comida',   comidaNombre)   : '',
+                        mealRow('Cena',     cenaNombre),
+    ].join('');
 
     el.innerHTML = `
       <div style="border-radius:12px;padding:1rem;background:var(--bg2);border:0.5px solid var(--border);opacity:.85;">
@@ -251,7 +279,7 @@ async function renderMenuDia() {
           <span style="font-size:10px;color:var(--text3);">Dile al bot "genera el menú"</span>
         </div>
         ${meals ? `
-        <div style="font-size:10px;color:var(--text3);margin-bottom:8px;font-style:italic;">Sugerencia por fase ${fase}:</div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:8px;font-style:italic;">${fuenteLabel}</div>
         <div style="display:flex;flex-direction:column;gap:6px;">${meals}</div>` : ''}
       </div>
     `;
