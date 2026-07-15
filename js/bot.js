@@ -384,8 +384,9 @@ async function renderCalStats() {
   const hoy = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); })();
   const macrosEl = document.getElementById('bot-cal-macros');
   try {
-    // Force server read — offline persistence caches "not found" and won't update
-    const doc = await userCol().doc('nutricion_hoy').get({ source: 'server' });
+    // Log UID and try both server and cache
+    console.log('[cal] uid:', currentUser?.uid, '| path: users/' + currentUser?.uid + '/data/nutricion_hoy');
+    const doc = await userCol().doc('nutricion_hoy').get({ source: 'server' }).catch(() => userCol().doc('nutricion_hoy').get());
     if (doc.exists && doc.data().fecha === hoy) {
       const d = doc.data();
       const kcal  = d.total?.calorias  || 0;
