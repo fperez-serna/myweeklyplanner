@@ -182,6 +182,7 @@ function subscribeDB(){
       if(snap.exists){
         weekData=snap.data();
         renderDay();
+        if(typeof renderCalStats==='function') renderCalStats();
       }
     }catch(e){console.error('onSnapshot week handler error:',e);}
   });
