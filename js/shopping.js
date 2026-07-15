@@ -8,6 +8,7 @@ function renderSh(){
   cats.forEach((catName,idx)=>{
     const key='cat'+idx;
     if(!shoppingItems[key])shoppingItems[key]=[];
+    shoppingItems[key].sort((a,b)=>(a.done?1:0)-(b.done?1:0));
     const emoji=SHOP_EMOJI[catName]||'';
     const col=document.createElement('div');
     const items=shoppingItems[key]||[];
