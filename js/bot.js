@@ -398,13 +398,13 @@ async function renderCalStats() {
       document.getElementById('bot-cal-fill').style.width = pct + '%';
     } else {
       document.getElementById('bot-cal-val').textContent = '—';
-      document.getElementById('bot-cal-sub').textContent = 'Registra comidas con el asistente';
+      document.getElementById('bot-cal-sub').textContent = 'Sin datos · dile al bot qué comiste';
       document.getElementById('bot-cal-fill').style.width = '0%';
     }
   } catch(e) {
     console.error('[cal] error:', e);
     document.getElementById('bot-cal-val').textContent = '—';
-    document.getElementById('bot-cal-sub').textContent = 'Registra comidas con el asistente';
+    document.getElementById('bot-cal-sub').textContent = 'Sin datos · dile al bot qué comiste';
     document.getElementById('bot-cal-fill').style.width = '0%';
   }
 }
