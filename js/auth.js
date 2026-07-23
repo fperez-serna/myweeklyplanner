@@ -192,6 +192,9 @@ async function forgotPassword(){
 async function signOut(){
   showToast(isEn()?'Saving...':'Guardando...');
   await flushPendingSaves();
+  // Limpiar caché de Firestore antes de cerrar sesión para que otro usuario
+  // no vea datos del usuario anterior en el mismo dispositivo
+  try { await db.clearPersistence(); } catch(e) {}
   auth.signOut().then(()=>{
     currentUser=null;
     const wall=document.getElementById('payment-wall');
